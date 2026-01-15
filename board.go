@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	// "strings"
+	"strings"
 	"unicode"
 )
 
@@ -20,6 +20,10 @@ const (
 type Board struct {
 	board       [8][8]rune
 	isWhiteTurn bool
+}
+type Square struct {
+	row int
+	col int
 }
 
 func (b Board) printBoard() {
@@ -55,15 +59,16 @@ func (b *Board) moveAlgebraicNotation(move_string string) int {
 			row = int(move_string[3]) - '0'
 			col = int(move_string[2]) - 'a'
 			from_col := int(move_string[0]) - 'a'
-			println(row, col, from_col)
 			b.board[8-row+1][from_col] = '*'
 			b.board[8-row][col] = 'P'
 		}
+	} else {
+		move_string = strings.replace('x','A')
 	}
 
 	return -1
 }
 
-func pawnMove() {
+func legalKnightMoves(row: int, col: int) []Square{
 	return
 }
