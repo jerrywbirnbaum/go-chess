@@ -23,8 +23,6 @@ func (mg *MoveGenerator) generateMoves() []Move {
 			moves = append(moves, mg.generatePawnMoves(p)...)
 		}
 	}
-	// pawnMoves := mg.generatePawnMoves()
-	// moves = append(moves, pawnMoves...)
 	return moves
 }
 
