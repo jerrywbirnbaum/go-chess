@@ -2,6 +2,12 @@ package main
 
 import "fmt"
 
-func pieces() {
-	fmt.Println("pieces")
+type Piece struct {
+	representation rune
+	isWhite        bool
+	isSlidingPiece bool
+}
+
+func (p Piece) printPiece() {
+	fmt.Printf("%q", p.representation)
 }

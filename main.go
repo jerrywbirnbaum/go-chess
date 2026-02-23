@@ -15,9 +15,11 @@ func main() {
 		isWhiteTurn: true,
 	}
 	board.moveAlgebraicNotation("fxe5")
-	board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-	board.printBoard()
-
-	board.updateFromFEN("r2qk3/2pp1p2/3p2b1/8/1P2R3/8/P7/1N2K3 b - - 0 1")
-	board.printBoard()
+	// board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+	// board.printBoard()
+	//
+	// board.updateFromFEN("r2qk3/2pp1p2/3p2b1/8/1P2R3/8/P7/1N2K3 b - - 0 1")
+	// board.printBoard()
+	piece := Piece{representation: 'p', isWhite: false, isSlidingPiece: false}
+	piece.printPiece()
 }
