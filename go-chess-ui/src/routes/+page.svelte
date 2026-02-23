@@ -1,16 +1,17 @@
 <script lang="ts">
-	import { Chessground } from 'svelte5-chessground';
-	import 'svelte5-chessground/style.css';
+	import { Chessground } from "svelte5-chessground";
+	import { Chess } from "chess.js";
+	import "svelte5-chessground/style.css";
 
-	let fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+	let fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 	function handleMove(from: string, to: string) {
-		console.log('Move:', from, 'to', to);
+		console.log("Move:", from, "to", to);
 	}
 </script>
 
 <div class="container">
-    <Chessground {fen} onMove={handleMove} />
+	<Chessground {fen} onMove={handleMove} />
 </div>
 
 <style>
