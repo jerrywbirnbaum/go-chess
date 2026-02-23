@@ -6,14 +6,19 @@ import (
 	"unicode"
 )
 
+type Square struct {
+	row   int
+	col   int
+	piece Piece
+}
+
 type Board struct {
 	board       [8][8]Piece
 	isWhiteTurn bool
 }
 
-type Square struct {
-	row int
-	col int
+func (b Board) cellEmpty(row int, col int) bool {
+	return isEmpty(b.board[row][col])
 }
 
 func (b Board) printBoard() {
@@ -69,6 +74,18 @@ func (b *Board) updateBoardFEN(board_fen_string string) {
 			}
 		}
 	}
+}
+
+func (b *Board) piecesGenerator() []Square {
+	pieces := []Square{}
+	for i := range 8 {
+		for j := range 8 {
+			if !isEmpty(b.board[i][j]) {
+				pieces = append(pieces, Square{row: i, col: j, piece: b.board[i][j]})
+			}
+		}
+	}
+	return pieces
 }
 
 // func (b *Board) moveAlgebraicNotation(move_string string) int {

@@ -39,6 +39,43 @@ func isSlidingPiece(pt PieceType) bool {
 	}
 	return false
 }
+
+func isWhite(p Piece) bool {
+	switch p {
+	case WhitePawn:
+	case WhiteBishop:
+	case WhiteKnight:
+	case WhiteRook:
+	case WhiteQueen:
+	case WhiteKing:
+		return true
+	case BlackPawn:
+	case BlackBishop:
+	case BlackKnight:
+	case BlackRook:
+	case BlackQueen:
+	case BlackKing:
+		return false
+	}
+	return false
+}
+
+func isPawn(pt PieceType) bool {
+	switch pt {
+	case Pawn:
+		return true
+	}
+	return false
+}
+
+func isEmpty(p Piece) bool {
+	switch p {
+	case EmptyPiece:
+		return true
+	}
+	return false
+}
+
 func pieceType(p Piece) PieceType {
 	switch p {
 	case EmptyPiece:
@@ -94,6 +131,7 @@ func newPiece(r rune) Piece {
 		return EmptyPiece
 	}
 }
+
 func printPiece(p Piece) rune {
 	switch p {
 	case EmptyPiece:
