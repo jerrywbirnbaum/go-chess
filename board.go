@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	// "slices"
 	"strings"
 	"unicode"
 )
@@ -27,8 +28,8 @@ type Square struct {
 }
 
 func (b Board) printBoard() {
-	for i := 0; i < 8; i++ {
-		for j := 0; j < 8; j++ {
+	for i := range 8 {
+		for j := range 8 {
 			fmt.Printf("%q", b.board[i][j])
 		}
 		fmt.Println()
@@ -63,12 +64,21 @@ func (b *Board) moveAlgebraicNotation(move_string string) int {
 			b.board[8-row][col] = 'P'
 		}
 	} else {
-		move_string = strings.replace('x','A')
+		strings.Replace(move_string, "x", "A", -1)
 	}
+	fmt.Println(legalKnightMoves(4, 4))
 
 	return -1
 }
 
-func legalKnightMoves(row: int, col: int) []Square{
-	return
+func legalKnightMoves(row int, col int) []Square {
+	result := []Square{}
+	if row > 2 && col > 0 {
+		result = append(result, Square{row - 2, col - 1})
+	}
+	if row > 2 && col > 0 {
+		result = append(result, Square{row - 2, col - 1})
+	}
+	return result
+
 }
