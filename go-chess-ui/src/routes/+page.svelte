@@ -28,6 +28,7 @@
 			game = new Chess(game.fen());
 			console.log("Illegal move", game.fen());
 			console.log("Turn", game.turn());
+			return;
 		}
 	}
 </script>

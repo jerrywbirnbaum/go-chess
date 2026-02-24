@@ -1,5 +1,10 @@
 package main
 
+import (
+	"math/rand"
+	"time"
+)
+
 type Move struct {
 	startSquare Square
 	endSquare   Square
@@ -41,4 +46,16 @@ func (mg *MoveGenerator) generatePawnMoves(p Square) []Move {
 		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
 	return moves
+}
+
+func (mg *MoveGenerator) randomMove() Move {
+	moves := mg.generateMoves()
+
+	seed := rand.NewSource(time.Now().Unix())
+	r := rand.New(seed)
+
+	random_index := r.Intn(len(moves))
+	random_move := moves[random_index]
+	return random_move
+
 }
