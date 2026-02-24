@@ -20,6 +20,10 @@ type MoveGenerator struct {
 	board Board
 }
 
+func (mg *MoveGenerator) updateBoard(board Board) {
+	mg.board = board
+}
+
 func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	moves := []Move{}
 
@@ -43,11 +47,11 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	directions := []int{1, 2, -1, -2}
 
 	startRow := 1
-	enpassantRow := 5
+	enpassantRow := 4
 	if color == Color(White) {
 		directions = directions[2:]
 		startRow = 6
-		enpassantRow = 2
+		enpassantRow = 3
 	} else {
 		directions = directions[:2]
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -29,7 +30,10 @@ func TestMoveGeneration(t *testing.T) {
 	}
 
 	board.updateFromFEN("8/8/8/8/2pP4/8/8/8 b KQkq d3 0 1")
+	moveGenerator.updateBoard(board)
+
 	moves = moveGenerator.generateMoves(Color(Black))
+	fmt.Println(moves)
 
 	if len(moves) != 2 {
 		t.Errorf("Failed TestMoveGen")
