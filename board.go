@@ -15,6 +15,7 @@ type Square struct {
 type Board struct {
 	board       [8][8]Piece
 	isWhiteTurn bool
+	enpassant   string
 }
 
 func (b Board) cellEmpty(row int, col int) bool {
@@ -25,8 +26,7 @@ func (b Board) canCapture(row int, col int, color Color) bool {
 	if isEmpty(b.board[row][col]) {
 		return false
 	}
-
-	return sameColor(b.board[row][col], color)
+	return !sameColor(b.board[row][col], color)
 }
 
 func (b Board) printBoard() {
@@ -48,7 +48,8 @@ func (b *Board) updateFromFEN(fen_string string) {
 
 	// TODO: Update castle and enpassant rules
 	// castle := fen_list[2]
-	// en_passant := fen_list[3]
+	en_passant := fen_list[3]
+	b.enpassant = en_passant
 	// halfmove_clock := fen_list[4]
 	// fullmove_number := fen_list[5]
 
@@ -95,49 +96,3 @@ func (b *Board) piecesGenerator() []Square {
 	}
 	return pieces
 }
-
-// func (b *Board) moveAlgebraicNotation(move_string string) int {
-// 	// Only works for the white pieces
-// 	// var movedPiece MovePiece
-//
-// 	//Pawn Moves
-// 	// TODO: Add en passant
-// 	if unicode.IsLower(rune(move_string[0])) {
-// 		// movedPiece = Pawn
-// 		col := int(move_string[0]) - 'a'
-// 		row := 0
-// 		if len(move_string) == 2 {
-// 			row = int(move_string[1]) - '0'
-// 			for i := range 8 {
-// 				if b.board[i][col] == 'P' {
-// 					b.board[i][col] = '*'
-// 					b.board[row][col] = 'P'
-// 					break
-// 				}
-// 			}
-// 		} else if len(move_string) == 4 {
-// 			row = int(move_string[3]) - '0'
-// 			col = int(move_string[2]) - 'a'
-// 			from_col := int(move_string[0]) - 'a'
-// 			b.board[8-row+1][from_col] = '*'
-// 			b.board[8-row][col] = 'P'
-// 		}
-// 	} else {
-// 		strings.Replace(move_string, "x", "A", -1)
-// 	}
-// 	fmt.Println(legalKnightMoves(4, 4))
-//
-// 	return -1
-// }
-//
-// func legalKnightMoves(row int, col int) []Square {
-// 	result := []Square{}
-// 	if row > 2 && col > 0 {
-// 		result = append(result, Square{row - 2, col - 1})
-// 	}
-// 	if row > 2 && col > 0 {
-// 		result = append(result, Square{row - 2, col - 1})
-// 	}
-// 	return result
-//
-// }

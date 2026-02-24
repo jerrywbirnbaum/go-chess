@@ -43,13 +43,14 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	directions := []int{1, 2, -1, -2}
 
 	startRow := 1
+	enpassantRow := 5
 	if color == Color(White) {
 		directions = directions[2:]
 		startRow = 6
+		enpassantRow = 2
 	} else {
-		directions = directions[:3]
+		directions = directions[:2]
 	}
-	fmt.Println(directions)
 
 	// Forward Moves
 	if mg.board.cellEmpty(p.row+directions[0], p.col) {
@@ -65,13 +66,37 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	}
 
 	//Capture Moves
-	// left_capture :=
+	if p.col > 0 && mg.board.canCapture(p.row+directions[0], p.col-1, color) {
+		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+		endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: p.piece}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	}
+	if p.col < 7 && mg.board.canCapture(p.row+directions[0], p.col+1, color) {
+		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+		endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: p.piece}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	}
+
+	//ENPASSANT
+	if mg.board.enpassant != "-" {
+		ep_row, ep_col := fromSquare(mg.board.enpassant)
+		if p.row == enpassantRow && (ep_col-p.col == 1 || ep_col-p.col == -1) {
+			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+			endSquare := Square{row: ep_row, col: ep_col, piece: p.piece}
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+		}
+	}
 
 	return moves
 }
 
 func toSquare(row int, col int) string {
 	return fmt.Sprintf("%c%d", 'a'+col, 8-row)
+}
+func fromSquare(square string) (int, int) {
+	row := 8 - int(square[1]-'0')
+	col := int(square[0] - 'a')
+	return row, col
 }
 
 func (mg *MoveGenerator) randomMove() MoveString {

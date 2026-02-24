@@ -1,7 +1,5 @@
 package main
 
-import "fmt"
-
 type Color int
 
 const (
@@ -41,9 +39,7 @@ const (
 
 func isSlidingPiece(pt PieceType) bool {
 	switch pt {
-	case Queen:
-	case Rook:
-	case Bishop:
+	case Queen, Rook, Bishop:
 		return true
 	}
 	return false
@@ -78,8 +74,6 @@ func isEmpty(p Piece) bool {
 }
 
 func sameColor(p Piece, c Color) bool {
-	fmt.Println(p)
-	fmt.Println(Piece(BlackPawn))
 	switch p {
 	case EmptyPiece:
 		return false
@@ -89,7 +83,6 @@ func sameColor(p Piece, c Color) bool {
 			return true
 		}
 	case BlackPawn, BlackBishop, BlackKnight, BlackRook, BlackQueen, BlackKing:
-		fmt.Println("case3")
 		switch c {
 		case Black:
 			return true
