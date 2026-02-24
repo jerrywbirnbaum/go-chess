@@ -65,8 +65,8 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	}
 
 	//Capture Moves
+	// left_capture :=
 
-	capture_directions := []int{1, 2, -1, -2}
 	return moves
 }
 

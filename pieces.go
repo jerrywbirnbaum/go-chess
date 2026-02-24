@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type Color int
 
 const (
@@ -49,19 +51,11 @@ func isSlidingPiece(pt PieceType) bool {
 
 func isWhite(p Piece) bool {
 	switch p {
-	case WhitePawn:
-	case WhiteBishop:
-	case WhiteKnight:
-	case WhiteRook:
-	case WhiteQueen:
-	case WhiteKing:
+
+	case WhitePawn, WhiteBishop, WhiteKnight, WhiteRook, WhiteQueen, WhiteKing:
 		return true
-	case BlackPawn:
-	case BlackBishop:
-	case BlackKnight:
-	case BlackRook:
-	case BlackQueen:
-	case BlackKing:
+
+	case BlackPawn, BlackBishop, BlackKnight, BlackRook, BlackQueen, BlackKing:
 		return false
 	}
 	return false
@@ -84,26 +78,18 @@ func isEmpty(p Piece) bool {
 }
 
 func sameColor(p Piece, c Color) bool {
+	fmt.Println(p)
+	fmt.Println(Piece(BlackPawn))
 	switch p {
 	case EmptyPiece:
 		return false
-	case WhitePawn:
-	case WhiteBishop:
-	case WhiteKnight:
-	case WhiteRook:
-	case WhiteQueen:
-	case WhiteKing:
+	case WhitePawn, WhiteBishop, WhiteKnight, WhiteRook, WhiteQueen, WhiteKing:
 		switch c {
 		case White:
 			return true
 		}
-	case BlackPawn:
-	case BlackBishop:
-	case BlackKnight:
-	case BlackRook:
-	case BlackQueen:
-	case BlackKing:
-
+	case BlackPawn, BlackBishop, BlackKnight, BlackRook, BlackQueen, BlackKing:
+		fmt.Println("case3")
 		switch c {
 		case Black:
 			return true
@@ -117,23 +103,17 @@ func pieceType(p Piece) PieceType {
 	switch p {
 	case EmptyPiece:
 		return EmptyPieceType
-	case WhitePawn:
-	case BlackPawn:
+	case WhitePawn, BlackPawn:
 		return Pawn
-	case WhiteBishop:
-	case BlackBishop:
+	case WhiteBishop, BlackBishop:
 		return Bishop
-	case WhiteKnight:
-	case BlackKnight:
+	case WhiteKnight, BlackKnight:
 		return Knight
-	case WhiteRook:
-	case BlackRook:
+	case WhiteRook, BlackRook:
 		return Rook
-	case WhiteQueen:
-	case BlackQueen:
+	case WhiteQueen, BlackQueen:
 		return Queen
-	case WhiteKing:
-	case BlackKing:
+	case WhiteKing, BlackKing:
 		return King
 	}
 	return EmptyPieceType
