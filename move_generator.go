@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -8,6 +9,11 @@ import (
 type Move struct {
 	startSquare Square
 	endSquare   Square
+}
+
+type MoveString struct {
+	startSquare string
+	endSquare   string
 }
 
 type MoveGenerator struct {
@@ -48,7 +54,11 @@ func (mg *MoveGenerator) generatePawnMoves(p Square) []Move {
 	return moves
 }
 
-func (mg *MoveGenerator) randomMove() Move {
+func toSquare(row int, col int) string {
+	return fmt.Sprintf("%c%d", 'a'+col, 8-row)
+}
+
+func (mg *MoveGenerator) randomMove() MoveString {
 	moves := mg.generateMoves()
 
 	seed := rand.NewSource(time.Now().Unix())
@@ -56,6 +66,7 @@ func (mg *MoveGenerator) randomMove() Move {
 
 	random_index := r.Intn(len(moves))
 	random_move := moves[random_index]
-	return random_move
-
+	startSquare := toSquare(random_move.startSquare.row, random_move.startSquare.col)
+	endSquare := toSquare(random_move.endSquare.row, random_move.endSquare.col)
+	return MoveString{startSquare: startSquare, endSquare: endSquare}
 }

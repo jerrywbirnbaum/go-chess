@@ -61,16 +61,12 @@ func main() {
 			fmt.Printf("%d%d\n", move.endSquare.row, move.endSquare.col)
 		}
 		random_move := moveGenerator.randomMove()
-		fmt.Println("randommove")
-		fmt.Printf("%d%d\n", random_move.startSquare.col)
 		c.JSON(http.StatusOK, gin.H{
-			"status":           "received",
-			"start_square_col": random_move.startSquare.col,
-			"start_square_row": random_move.startSquare.row,
-			"end_square_col":   random_move.endSquare.col,
-			"end_square_row":   random_move.endSquare.row,
-			"promotion":        "q",
-			"fen":              receivedFen,
+			"status":       "received",
+			"start_square": random_move.startSquare,
+			"end_square":   random_move.endSquare,
+			"promotion":    "q",
+			"fen":          receivedFen,
 		})
 	})
 
