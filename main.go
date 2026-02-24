@@ -64,7 +64,7 @@ func main() {
 		board.updateFromFEN(receivedFen)
 
 		moveGenerator := MoveGenerator{board: board}
-		moves := moveGenerator.generateMoves()
+		moves := moveGenerator.generateMoves(Color(Black))
 		for _, move := range moves {
 			fmt.Println("Move")
 			fmt.Printf("%d%d\n", move.startSquare.row, move.startSquare.col)

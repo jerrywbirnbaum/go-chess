@@ -20,35 +20,46 @@ type MoveGenerator struct {
 	board Board
 }
 
-func (mg *MoveGenerator) generateMoves() []Move {
+func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	moves := []Move{}
 
 	pieces := mg.board.piecesGenerator()
 	for _, p := range pieces {
-		if isWhite(p.piece) {
+		if isWhite(p.piece) && color != Color(White) {
 			continue
 		}
 
 		pieceType := pieceType(p.piece)
 		if isPawn(pieceType) {
-			moves = append(moves, mg.generatePawnMoves(p)...)
+			moves = append(moves, mg.generatePawnMoves(p, color)...)
 		}
 	}
 	return moves
 }
 
-func (mg *MoveGenerator) generatePawnMoves(p Square) []Move {
+func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	moves := []Move{}
 
-	if mg.board.cellEmpty(p.row+1, p.col) {
+	directions := []int{1, 2, -1, -2}
+
+	startRow := 1
+	if color == Color(White) {
+		directions = directions[2:]
+		startRow = 6
+	} else {
+		directions = directions[:3]
+	}
+	fmt.Println(directions)
+
+	if mg.board.cellEmpty(p.row+directions[0], p.col) {
 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-		endSquare := Square{row: p.row + 1, col: p.col, piece: p.piece}
+		endSquare := Square{row: p.row + directions[0], col: p.col, piece: p.piece}
 		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
 
-	if p.row == 1 && mg.board.cellEmpty(p.row+2, p.col) && mg.board.cellEmpty(p.row+1, p.col) {
+	if p.row == startRow && mg.board.cellEmpty(p.row+directions[1], p.col) && mg.board.cellEmpty(p.row+1, p.col) {
 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-		endSquare := Square{row: p.row + 2, col: p.col, piece: p.piece}
+		endSquare := Square{row: p.row + directions[1], col: p.col, piece: p.piece}
 		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
 	return moves
@@ -59,7 +70,7 @@ func toSquare(row int, col int) string {
 }
 
 func (mg *MoveGenerator) randomMove() MoveString {
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(Color(Black))
 
 	seed := rand.NewSource(time.Now().Unix())
 	r := rand.New(seed)
