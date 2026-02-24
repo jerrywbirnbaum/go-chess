@@ -51,6 +51,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	}
 	fmt.Println(directions)
 
+	// Forward Moves
 	if mg.board.cellEmpty(p.row+directions[0], p.col) {
 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 		endSquare := Square{row: p.row + directions[0], col: p.col, piece: p.piece}
@@ -62,6 +63,10 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 		endSquare := Square{row: p.row + directions[1], col: p.col, piece: p.piece}
 		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
+
+	//Capture Moves
+
+	capture_directions := []int{1, 2, -1, -2}
 	return moves
 }
 

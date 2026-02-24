@@ -21,6 +21,14 @@ func (b Board) cellEmpty(row int, col int) bool {
 	return isEmpty(b.board[row][col])
 }
 
+func (b Board) canCapture(row int, col int, color Color) bool {
+	if isEmpty(b.board[row][col]) {
+		return false
+	}
+
+	return sameColor(b.board[row][col], color)
+}
+
 func (b Board) printBoard() {
 	for i := range 8 {
 		for j := range 8 {

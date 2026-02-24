@@ -83,6 +83,36 @@ func isEmpty(p Piece) bool {
 	return false
 }
 
+func sameColor(p Piece, c Color) bool {
+	switch p {
+	case EmptyPiece:
+		return false
+	case WhitePawn:
+	case WhiteBishop:
+	case WhiteKnight:
+	case WhiteRook:
+	case WhiteQueen:
+	case WhiteKing:
+		switch c {
+		case White:
+			return true
+		}
+	case BlackPawn:
+	case BlackBishop:
+	case BlackKnight:
+	case BlackRook:
+	case BlackQueen:
+	case BlackKing:
+
+		switch c {
+		case Black:
+			return true
+		}
+	}
+	return false
+
+}
+
 func pieceType(p Piece) PieceType {
 	switch p {
 	case EmptyPiece:
