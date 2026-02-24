@@ -17,7 +17,7 @@
 		});
 		return map;
 	});
-	function handleMove(from: string, to: string) {
+	async function handleMove(from: string, to: string) {
 		try {
 			const newGame = new Chess(game.fen());
 			newGame.move({ from, to, promotion: "q" });
@@ -29,6 +29,38 @@
 			console.log("Illegal move", game.fen());
 			console.log("Turn", game.turn());
 			return;
+		}
+		await engineMove();
+	}
+
+	async function engineMove() {
+		const currentFen = game.fen();
+		try {
+			const response = await fetch(
+				"http://localhost:8080/generate-moves",
+				{
+					method: "POST",
+					headers: {
+						"Content-Type":
+							"application/json",
+					},
+					body: JSON.stringify({
+						fen: currentFen,
+					}),
+				},
+			);
+			const data = await response.json();
+			console.log(data);
+
+			const newGame = new Chess(game.fen());
+			newGame.move({
+				from: data.start_square,
+				to: data.end_square,
+				promotion: "q",
+			});
+			game = newGame;
+		} catch (error) {
+			console.log(error);
 		}
 	}
 </script>
