@@ -41,10 +41,10 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 	var kingRune rune
 	if color == Color(White) {
 		oppositeColor = Color(Black)
-		kingRune = 'K'
+		kingRune = 'k'
 	} else {
 		oppositeColor = Color(White)
-		kingRune = 'k'
+		kingRune = 'K'
 	}
 
 	//Remove king
@@ -106,9 +106,6 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 	}
 
 	for _, move := range moves {
-		// fmt.Println("Move")
-		// fmt.Printf("row: %dcol: %d\n", move.endSquare.row, move.endSquare.col)
-		// fmt.Println(move)
 		attacks[move.endSquare.row][move.endSquare.col] += 1
 	}
 	return attacks
@@ -231,6 +228,7 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 }
 
 func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask [8][8]int) []Move {
+	fmt.Printf("generateKingMoves")
 
 	moves := []Move{}
 
