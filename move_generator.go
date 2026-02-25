@@ -24,6 +24,61 @@ func (mg *MoveGenerator) updateBoard(board Board) {
 	mg.board = board
 }
 
+func (mg *MoveGenerator) generateAttacks(color Color) []Move {
+	moves := []Move{}
+
+	//Remove Opposite color king
+	var oppositeColor Color
+	var kingRune rune
+	if color == Color(White) {
+		oppositeColor = Color(Black)
+		kingRune = 'K'
+	} else {
+		oppositeColor = Color(White)
+		kingRune = 'k'
+	}
+	var kingRow int
+	var kingCol int
+	for i := range 8 {
+		for j := range 8 {
+			piece := mg.board.board[i][j]
+			pieceType := pieceType(piece)
+			if sameColor(piece, oppositeColor) && isKing(pieceType) {
+				kingRow = i
+				kingCol = j
+			}
+
+		}
+	}
+	mg.board.board[kingRow][kingCol] = EmptyPiece
+
+	pieces := mg.board.piecesGenerator()
+	for _, p := range pieces {
+		if isWhite(p.piece) && color != Color(White) {
+			continue
+		}
+
+		pieceType := pieceType(p.piece)
+		if isPawn(pieceType) {
+			moves = append(moves, mg.generatePawnMoves(p, color)...)
+		}
+
+		if isKnight(pieceType) {
+			moves = append(moves, mg.generateKnightMoves(p, color)...)
+		}
+
+		if isSlidingPiece(pieceType) {
+			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType)...)
+		}
+
+		if isKing(pieceType) {
+			moves = append(moves, mg.generateKingMoves(p, color)...)
+		}
+	}
+
+	mg.board.board[kingRow][kingCol] = newPiece(kingRune)
+	return moves
+}
 func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	moves := []Move{}
 
@@ -165,8 +220,8 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color) []Move {
 		}
 	}
 	return moves
-
 }
+
 func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	moves := []Move{}
 
@@ -220,6 +275,31 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	return moves
 }
 
+func (mg *MoveGenerator) generatePawnAttacks(p Square, color Color) []Move {
+	moves := []Move{}
+
+	directions := []int{1, 2, -1, -2}
+
+	if color == Color(White) {
+		directions = directions[2:]
+	} else {
+		directions = directions[:2]
+	}
+
+	if p.col > 0 {
+		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+		endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: p.piece}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	}
+	if p.col < 7 {
+		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+		endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: p.piece}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	}
+
+	return moves
+
+}
 func toSquare(row int, col int) string {
 	return fmt.Sprintf("%c%d", 'a'+col, 8-row)
 }

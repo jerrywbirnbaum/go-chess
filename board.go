@@ -96,3 +96,26 @@ func (b *Board) piecesGenerator() []Square {
 	}
 	return pieces
 }
+
+func (b *Board) attackedBoard(color Color) [8][8]int {
+	attacks := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+
+	moveGenerator := MoveGenerator{board: *b}
+
+	moves := moveGenerator.generateMoves(color)
+	for _, move := range moves {
+		fmt.Printf("row: %dcol: %d\n", move.endSquare.row, move.endSquare.row)
+		attacks[move.endSquare.row][move.endSquare.row] += 1
+	}
+
+	return attacks
+}
