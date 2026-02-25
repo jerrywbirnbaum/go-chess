@@ -80,7 +80,7 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 
 	pieces := mg.board.piecesGenerator()
 	for _, p := range pieces {
-		if isWhite(p.piece) && color != Color(White) {
+		if getColor(p.piece) != color {
 			continue
 		}
 
@@ -124,11 +124,13 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 
 	var kingRow int
 	var kingCol int
+	kingExists := false
 	for i := range 8 {
 		for j := range 8 {
 			piece := mg.board.board[i][j]
 			pieceType := pieceType(piece)
 			if sameColor(piece, color) && isKing(pieceType) {
+				kingExists = true
 				kingRow = i
 				kingCol = j
 			}
@@ -137,8 +139,7 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	}
 
 	//Double check
-	if attackedSquares[kingRow][kingCol] > 1 {
-		// piece := mg.board.board[kingRow][kingCol]
+	if kingExists && attackedSquares[kingRow][kingCol] > 1 {
 		piece := Square{row: kingRow, col: kingCol, piece: mg.board.board[kingRow][kingCol]}
 		moves = append(moves, mg.generateKingMoves(piece, color, false, attackedSquares)...)
 		return moves
@@ -146,7 +147,7 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 
 	pieces := mg.board.piecesGenerator()
 	for _, p := range pieces {
-		if isWhite(p.piece) && color != Color(White) {
+		if getColor(p.piece) != color {
 			continue
 		}
 
@@ -228,7 +229,6 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 }
 
 func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask [8][8]int) []Move {
-	fmt.Printf("generateKingMoves")
 
 	moves := []Move{}
 

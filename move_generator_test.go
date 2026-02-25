@@ -8,20 +8,7 @@ import (
 
 func TestMoveGeneration(t *testing.T) {
 	fmt.Println("TestMoveGeneration")
-	board := Board{
-		board: [8][8]Piece{
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-		},
-		isWhiteTurn: true,
-	}
-
+	board := initBoard()
 	board.updateFromFEN("8/8/3p4/4P3/8/8/8/8 b KQkq - 0 1")
 	moveGenerator := MoveGenerator{board: board}
 
@@ -61,24 +48,24 @@ func TestMoveGeneration(t *testing.T) {
 	if len(moves) != 8 {
 		t.Errorf("Failed TestMoveGen King")
 	}
+}
+
+func TestMoveGenerationDoubleCheck(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("1k5r/8/2N5/4Q3/8/8/8/8 b KQkq d3 0 1")
+
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves(Color(Black))
+	// fmt.Println(len(moves))
+	// fmt.Println(moves)
+	if len(moves) != 3 {
+		t.Errorf("Failed TestMoveGen DoubleCheck")
+	}
 
 }
 
 func TestAttackedBoard(t *testing.T) {
-	board := Board{
-		board: [8][8]Piece{
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
-		},
-		isWhiteTurn: true,
-	}
-
+	board := initBoard()
 	board.updateFromFEN("rnbqkbnr/pppppppp/PPP3PP/8/8/8/8/RNBQKBNR w KQkq - 0 1")
 	expected := [8][8]int{
 		{0, 1, 1, 1, 1, 1, 1, 0},

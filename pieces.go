@@ -45,6 +45,17 @@ func isSlidingPiece(pt PieceType) bool {
 	return false
 }
 
+func getColor(p Piece) Color {
+	switch p {
+
+	case WhitePawn, WhiteBishop, WhiteKnight, WhiteRook, WhiteQueen, WhiteKing:
+		return Color(White)
+
+	case BlackPawn, BlackBishop, BlackKnight, BlackRook, BlackQueen, BlackKing:
+		return Color(Black)
+	}
+	return Color(Black)
+}
 func isWhite(p Piece) bool {
 	switch p {
 
