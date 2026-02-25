@@ -63,6 +63,32 @@ func TestMoveGeneration(t *testing.T) {
 
 }
 
+func TestAttackedBoard(t *testing.T) {
+	board := Board{
+		board: [8][8]Piece{
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+			{newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*')},
+		},
+		isWhiteTurn: true,
+	}
+
+	board.updateFromFEN("rnbqkbnr/pppppppp/PPP3PP/8/8/8/8/RNBQKBNR w KQkq - 0 1")
+
+	moveGenerator := MoveGenerator{board: board}
+	attacks := moveGenerator.generateAttacks(Color(White))
+	// attacks := board.attackedBoard(Color(Black))
+	fmt.Println(attacks)
+	// if !result {
+	// 	t.Errorf("Failed TestSameColor")
+	// }
+
+}
 func TestFromSquare(t *testing.T) {
 	row, col := fromSquare("a1")
 	if row != 7 || col != 0 {
