@@ -65,6 +65,14 @@ func isPawn(pt PieceType) bool {
 	return false
 }
 
+func isKnight(pt PieceType) bool {
+	switch pt {
+	case Knight:
+		return true
+	}
+	return false
+}
+
 func isEmpty(p Piece) bool {
 	switch p {
 	case EmptyPiece:

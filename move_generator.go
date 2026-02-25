@@ -37,10 +37,45 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 		if isPawn(pieceType) {
 			moves = append(moves, mg.generatePawnMoves(p, color)...)
 		}
+
+		if isKnight(pieceType) {
+			moves = append(moves, mg.generateKnightMoves(p, color)...)
+		}
 	}
 	return moves
 }
 
+func (mg *MoveGenerator) generateKnightMoves(p Square, color Color) []Move {
+
+	moves := []Move{}
+
+	knightMoves := [][2]int{
+		{1, 2},
+		{2, 1},
+		{-1, -2},
+		{-2, -1},
+		{2, -1},
+		{-2, 1},
+		{-1, 2},
+		{1, -2},
+	}
+
+	currentRow := p.row
+	currentCol := p.col
+	var row int
+	var col int
+	for _, move := range knightMoves {
+		row = currentRow + move[0]
+		col = currentCol + move[1]
+		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
+			startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+			endSquare := Square{row: row, col: col, piece: p.piece}
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+		}
+	}
+	return moves
+
+}
 func (mg *MoveGenerator) generatePawnMoves(p Square, color Color) []Move {
 	moves := []Move{}
 

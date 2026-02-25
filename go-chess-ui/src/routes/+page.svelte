@@ -3,7 +3,7 @@
 	import { Chess } from "chess.js";
 	import "svelte5-chessground/style.css";
 
-	let game = $state(new Chess("7k/8/8/8/2p5/2P5/3P4/7K w KQkq - 0 1"));
+	let game = $state(new Chess("6nk/8/8/8/8/8/8/7K w KQkq - 0 1"));
 	const fen = $derived(game.fen());
 	const turn = $derived(game.turn() === "w" ? "white" : "black");
 
