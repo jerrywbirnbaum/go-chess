@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -79,16 +80,41 @@ func TestAttackedBoard(t *testing.T) {
 	}
 
 	board.updateFromFEN("rnbqkbnr/pppppppp/PPP3PP/8/8/8/8/RNBQKBNR w KQkq - 0 1")
-
+	expected := [8][8]int{
+		{0, 1, 1, 1, 1, 1, 1, 0},
+		{1, 1, 1, 4, 4, 1, 1, 1},
+		{2, 2, 3, 2, 2, 3, 2, 2},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
 	moveGenerator := MoveGenerator{board: board}
-	attacks := moveGenerator.generateAttacks(Color(White))
-	// attacks := board.attackedBoard(Color(Black))
-	fmt.Println(attacks)
-	// if !result {
-	// 	t.Errorf("Failed TestSameColor")
-	// }
+	attacks := moveGenerator.generateAttacks(Color(Black))
+	if !reflect.DeepEqual(attacks, expected) {
+		t.Errorf("Failed generate attacks")
+	}
+
+	board.updateFromFEN("rK6/8/8/8/8/8/8/8 w KQkq - 0 1")
+	expected = [8][8]int{
+		{0, 1, 1, 1, 1, 1, 1, 1},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+	}
+	moveGenerator.updateBoard(board)
+	attacks = moveGenerator.generateAttacks(Color(Black))
+	if !reflect.DeepEqual(attacks, expected) {
+		t.Errorf("Failed generate attacks")
+	}
 
 }
+
 func TestFromSquare(t *testing.T) {
 	row, col := fromSquare("a1")
 	if row != 7 || col != 0 {

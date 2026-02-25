@@ -54,7 +54,7 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 		for j := range 8 {
 			piece := mg.board.board[i][j]
 			pieceType := pieceType(piece)
-			if sameColor(piece, color) && isKing(pieceType) {
+			if sameColor(piece, oppositeColor) && isKing(pieceType) {
 				kingRow = i
 				kingCol = j
 			}
@@ -65,33 +65,33 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 
 	pieces := mg.board.piecesGenerator()
 	for _, p := range pieces {
-		if isWhite(p.piece) && oppositeColor != Color(White) {
+		if isWhite(p.piece) && color != Color(White) {
 			continue
 		}
 
 		pieceType := pieceType(p.piece)
 		if isPawn(pieceType) {
-			moves = append(moves, mg.generatePawnAttacks(p, oppositeColor)...)
+			moves = append(moves, mg.generatePawnAttacks(p, color)...)
 		}
 		if isKnight(pieceType) {
-			moves = append(moves, mg.generateKnightMoves(p, oppositeColor, true)...)
+			moves = append(moves, mg.generateKnightMoves(p, color, true)...)
 		}
 
 		if isSlidingPiece(pieceType) {
-			moves = append(moves, mg.generateSlidingMoves(p, oppositeColor, pieceType, true)...)
+			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType, true)...)
 		}
 
 		if isKing(pieceType) {
-			moves = append(moves, mg.generateKingMoves(p, oppositeColor)...)
+			moves = append(moves, mg.generateKingMoves(p, color, true)...)
 		}
 	}
 
 	mg.board.board[kingRow][kingCol] = newPiece(kingRune)
 
 	for _, move := range moves {
-		fmt.Println("Move")
-		fmt.Printf("row: %dcol: %d\n", move.endSquare.row, move.endSquare.col)
-		fmt.Println(move)
+		// fmt.Println("Move")
+		// fmt.Printf("row: %dcol: %d\n", move.endSquare.row, move.endSquare.col)
+		// fmt.Println(move)
 		attacks[move.endSquare.row][move.endSquare.col] += 1
 	}
 	return attacks
@@ -119,7 +119,7 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 		}
 
 		if isKing(pieceType) {
-			moves = append(moves, mg.generateKingMoves(p, color)...)
+			moves = append(moves, mg.generateKingMoves(p, color, false)...)
 		}
 	}
 	return moves
@@ -182,7 +182,7 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 	return moves
 }
 
-func (mg *MoveGenerator) generateKingMoves(p Square, color Color) []Move {
+func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool) []Move {
 
 	moves := []Move{}
 
@@ -204,10 +204,12 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color) []Move {
 	for _, move := range kingMoves {
 		row = currentRow + move[0]
 		col = currentCol + move[1]
-		if row >= 0 && row <= 7 && col >= 0 && col <= 7 && mg.board.cellEmpty(row, col) {
-			startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
-			endSquare := Square{row: row, col: col, piece: p.piece}
-			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
+			if isAttack || mg.board.canCapture(row, col, color) || mg.board.cellEmpty(row, col) {
+				startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+				endSquare := Square{row: row, col: col, piece: p.piece}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
 		}
 	}
 	return moves
