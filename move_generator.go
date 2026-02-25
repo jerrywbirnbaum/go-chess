@@ -50,18 +50,23 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 	//Remove king
 	var kingRow int
 	var kingCol int
+	kingExists := false
 	for i := range 8 {
 		for j := range 8 {
 			piece := mg.board.board[i][j]
 			pieceType := pieceType(piece)
 			if sameColor(piece, oppositeColor) && isKing(pieceType) {
+				kingExists = true
 				kingRow = i
 				kingCol = j
 			}
 
 		}
 	}
-	mg.board.board[kingRow][kingCol] = EmptyPiece
+
+	if kingExists {
+		mg.board.board[kingRow][kingCol] = EmptyPiece
+	}
 	emptyMask := [8][8]int{
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
@@ -96,7 +101,9 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 		}
 	}
 
-	mg.board.board[kingRow][kingCol] = newPiece(kingRune)
+	if kingExists {
+		mg.board.board[kingRow][kingCol] = newPiece(kingRune)
+	}
 
 	for _, move := range moves {
 		// fmt.Println("Move")

@@ -50,7 +50,7 @@ func TestMoveGeneration(t *testing.T) {
 	moveGenerator.updateBoard(board)
 	moves = moveGenerator.generateMoves(Color(Black))
 	if len(moves) != 11 {
-		t.Errorf("Failed TestMoveGen Knight")
+		t.Errorf("Failed TestMoveGen Sliding")
 	}
 
 	board.updateFromFEN("8/8/8/8/3k4/8/8/8 b KQkq d3 0 1")
