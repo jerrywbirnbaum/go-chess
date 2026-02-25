@@ -41,10 +41,101 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 		if isKnight(pieceType) {
 			moves = append(moves, mg.generateKnightMoves(p, color)...)
 		}
+
+		if isSlidingPiece(pieceType) {
+			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType)...)
+		}
+
+		if isKing(pieceType) {
+			moves = append(moves, mg.generateKingMoves(p, color)...)
+		}
 	}
 	return moves
 }
 
+func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType) []Move {
+	moves := []Move{}
+
+	slidingMoves := [][2]int{
+		{1, 1},
+		{-1, -1},
+		{-1, 1},
+		{1, -1},
+		{1, 0},
+		{-1, 0},
+		{0, 1},
+		{0, -1},
+	}
+
+	if isRook(pt) {
+		slidingMoves = slidingMoves[4:]
+	} else if isBishop(pt) {
+		slidingMoves = slidingMoves[:4]
+	}
+	currentRow := p.row
+	currentCol := p.col
+	for _, move := range slidingMoves {
+		row := currentRow + move[0]
+		col := currentCol + move[1]
+		for i := range 7 {
+			_ = i
+			if row < 0 || row > 7 || col < 0 || col > 7 {
+				break
+			}
+
+			if mg.board.cellEmpty(row, col) {
+				startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+				endSquare := Square{row: row, col: col, piece: p.piece}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			} else if mg.board.canCapture(row, col, color) {
+				startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+				endSquare := Square{row: row, col: col, piece: p.piece}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+				break
+			} else {
+				break
+			}
+
+			row += move[0]
+			col += move[1]
+
+		}
+
+	}
+	return moves
+}
+
+func (mg *MoveGenerator) generateKingMoves(p Square, color Color) []Move {
+
+	moves := []Move{}
+
+	kingMoves := [][2]int{
+		{1, 1},
+		{1, -1},
+		{-1, 1},
+		{-1, -1},
+		{1, 0},
+		{-1, 0},
+		{0, 1},
+		{0, -1},
+	}
+
+	currentRow := p.row
+	currentCol := p.col
+	var row int
+	var col int
+	for _, move := range kingMoves {
+		row = currentRow + move[0]
+		col = currentCol + move[1]
+		if row >= 0 && row <= 7 && col >= 0 && col <= 7 && mg.board.cellEmpty(row, col) {
+			startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+			endSquare := Square{row: row, col: col, piece: p.piece}
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+		}
+	}
+	return moves
+
+}
 func (mg *MoveGenerator) generateKnightMoves(p Square, color Color) []Move {
 
 	moves := []Move{}
@@ -67,7 +158,7 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color) []Move {
 	for _, move := range knightMoves {
 		row = currentRow + move[0]
 		col = currentCol + move[1]
-		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
+		if row >= 0 && row <= 7 && col >= 0 && col <= 7 && mg.board.cellEmpty(row, col) {
 			startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 			endSquare := Square{row: row, col: col, piece: p.piece}
 			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})

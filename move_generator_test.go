@@ -45,6 +45,22 @@ func TestMoveGeneration(t *testing.T) {
 		t.Errorf("Failed TestMoveGen Knight")
 	}
 
+	board.updateFromFEN("r3R3/b7/8/8/8/8/8/8 b KQkq d3 0 1")
+	moveGenerator.updateBoard(board)
+	moves = moveGenerator.generateMoves(Color(Black))
+	if len(moves) != 11 {
+		t.Errorf("Failed TestMoveGen Knight")
+	}
+
+	board.updateFromFEN("8/8/8/8/3k4/8/8/8 b KQkq d3 0 1")
+	moveGenerator.updateBoard(board)
+	moves = moveGenerator.generateMoves(Color(Black))
+	// fmt.Println(len(moves))
+	// fmt.Println(moves)
+	if len(moves) != 8 {
+		t.Errorf("Failed TestMoveGen King")
+	}
+
 }
 
 func TestFromSquare(t *testing.T) {

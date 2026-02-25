@@ -64,13 +64,11 @@ func main() {
 		board.updateFromFEN(receivedFen)
 
 		moveGenerator := MoveGenerator{board: board}
-		moves := moveGenerator.generateMoves(Color(Black))
-		for _, move := range moves {
-			fmt.Println("Move")
-			fmt.Printf("%d%d\n", move.startSquare.row, move.startSquare.col)
-			fmt.Printf("%d%d\n", move.endSquare.row, move.endSquare.col)
-		}
 		random_move := moveGenerator.randomMove()
+		fmt.Println("Move")
+		fmt.Println(random_move.startSquare)
+		fmt.Println(random_move.endSquare)
+		fmt.Println("-------")
 		c.JSON(http.StatusOK, gin.H{
 			"status":       "received",
 			"start_square": random_move.startSquare,

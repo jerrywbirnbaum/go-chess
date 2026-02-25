@@ -73,6 +73,30 @@ func isKnight(pt PieceType) bool {
 	return false
 }
 
+func isRook(pt PieceType) bool {
+	switch pt {
+	case Rook:
+		return true
+	}
+	return false
+}
+
+func isBishop(pt PieceType) bool {
+	switch pt {
+	case Bishop:
+		return true
+	}
+	return false
+}
+
+func isKing(pt PieceType) bool {
+	switch pt {
+	case King:
+		return true
+	}
+	return false
+}
+
 func isEmpty(p Piece) bool {
 	switch p {
 	case EmptyPiece:
