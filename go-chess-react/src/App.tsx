@@ -1,16 +1,20 @@
 import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { useRef, useState } from 'react';
+import { Loader } from 'react-overlay-loader';
 
+import 'react-overlay-loader/styles.css';
 function App() {
   const chessGameRef = useRef(new Chess());
   const chessGame = chessGameRef.current;
 
   // track the current position of the chess game in state to trigger a re-render of the chessboard
   const [chessPosition, setChessPosition] = useState(chessGame.fen());
+  const [isLoading, setLoading] = useState(false);
 
   // make a random "CPU" move
   async function makeEngineMove() {
+    setLoading(true);
     const currentFen = chessGame.fen()
     if (chessGame.isGameOver()) {
       return;
@@ -50,6 +54,7 @@ function App() {
 
     // update the position state
     setChessPosition(chessGame.fen());
+    setLoading(false);
   }
 
   // handle piece drop
@@ -95,6 +100,7 @@ function App() {
   return (
     <div style={{ width: '50vw' }} className="chessboard-container">
       <Chessboard options={chessboardOptions} />);
+      <Loader fullPage loading={isLoading} />
     </div>
   )
 }

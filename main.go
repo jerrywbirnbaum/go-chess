@@ -28,6 +28,7 @@ func main() {
 	r.POST("/generate-moves", func(c *gin.Context) {
 		var json ChessRequest
 
+		time.Sleep(1 * time.Second)
 		if err := c.ShouldBindJSON(&json); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
