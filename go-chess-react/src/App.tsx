@@ -93,7 +93,10 @@ function App() {
   };
 
   return (
-    <Chessboard options={chessboardOptions} />);
+    <div style={{ width: '50vw' }} className="chessboard-container">
+      <Chessboard options={chessboardOptions} />);
+    </div>
+  )
 }
 
 
