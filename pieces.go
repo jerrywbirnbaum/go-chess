@@ -216,3 +216,13 @@ func printPiece(p Piece) rune {
 	}
 	return '*'
 }
+
+func oppositeColor(c Color) Color {
+	switch c {
+	case White:
+		return Black
+	case Black:
+		return White
+	}
+	return White
+}

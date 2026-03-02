@@ -113,3 +113,39 @@ func TestFromSquare(t *testing.T) {
 		t.Errorf("Failed TestFromSquare")
 	}
 }
+
+func TestMoveGenerationChecks(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k7/3r4/2n5/8/8/R7/8/8 b KQkq - 0 1")
+
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves(Color(Black))
+	fmt.Println(len(moves))
+	fmt.Println(moves)
+	if len(moves) != 5 {
+		t.Errorf("Failed TestMoveGen Check")
+	}
+}
+
+func TestCheckRays(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k7/1P6/8/8/8/8/8/8 b KQkq - 0 1")
+
+	expected := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+	moveGenerator := MoveGenerator{board: board}
+	result := moveGenerator.checkRays(0, 0)
+
+	fmt.Println(result)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Failed Check Rays")
+	}
+}
