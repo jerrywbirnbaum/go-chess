@@ -10,20 +10,43 @@ function App() {
   const [chessPosition, setChessPosition] = useState(chessGame.fen());
 
   // make a random "CPU" move
-  function makeRandomMove() {
-    // get all possible moves`
-    const possibleMoves = chessGame.moves();
-
-    // exit if the game is over
+  async function makeEngineMove() {
+    const currentFen = chessGame.fen()
     if (chessGame.isGameOver()) {
       return;
     }
 
+    try {
+      const response = await fetch(
+        "http://localhost:8080/generate-moves",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            fen: currentFen,
+          }),
+        },
+      );
+      const data = await response.json();
+      console.log(data);
+
+      chessGame.move({
+        from: data.start_square,
+        to: data.end_square,
+        promotion: "q",
+      });
+    } catch (error) {
+      console.log(error);
+    }
+
     // pick a random move
-    const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+    // const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
 
     // make the move
-    chessGame.move(randomMove);
+    // chessGame.move(randomMove);
 
     // update the position state
     setChessPosition(chessGame.fen());
@@ -51,7 +74,7 @@ function App() {
       setChessPosition(chessGame.fen());
 
       // make random cpu move after a short delay
-      setTimeout(makeRandomMove, 5);
+      setTimeout(makeEngineMove, 5);
 
       // return true as the move was successful
       return true;
