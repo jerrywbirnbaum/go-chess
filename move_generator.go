@@ -146,12 +146,6 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 	}
 	// piece := mg.board.board[kingRow+directions[0]][kingCol-1]
 
-	fmt.Println("Pawns")
-	if kingCol < 7 {
-		fmt.Println(mg.board.canCapture(kingRow+directions[0], kingCol+1, color))
-		fmt.Println(isPawn(pieceType(mg.board.board[kingRow+directions[0]][kingCol+1])))
-		fmt.Println("---")
-	}
 	if kingCol > 0 && mg.board.canCapture(kingRow+directions[0], kingCol-1, color) && isPawn(pieceType(mg.board.board[kingRow+directions[0]][kingCol-1])) {
 		checkMask[kingRow+directions[0]][kingCol-1] = 1
 		return checkMask
@@ -298,7 +292,7 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 		}
 
 		if isKnight(pieceType) {
-			moves = append(moves, mg.generateKnightMoves(p, color, true, checkMask)...)
+			moves = append(moves, mg.generateKnightMoves(p, color, false, checkMask)...)
 		}
 
 		if isSlidingPiece(pieceType) {
