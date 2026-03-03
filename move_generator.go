@@ -37,15 +37,13 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
 
-	var oppositeColor Color
 	var kingRune rune
 	if color == Color(White) {
-		oppositeColor = Color(Black)
 		kingRune = 'k'
 	} else {
-		oppositeColor = Color(White)
 		kingRune = 'K'
 	}
+	oppositeColor := oppositeColor(color)
 
 	//Remove king
 	var kingRow int
@@ -134,6 +132,7 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
+
 	piece := mg.board.board[kingRow][kingCol]
 	color := getColor(piece)
 	oppositeColor := oppositeColor(color)
@@ -144,7 +143,6 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 	} else {
 		directions = directions[1:]
 	}
-	// piece := mg.board.board[kingRow+directions[0]][kingCol-1]
 
 	if kingCol > 0 && mg.board.canCapture(kingRow+directions[0], kingCol-1, color) && isPawn(pieceType(mg.board.board[kingRow+directions[0]][kingCol-1])) {
 		checkMask[kingRow+directions[0]][kingCol-1] = 1
@@ -180,6 +178,13 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 		}
 	}
 
+	// check sliding
+	checkMask = mg.slidingRays(kingRow, kingCol, color, checkMask)
+
+	return checkMask
+}
+
+func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, checkMask [8][8]int) [8][8]int {
 	// check sliding
 	slidingMoves := [][2]int{
 		{1, 1},
@@ -232,7 +237,6 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 			col += move[1]
 		}
 	}
-
 	return checkMask
 }
 func (mg *MoveGenerator) generateMoves(color Color) []Move {
@@ -372,7 +376,6 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 }
 
 func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask [8][8]int) []Move {
-
 	moves := []Move{}
 
 	kingMoves := [][2]int{
