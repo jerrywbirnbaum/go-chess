@@ -125,7 +125,7 @@ func TestMoveGenerationChecks(t *testing.T) {
 	}
 }
 
-func TestCheckRays(t *testing.T) {
+func TestCheckRaysPawn(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k7/1P6/8/8/8/8/8/8 b KQkq - 0 1")
 
@@ -142,6 +142,68 @@ func TestCheckRays(t *testing.T) {
 	moveGenerator := MoveGenerator{board: board}
 	result := moveGenerator.checkRays(0, 0)
 
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Failed Check Rays")
+	}
+}
+
+func TestCheckRaysKnight(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k7/8/1N6/8/8/8/8/8 b KQkq - 0 1")
+
+	expected := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+	moveGenerator := MoveGenerator{board: board}
+	result := moveGenerator.checkRays(0, 0)
+
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Failed Check Rays")
+	}
+}
+
+func TestCheckRaysRook(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k7/8/8/8/8/8/8/R7 b KQkq - 0 1")
+	expected := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+	}
+	moveGenerator := MoveGenerator{board: board}
+	result := moveGenerator.checkRays(0, 0)
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("Failed Check Rays")
+	}
+}
+
+func TestCheckRaysBishop(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k7/8/8/8/8/8/6B1/8 b KQkq - 0 1")
+	expected := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 1, 0, 0, 0, 0, 0, 0},
+		{0, 0, 1, 0, 0, 0, 0, 0},
+		{0, 0, 0, 1, 0, 0, 0, 0},
+		{0, 0, 0, 0, 1, 0, 0, 0},
+		{0, 0, 0, 0, 0, 1, 0, 0},
+		{0, 0, 0, 0, 0, 0, 1, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+	moveGenerator := MoveGenerator{board: board}
+	result := moveGenerator.checkRays(0, 0)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Failed Check Rays")
 	}

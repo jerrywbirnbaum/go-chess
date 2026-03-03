@@ -192,7 +192,13 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 		{0, -1},
 	}
 
-	for _, move := range slidingMoves {
+	var isDiagonal bool
+	for slidingIdx, move := range slidingMoves {
+		if slidingIdx > 3 {
+			isDiagonal = false
+		} else {
+			isDiagonal = true
+		}
 		row := kingRow + move[0]
 		col := kingCol + move[1]
 		for i := range 7 {
@@ -201,8 +207,15 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 				break
 			}
 
-			if mg.board.canCapture(row, col, color) && isSlidingPiece(pieceType(mg.board.board[row][col])) {
-				fmt.Println("sliding attacker")
+			pieceType := pieceType(mg.board.board[row][col])
+			if mg.board.canCapture(row, col, color) && isSlidingPiece(pieceType) {
+				if isDiagonal && isStriaghtSlidingPiece(pieceType) {
+					continue
+				}
+
+				if !isDiagonal && isDiagonalSlidingPiece(pieceType) {
+					continue
+				}
 				checkMask[row][col] = 1
 				for j := range 7 {
 					_ = j
@@ -257,16 +270,7 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 		moves = append(moves, mg.generateKingMoves(piece, color, false, attackedSquares)...)
 		return moves
 	} else if kingExists && attackedSquares[kingRow][kingCol] == 1 {
-		checkMask = [8][8]int{
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-			{1, 0, 0, 0, 0, 0, 0, 0},
-		}
+		checkMask = mg.checkRays(kingRow, kingCol)
 	} else {
 		checkMask = [8][8]int{
 			{1, 1, 1, 1, 1, 1, 1, 1},

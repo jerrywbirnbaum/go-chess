@@ -45,6 +45,22 @@ func isSlidingPiece(pt PieceType) bool {
 	return false
 }
 
+func isDiagonalSlidingPiece(pt PieceType) bool {
+	switch pt {
+	case Queen, Bishop:
+		return true
+	}
+	return false
+}
+
+func isStriaghtSlidingPiece(pt PieceType) bool {
+	switch pt {
+	case Queen, Rook:
+		return true
+	}
+	return false
+}
+
 func getColor(p Piece) Color {
 	switch p {
 
