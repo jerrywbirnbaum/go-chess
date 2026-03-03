@@ -219,16 +219,23 @@ func TestPinnedPieces(t *testing.T) {
 	}
 }
 
-func TestMoveGenerationPinned(t *testing.T) {
-	fmt.Println("TestMoveGeneration")
+func TestMoveGenerationPinnedKnight(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k3n2R/8/8/8/8/8/8/8 b KQkq - 0 1")
 	moveGenerator := MoveGenerator{board: board}
-
 	moves := moveGenerator.generateMoves(Color(Black))
-
 	if len(moves) != 3 {
 		t.Errorf("Failed TestMoveGenerationPinned")
 	}
 
+}
+
+func TestMoveGenerationPinned(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k3q2R/7R/8/8/8/8/8/1R6 b KQkq - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves(Color(Black))
+	if len(moves) != 6 {
+		t.Errorf("Failed TestMoveGenerationPinned")
+	}
 }
