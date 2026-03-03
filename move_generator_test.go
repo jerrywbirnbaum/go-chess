@@ -218,3 +218,17 @@ func TestPinnedPieces(t *testing.T) {
 		t.Errorf("Failed Pinned Pieces")
 	}
 }
+
+func TestMoveGenerationPinned(t *testing.T) {
+	fmt.Println("TestMoveGeneration")
+	board := initBoard()
+	board.updateFromFEN("k3n2R/8/8/8/8/8/8/8 b KQkq - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+
+	moves := moveGenerator.generateMoves(Color(Black))
+
+	if len(moves) != 3 {
+		t.Errorf("Failed TestMoveGenerationPinned")
+	}
+
+}

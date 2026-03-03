@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"slices"
 	"time"
 )
 
@@ -121,7 +122,7 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 	return attacks
 }
 
-func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) [][2]int {
+func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) []Square {
 	pinnedRays := [8][8]int{
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
@@ -137,15 +138,15 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) [][2]int {
 	color := getColor(piece)
 	oppositeColor := oppositeColor(color)
 	pinnedRays = mg.slidingRays(kingRow, kingCol, oppositeColor, pinnedRays, true)
-	var pinnedPieces [][2]int
+	var pinnedPieces []Square
 
 	attackedSquares := mg.generateAttacks(oppositeColor)
 
 	for i := range 8 {
 		for j := range 8 {
 			if pinnedRays[i][j] > 0 && attackedSquares[i][j] > 0 {
-				newSquare := [2]int{i, j}
-				pinnedPieces = append(pinnedPieces, newSquare)
+				pinnedPiece := Square{row: i, col: j, piece: mg.board.board[i][j]}
+				pinnedPieces = append(pinnedPieces, pinnedPiece)
 
 			}
 		}
@@ -321,8 +322,14 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	}
 
 	pieces := mg.board.piecesGenerator()
+	pinnedPieces := mg.pinnedPieces(kingRow, kingCol)
 	for _, p := range pieces {
 		if getColor(p.piece) != color {
+			continue
+		}
+		if slices.Contains(pinnedPieces, p) {
+			fmt.Println("Pinned Piece")
+			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkMask)...)
 			continue
 		}
 
@@ -346,6 +353,129 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	return moves
 }
 
+func (mg *MoveGenerator) pinDirection(kingRow int, kingCol int, row int, col int) ([2]int, bool) {
+	slidingMoves := [][2]int{
+		{1, 1},
+		{-1, -1},
+		{-1, 1},
+		{1, -1},
+		{1, 0},
+		{-1, 0},
+		{0, 1},
+		{0, -1},
+	}
+	if kingRow == row {
+		if col > kingCol {
+			return slidingMoves[6], false
+		} else if col < kingCol {
+			return slidingMoves[7], false
+		}
+	} else if kingCol == col {
+		if row > kingRow {
+			return slidingMoves[4], false
+		} else if row < kingRow {
+			return slidingMoves[5], false
+		}
+	} else if kingRow > row {
+		if col > kingCol {
+			return slidingMoves[2], true
+		} else if col < kingCol {
+			return slidingMoves[1], true
+		}
+	} else if kingRow < row {
+		if col > kingCol {
+			return slidingMoves[0], true
+		} else if col < kingCol {
+			return slidingMoves[3], true
+		}
+	}
+	return slidingMoves[0], true
+
+}
+func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int, kingCol int, checkMask [8][8]int) []Move {
+	moves := []Move{}
+	row := p.row
+	col := p.col
+	currentPieceType := pieceType(p.piece)
+	if isKnight(currentPieceType) {
+		return moves
+	}
+	direction, isDiagonal := mg.pinDirection(kingRow, kingCol, row, col)
+
+	if !isPawn(currentPieceType) && isDiagonal && !isDiagonalSlidingPiece(currentPieceType) {
+		return moves
+	}
+
+	if !isPawn(currentPieceType) && !isDiagonal && !isStriaghtSlidingPiece(currentPieceType) {
+		return moves
+	}
+
+	currentRow := row
+	currentCol := col
+	pinnedMask := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+
+	for i := range 7 {
+		_ = i
+		currentRow += direction[0]
+		currentCol += direction[1]
+		if currentRow < 0 || currentRow > 7 || currentCol < 0 || currentCol > 7 {
+			break
+		}
+		if mg.board.canCapture(currentRow, currentCol, color) {
+			pinnedMask[currentRow][currentCol] = 1
+			break
+		}
+		pinnedMask[currentRow][currentCol] = 1
+
+	}
+
+	currentRow = row
+	currentCol = col
+
+	for i := range 7 {
+		_ = i
+		currentRow -= direction[0]
+		currentCol -= direction[1]
+		if currentRow < 0 || currentRow > 7 || currentCol < 0 || currentCol > 7 {
+			break
+		}
+
+		piece := mg.board.board[currentRow][currentCol]
+		pieceType := pieceType(piece)
+		if isKing(pieceType) {
+			break
+		}
+		pinnedMask[currentRow][currentCol] = 1
+
+	}
+
+	for i := range 8 {
+		for j := range 8 {
+			if pinnedMask[i][j] > 0 && checkMask[i][j] > 0 {
+				pinnedMask[i][j] = 1
+			}
+		}
+	}
+
+	if isPawn(currentPieceType) {
+		moves = append(moves, mg.generatePawnMoves(p, color, pinnedMask)...)
+	}
+
+	if isSlidingPiece(currentPieceType) {
+		moves = append(moves, mg.generateSlidingMoves(p, color, currentPieceType, false, pinnedMask)...)
+	}
+
+	return moves
+}
 func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, isAttacks bool, checkMask [8][8]int) []Move {
 	moves := []Move{}
 
