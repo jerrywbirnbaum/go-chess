@@ -121,6 +121,38 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 	return attacks
 }
 
+func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) [][2]int {
+	pinnedRays := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+
+	piece := mg.board.board[kingRow][kingCol]
+	color := getColor(piece)
+	oppositeColor := oppositeColor(color)
+	pinnedRays = mg.slidingRays(kingRow, kingCol, oppositeColor, pinnedRays, true)
+	var pinnedPieces [][2]int
+
+	attackedSquares := mg.generateAttacks(oppositeColor)
+
+	for i := range 8 {
+		for j := range 8 {
+			if pinnedRays[i][j] > 0 && attackedSquares[i][j] > 0 {
+				newSquare := [2]int{i, j}
+				pinnedPieces = append(pinnedPieces, newSquare)
+
+			}
+		}
+	}
+
+	return pinnedPieces
+}
 func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 	checkMask := [8][8]int{
 		{0, 0, 0, 0, 0, 0, 0, 0},
@@ -179,12 +211,12 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 	}
 
 	// check sliding
-	checkMask = mg.slidingRays(kingRow, kingCol, color, checkMask)
+	checkMask = mg.slidingRays(kingRow, kingCol, color, checkMask, false)
 
 	return checkMask
 }
 
-func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, checkMask [8][8]int) [8][8]int {
+func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, checkMask [8][8]int, isPinRay bool) [8][8]int {
 	// check sliding
 	slidingMoves := [][2]int{
 		{1, 1},
@@ -213,12 +245,14 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 			}
 
 			pieceType := pieceType(mg.board.board[row][col])
-			if mg.board.canCapture(row, col, color) && isSlidingPiece(pieceType) {
-				if isDiagonal && isStriaghtSlidingPiece(pieceType) {
+
+			if mg.board.canCapture(row, col, color) && (isSlidingPiece(pieceType) || isPinRay) {
+
+				if !isPinRay && isDiagonal && isStriaghtSlidingPiece(pieceType) {
 					continue
 				}
 
-				if !isDiagonal && isDiagonalSlidingPiece(pieceType) {
+				if !isPinRay && !isDiagonal && isDiagonalSlidingPiece(pieceType) {
 					continue
 				}
 				checkMask[row][col] = 1
@@ -227,7 +261,11 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 					row -= move[0]
 					col -= move[1]
 					if row == kingRow && col == kingCol {
-						return checkMask
+						if !isPinRay {
+							return checkMask
+						} else {
+							break
+						}
 					}
 					checkMask[row][col] = 1
 				}
@@ -242,13 +280,7 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 func (mg *MoveGenerator) generateMoves(color Color) []Move {
 	moves := []Move{}
 
-	var oppositeColor Color
-	//TODO: refactor this
-	if color == Color(White) {
-		oppositeColor = Color(Black)
-	} else {
-		oppositeColor = Color(White)
-	}
+	oppositeColor := oppositeColor(color)
 	attackedSquares := mg.generateAttacks(oppositeColor)
 
 	var kingRow int

@@ -208,3 +208,13 @@ func TestCheckRaysBishop(t *testing.T) {
 		t.Errorf("Failed Check Rays")
 	}
 }
+
+func TestPinnedPieces(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("kn4Q1/1b6/r7/8/8/8/6B1/R7 b KQkq - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+	result := moveGenerator.pinnedPieces(0, 0)
+	if len(result) != 3 {
+		t.Errorf("Failed Pinned Pieces")
+	}
+}
