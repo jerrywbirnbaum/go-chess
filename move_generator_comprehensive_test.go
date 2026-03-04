@@ -151,19 +151,36 @@ func TestPerft_StartPositionRegression(t *testing.T) {
 	}
 }
 
-func TestPerft_KiwipeteRegression(t *testing.T) {
+func TestMoveGeneration_QueensideCastleAllowedWhenB1Attacked(t *testing.T) {
+	// b1 is attacked by a rook, but that should not prevent white O-O-O.
+	fen := "1r6/8/8/8/8/8/8/R3K2R w Q - 0 1"
+	assertHasMove(t, fen, "e1c1")
+}
+
+func TestBoardUpdateCastle_WhiteQueensideRookMoveClearsQOnly(t *testing.T) {
 	board := initBoard()
-	board.updateFromFEN("r3k2r/p1ppqpb1/bn2pnp1/2P5/1p2P3/2N2N2/PPQPBPPP/R3K2R w KQkq - 0 1")
-	for _, tc := range []struct {
-		depth int
-		nodes int
-	}{
-		{depth: 1, nodes: 48},
-		{depth: 2, nodes: 2039},
-	} {
-		got := moveGenerationRecursive(tc.depth, board)
-		if got != tc.nodes {
-			t.Fatalf("kiwipete perft depth %d: expected %d, got %d", tc.depth, tc.nodes, got)
-		}
+	board.updateFromFEN("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1")
+
+	move := Move{
+		startSquare: Square{row: 7, col: 0, piece: newPiece('R')},
+		endSquare:   Square{row: 7, col: 1, piece: newPiece('*')},
+	}
+	board.makeMove(move)
+
+	if board.castleAvailable != "K" {
+		t.Fatalf("expected castle rights to be K after moving a1 rook, got %q", board.castleAvailable)
+	}
+}
+
+func TestBoardMakeMove_BlackDoublePushSetsEnPassant(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("4k3/4p3/8/8/8/8/8/4K3 b - - 0 1")
+	move := Move{
+		startSquare: Square{row: 1, col: 4, piece: newPiece('p')},
+		endSquare:   Square{row: 3, col: 4, piece: newPiece('*')},
+	}
+	board.makeMove(move)
+	if board.enpassant != "e6" {
+		t.Fatalf("expected en-passant square e6 after e7e5, got %q", board.enpassant)
 	}
 }

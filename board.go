@@ -161,7 +161,7 @@ func (b *Board) updateCastle(move Move) {
 		if isWhite && startCol == 7 {
 			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
 		} else if isWhite && startCol == 0 {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "Q", "")
 		} else if !isWhite && startCol == 7 {
 			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "k", "")
 		} else if !isWhite && startCol == 0 {
@@ -179,7 +179,7 @@ func (b *Board) makeMove(move Move) {
 	//Double Pawn Push
 	if isPawn(pieceType) && (endRow-startRow) == 2 {
 		b.enpassant = toSquare(2, startCol)
-	} else if isPawn(pieceType) && (endRow-startRow) == 2 {
+	} else if isPawn(pieceType) && (endRow-startRow) == -2 {
 		b.enpassant = toSquare(5, startCol)
 	}
 
@@ -202,7 +202,7 @@ func (b *Board) makeMove(move Move) {
 		b.board[startRow][5] = b.board[startRow][7]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][7] = newPiece('*')
-		b.moveCount -= 1
+		b.moveCount += 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
 	} else if isKing(pieceType) && (endCol-startCol) == -2 {
@@ -210,7 +210,7 @@ func (b *Board) makeMove(move Move) {
 		b.board[startRow][3] = b.board[startRow][0]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][0] = newPiece('*')
-		b.moveCount -= 1
+		b.moveCount += 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
 	}
