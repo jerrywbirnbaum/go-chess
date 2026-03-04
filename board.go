@@ -13,12 +13,10 @@ type Square struct {
 }
 
 type Board struct {
-	board         [8][8]Piece
-	isWhiteTurn   bool
-	enpassant     string
-	previousMove  Move
-	capturedPiece Piece
-	moveCount     int
+	board       [8][8]Piece
+	isWhiteTurn bool
+	enpassant   string
+	moveCount   int
 }
 
 func (b Board) cellEmpty(row int, col int) bool {
@@ -149,20 +147,17 @@ func (b *Board) makeMove(move Move) {
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
 
-	b.capturedPiece = b.board[endRow][endCol]
-	b.previousMove = move
-
 	b.board[startRow][startCol] = newPiece('*')
 	b.board[endRow][endCol] = move.startSquare.piece
 	b.moveCount += 1
 }
 
-func (b *Board) unmakeMove() {
-	startRow := b.previousMove.startSquare.row
-	startCol := b.previousMove.startSquare.col
-	endRow := b.previousMove.endSquare.row
-	endCol := b.previousMove.endSquare.col
-	b.board[startRow][startCol] = b.previousMove.startSquare.piece
-	b.board[endRow][endCol] = b.capturedPiece
+func (b *Board) unmakeMove(move Move) {
+	startRow := move.startSquare.row
+	startCol := move.startSquare.col
+	endRow := move.endSquare.row
+	endCol := move.endSquare.col
+	b.board[startRow][startCol] = move.startSquare.piece
+	b.board[endRow][endCol] = move.endSquare.piece
 	b.moveCount -= 1
 }

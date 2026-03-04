@@ -21,7 +21,7 @@ func TestMakeMove(t *testing.T) {
 	board := initBoard()
 	piece := newPiece('P')
 	startSquare := Square{row: 6, col: 0, piece: piece}
-	endSquare := Square{row: 5, col: 0, piece: piece}
+	endSquare := Square{row: 5, col: 0, piece: newPiece('*')}
 	move := Move{startSquare: startSquare, endSquare: endSquare}
 	board.makeMove(move)
 
@@ -39,7 +39,7 @@ Is white's turn: true`
 	if result != expected {
 		t.Errorf("Failed MakeMove")
 	}
-	board.unmakeMove()
+	board.unmakeMove(move)
 
 	expected = `'r''n''b''q''k''b''n''r'
 'p''p''p''p''p''p''p''p'
