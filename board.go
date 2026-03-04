@@ -150,6 +150,7 @@ func (b *Board) makeMove(move Move) {
 	b.board[startRow][startCol] = newPiece('*')
 	b.board[endRow][endCol] = move.startSquare.piece
 	b.moveCount += 1
+	b.isWhiteTurn = !b.isWhiteTurn
 }
 
 func (b *Board) unmakeMove(move Move) {
@@ -160,4 +161,5 @@ func (b *Board) unmakeMove(move Move) {
 	b.board[startRow][startCol] = move.startSquare.piece
 	b.board[endRow][endCol] = move.endSquare.piece
 	b.moveCount -= 1
+	b.isWhiteTurn = !b.isWhiteTurn
 }

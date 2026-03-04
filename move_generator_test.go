@@ -239,3 +239,27 @@ func TestMoveGenerationPinned(t *testing.T) {
 		t.Errorf("Failed TestMoveGenerationPinned")
 	}
 }
+func moveGenerationRecursive(depth int, board Board) int {
+	if depth == 0 {
+		return 1
+	}
+
+	numPositions := 0
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves(Color(Black))
+	for _, move := range moves {
+		board.makeMove(move)
+		numPositions += moveGenerationRecursive(depth-1, board)
+		board.unmakeMove(move)
+	}
+	return numPositions
+}
+
+func TestMultipleMoves(t *testing.T) {
+	board := initBoard()
+	result := moveGenerationRecursive(2, board)
+
+	if result != 400 {
+		t.Errorf("Failed RecursiveMoveGeneration")
+	}
+}
