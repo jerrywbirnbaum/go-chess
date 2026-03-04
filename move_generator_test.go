@@ -260,10 +260,12 @@ func moveGenerationRecursive(depth int, board Board) int {
 	moves := moveGenerator.generateMoves()
 	for _, move := range moves {
 		castle := board.castleAvailable
+		enpassant := board.enpassant
 		board.makeMove(move)
 		numPositions += moveGenerationRecursive(depth-1, board)
 		board.unmakeMove(move)
 		board.castleAvailable = castle
+		board.enpassant = enpassant
 	}
 	return numPositions
 }

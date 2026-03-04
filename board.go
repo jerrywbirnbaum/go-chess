@@ -176,20 +176,48 @@ func (b *Board) makeMove(move Move) {
 	endCol := move.endSquare.col
 	pieceType := pieceType(move.startSquare.piece)
 	b.updateCastle(move)
+	//Double Pawn Push
+	if isPawn(pieceType) && (endRow-startRow) == 2 {
+		b.enpassant = toSquare(2, startCol)
+	} else if isPawn(pieceType) && (endRow-startRow) == 2 {
+		b.enpassant = toSquare(5, startCol)
+	}
+
+	//Enpassant
+	if isPawn(pieceType) && b.enpassant != "-" {
+		enpassantRow, enpassantCol := fromSquare(b.enpassant)
+		if endRow == enpassantRow && endCol == enpassantCol {
+			b.board[enpassantRow][enpassantCol] = move.startSquare.piece
+			b.board[startRow][enpassantCol] = newPiece('*')
+			b.board[startRow][startCol] = newPiece('*')
+			b.moveCount += 1
+			b.isWhiteTurn = !b.isWhiteTurn
+			return
+		}
+	}
+
+	//Castling
 	if isKing(pieceType) && (endCol-startCol) == 2 {
 		b.board[startRow][6] = move.startSquare.piece
 		b.board[startRow][5] = b.board[startRow][7]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][7] = newPiece('*')
+		b.moveCount -= 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
 	} else if isKing(pieceType) && (endCol-startCol) == -2 {
 		b.board[startRow][2] = move.startSquare.piece
 		b.board[startRow][3] = b.board[startRow][0]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][0] = newPiece('*')
-	} else {
-		b.board[startRow][startCol] = newPiece('*')
-		b.board[endRow][endCol] = move.startSquare.piece
+		b.moveCount -= 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
 	}
+
+	//Normal Move
+	b.board[startRow][startCol] = newPiece('*')
+	b.board[endRow][endCol] = move.startSquare.piece
 	b.moveCount += 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
@@ -201,20 +229,42 @@ func (b *Board) unmakeMove(move Move) {
 	endCol := move.endSquare.col
 	pieceType := pieceType(move.startSquare.piece)
 
+	//Enpassant
+	if isPawn(pieceType) && b.enpassant != "-" {
+		enpassantRow, enpassantCol := fromSquare(b.enpassant)
+		if endRow == enpassantRow && endCol == enpassantCol {
+			b.board[enpassantRow][enpassantCol] = newPiece('*')
+			b.board[startRow][startCol] = move.startSquare.piece
+			if endRow > startRow {
+				b.board[startRow][enpassantCol] = newPiece('P')
+			} else {
+				b.board[startRow][enpassantCol] = newPiece('p')
+			}
+			b.moveCount -= 1
+			b.isWhiteTurn = !b.isWhiteTurn
+			return
+		}
+	}
+	// Castling
 	if isKing(pieceType) && (endCol-startCol) == 2 {
 		b.board[startRow][4] = move.startSquare.piece
 		b.board[startRow][7] = b.board[startRow][5]
 		b.board[startRow][5] = newPiece('*')
 		b.board[startRow][6] = newPiece('*')
+		b.moveCount -= 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
 	} else if isKing(pieceType) && (endCol-startCol) == -2 {
 		b.board[startRow][4] = move.startSquare.piece
 		b.board[startRow][0] = b.board[startRow][3]
 		b.board[startRow][2] = newPiece('*')
 		b.board[startRow][3] = newPiece('*')
-	} else {
-		b.board[startRow][startCol] = move.startSquare.piece
-		b.board[endRow][endCol] = move.endSquare.piece
+		b.moveCount -= 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
 	}
+	b.board[startRow][startCol] = move.startSquare.piece
+	b.board[endRow][endCol] = move.endSquare.piece
 
 	b.moveCount -= 1
 	b.isWhiteTurn = !b.isWhiteTurn
