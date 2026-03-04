@@ -239,6 +239,17 @@ func TestMoveGenerationPinned(t *testing.T) {
 		t.Errorf("Failed TestMoveGenerationPinned")
 	}
 }
+
+func TestMoveGenerationCastle(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("r3k2r/8/8/8/8/8/8/7K b KQkq - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves()
+	if len(moves) != 26 {
+		t.Errorf("Failed TestMoveGenerationPinned")
+	}
+}
+
 func moveGenerationRecursive(depth int, board Board) int {
 	if depth == 0 {
 		return 1
