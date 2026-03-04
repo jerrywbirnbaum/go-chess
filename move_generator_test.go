@@ -248,18 +248,21 @@ func moveGenerationRecursive(depth int, board Board) int {
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves()
 	for _, move := range moves {
+		castle := board.castleAvailable
 		board.makeMove(move)
 		numPositions += moveGenerationRecursive(depth-1, board)
 		board.unmakeMove(move)
+		board.castleAvailable = castle
 	}
 	return numPositions
 }
 
 func TestMultipleMoves(t *testing.T) {
 	board := initBoard()
-	result := moveGenerationRecursive(2, board)
+	result := moveGenerationRecursive(5, board)
 
-	if result != 400 {
+	fmt.Println(result)
+	if result != 4865609 {
 		t.Errorf("Failed RecursiveMoveGeneration")
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -355,9 +356,57 @@ func (mg *MoveGenerator) generateMoves() []Move {
 			moves = append(moves, mg.generateKingMoves(p, color, false, attackedSquares)...)
 		}
 	}
+
+	moves = append(moves, mg.generateCastles(color, attackedSquares)...)
+
 	return moves
 }
 
+func (mg *MoveGenerator) generateCastles(color Color, checkMask [8][8]int) []Move {
+	moves := []Move{}
+	availability := mg.board.castleAvailable
+
+	if color == Color(White) && strings.Contains(availability, "K") {
+		if checkMask[7][4] == 0 && checkMask[7][5] == 0 && checkMask[7][6] == 0 {
+			if mg.board.cellEmpty(7, 5) && mg.board.cellEmpty(7, 6) && mg.board.board[7][7] == newPiece('R') && mg.board.board[7][4] == newPiece('K') {
+				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
+				endSquare := Square{row: 7, col: 6, piece: newPiece('*')}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
+		}
+	}
+
+	if color == Color(White) && strings.Contains(availability, "Q") {
+		if checkMask[7][4] == 0 && checkMask[7][3] == 0 && checkMask[7][2] == 0 && checkMask[7][1] == 0 {
+			if mg.board.cellEmpty(7, 1) && mg.board.cellEmpty(7, 2) && mg.board.cellEmpty(7, 3) && mg.board.board[7][0] == newPiece('R') && mg.board.board[7][4] == newPiece('K') {
+				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
+				endSquare := Square{row: 7, col: 2, piece: newPiece('*')}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
+		}
+	}
+
+	if color == Color(Black) && strings.Contains(availability, "k") {
+		if checkMask[0][4] == 0 && checkMask[0][5] == 0 && checkMask[0][6] == 0 {
+			if mg.board.cellEmpty(0, 5) && mg.board.cellEmpty(0, 6) && mg.board.board[0][7] == newPiece('r') && mg.board.board[0][4] == newPiece('k') {
+				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
+				endSquare := Square{row: 0, col: 6, piece: newPiece('*')}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
+		}
+	}
+
+	if color == Color(White) && strings.Contains(availability, "q") {
+		if checkMask[0][4] == 0 && checkMask[0][3] == 0 && checkMask[0][2] == 0 && checkMask[0][1] == 0 {
+			if mg.board.cellEmpty(0, 1) && mg.board.cellEmpty(0, 2) && mg.board.cellEmpty(0, 3) && mg.board.board[0][0] == newPiece('r') && mg.board.board[0][4] == newPiece('k') {
+				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
+				endSquare := Square{row: 0, col: 2, piece: newPiece('*')}
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
+		}
+	}
+	return moves
+}
 func (mg *MoveGenerator) pinDirection(kingRow int, kingCol int, row int, col int) ([2]int, bool) {
 	slidingMoves := [][2]int{
 		{1, 1},

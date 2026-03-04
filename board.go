@@ -13,10 +13,11 @@ type Square struct {
 }
 
 type Board struct {
-	board       [8][8]Piece
-	isWhiteTurn bool
-	enpassant   string
-	moveCount   int
+	board           [8][8]Piece
+	isWhiteTurn     bool
+	enpassant       string
+	castleAvailable string
+	moveCount       int
 }
 
 func (b Board) cellEmpty(row int, col int) bool {
@@ -50,7 +51,8 @@ func (b *Board) updateFromFEN(fen_string string) {
 	b.updateTurnFEN(turn)
 
 	// TODO: Update castle and enpassant rules
-	// castle := fen_list[2]
+	castle := fen_list[2]
+	b.castleAvailable = castle
 	en_passant := fen_list[3]
 	b.enpassant = en_passant
 	// halfmove_clock := fen_list[4]
@@ -141,14 +143,53 @@ func initBoard() Board {
 	return board
 }
 
+func (b *Board) updateCastle(move Move) {
+	startCol := move.startSquare.col
+	pieceType := pieceType(move.startSquare.piece)
+	isWhite := isWhite(move.startSquare.piece)
+	if isKing(pieceType) {
+		if isWhite {
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "Q", "")
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
+		}
+		if !isWhite {
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "q", "")
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "k", "")
+		}
+	}
+	if isRook(pieceType) {
+		if isWhite && startCol == 7 {
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
+		} else if isWhite && startCol == 0 {
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
+		} else if !isWhite && startCol == 7 {
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "k", "")
+		} else if !isWhite && startCol == 0 {
+			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "q", "")
+		}
+	}
+}
 func (b *Board) makeMove(move Move) {
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
-
-	b.board[startRow][startCol] = newPiece('*')
-	b.board[endRow][endCol] = move.startSquare.piece
+	pieceType := pieceType(move.startSquare.piece)
+	b.updateCastle(move)
+	if isKing(pieceType) && (endCol-startCol) == 2 {
+		b.board[startRow][6] = move.startSquare.piece
+		b.board[startRow][5] = b.board[startRow][7]
+		b.board[startRow][startCol] = newPiece('*')
+		b.board[startRow][7] = newPiece('*')
+	} else if isKing(pieceType) && (endCol-startCol) == -2 {
+		b.board[startRow][2] = move.startSquare.piece
+		b.board[startRow][3] = b.board[startRow][0]
+		b.board[startRow][startCol] = newPiece('*')
+		b.board[startRow][0] = newPiece('*')
+	} else {
+		b.board[startRow][startCol] = newPiece('*')
+		b.board[endRow][endCol] = move.startSquare.piece
+	}
 	b.moveCount += 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
@@ -158,8 +199,23 @@ func (b *Board) unmakeMove(move Move) {
 	startCol := move.startSquare.col
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
-	b.board[startRow][startCol] = move.startSquare.piece
-	b.board[endRow][endCol] = move.endSquare.piece
+	pieceType := pieceType(move.startSquare.piece)
+
+	if isKing(pieceType) && (endCol-startCol) == 2 {
+		b.board[startRow][4] = move.startSquare.piece
+		b.board[startRow][7] = b.board[startRow][5]
+		b.board[startRow][5] = newPiece('*')
+		b.board[startRow][6] = newPiece('*')
+	} else if isKing(pieceType) && (endCol-startCol) == -2 {
+		b.board[startRow][4] = move.startSquare.piece
+		b.board[startRow][0] = b.board[startRow][3]
+		b.board[startRow][2] = newPiece('*')
+		b.board[startRow][3] = newPiece('*')
+	} else {
+		b.board[startRow][startCol] = move.startSquare.piece
+		b.board[endRow][endCol] = move.endSquare.piece
+	}
+
 	b.moveCount -= 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
