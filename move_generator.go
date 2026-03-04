@@ -734,19 +734,55 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 	}
 
 	//ENPASSANT
-	//TODO: Check rules for enpassant
 	if mg.board.enpassant != "-" {
 		ep_row, ep_col := fromSquare(mg.board.enpassant)
 		if p.row == enpassantRow && (ep_col-p.col == 1 || ep_col-p.col == -1) {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: ep_row, col: ep_col, piece: mg.board.board[ep_row][ep_col]}
-			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			enpassantMove := Move{startSquare: startSquare, endSquare: endSquare}
+			if !mg.enpassantCheck(enpassantMove, color) {
+				moves = append(moves, enpassantMove)
+			}
 		}
 	}
 
 	return moves
 }
 
+func (mg *MoveGenerator) enpassantCheck(move Move, color Color) bool {
+	simulatedBoard := mg.board
+	castle := simulatedBoard.castleAvailable
+	enpassant := simulatedBoard.enpassant
+	simulatedBoard.makeMove(move)
+
+	simulatedMoveGenerator := MoveGenerator{board: simulatedBoard}
+	attacks := simulatedMoveGenerator.generateAttacks(oppositeColor(color), true)
+
+	var kingRow int
+	var kingCol int
+	kingFound := false
+	for i := range 8 {
+		for j := range 8 {
+			piece := simulatedBoard.board[i][j]
+			if sameColor(piece, color) && isKing(pieceType(piece)) {
+				kingRow = i
+				kingCol = j
+				kingFound = true
+				break
+			}
+		}
+		if kingFound {
+			break
+		}
+	}
+
+	inCheck := kingFound && attacks[kingRow][kingCol] > 0
+
+	simulatedBoard.unmakeMove(move)
+	simulatedBoard.castleAvailable = castle
+	simulatedBoard.enpassant = enpassant
+	return inCheck
+}
 func (mg *MoveGenerator) generatePawnAttacks(p Square, color Color) []Move {
 	moves := []Move{}
 

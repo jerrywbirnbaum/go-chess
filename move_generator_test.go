@@ -270,6 +270,16 @@ func TestMoveGenerationDoublePin(t *testing.T) {
 	}
 }
 
+func TestMoveGenerationEnpassantCheck(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("8/8/8/8/k2Pp1R1/8/8/8 b - d3 0 1")
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves()
+	if len(moves) != 6 {
+		t.Errorf("Failed  TestMoveGenerationChecksStarting")
+	}
+}
+
 func moveGenerationRecursive(depth int, board Board) int {
 	if depth == 0 {
 		return 1
