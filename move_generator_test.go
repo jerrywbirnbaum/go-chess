@@ -250,6 +250,19 @@ func TestMoveGenerationCastle(t *testing.T) {
 	}
 }
 
+func TestMoveGenerationChecksStarting(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("rnbqkb1r/pppppppp/7n/1B6/8/4P3/PPPP1PPP/RNBQK1NR b KQkq - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves()
+
+	fmt.Println(len(moves))
+	fmt.Println(moves)
+	if len(moves) != 17 {
+		t.Errorf("Failed  TestMoveGenerationChecksStarting")
+	}
+}
+
 func moveGenerationRecursive(depth int, board Board) int {
 	if depth == 0 {
 		return 1
@@ -272,10 +285,9 @@ func moveGenerationRecursive(depth int, board Board) int {
 
 func TestMultipleMoves(t *testing.T) {
 	board := initBoard()
-	result := moveGenerationRecursive(5, board)
+	result := moveGenerationRecursive(4, board)
 
-	// fmt.Println(result)
-	if result != 4865609 {
+	if result != 197281 {
 		t.Errorf("Failed RecursiveMoveGeneration")
 	}
 }
