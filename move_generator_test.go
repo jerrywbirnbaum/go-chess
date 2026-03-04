@@ -250,18 +250,6 @@ func TestMoveGenerationCastle(t *testing.T) {
 	}
 }
 
-func TestMoveGeneratione2e4(t *testing.T) {
-	board := initBoard()
-	board.updateFromFEN("rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 3 1")
-	moveGenerator := MoveGenerator{board: board}
-	moves := moveGenerator.generateMoves()
-	fmt.Println(len(moves))
-	fmt.Println(moves)
-	if len(moves) != 31 {
-		t.Errorf("Failed TestMoveGenerationPinned")
-	}
-}
-
 func moveGenerationRecursive(depth int, board Board) int {
 	if depth == 0 {
 		return 1
@@ -274,11 +262,6 @@ func moveGenerationRecursive(depth int, board Board) int {
 		castle := board.castleAvailable
 		enpassant := board.enpassant
 		board.makeMove(move)
-		if depth == 1 && board.board[3][3] == newPiece('p') {
-			fmt.Println()
-			fmt.Println(board.printBoard())
-			fmt.Println()
-		}
 		numPositions += moveGenerationRecursive(depth-1, board)
 		board.unmakeMove(move)
 		board.castleAvailable = castle
@@ -289,30 +272,10 @@ func moveGenerationRecursive(depth int, board Board) int {
 
 func TestMultipleMoves(t *testing.T) {
 	board := initBoard()
+	result := moveGenerationRecursive(3, board)
 
-	moveGenerator := MoveGenerator{board: board}
-	moves := moveGenerator.generateMoves()
-	for _, move := range moves {
-		firstMove := toSquare(move.startSquare.row, move.startSquare.col) + toSquare(move.endSquare.row, move.endSquare.col)
-		if firstMove == "e2e4" {
-			fmt.Print(firstMove)
-			castle := board.castleAvailable
-			enpassant := board.enpassant
-			board.makeMove(move)
-
-			result := moveGenerationRecursive(2, board)
-			fmt.Print("  ")
-			fmt.Print(result)
-			fmt.Println()
-			board.unmakeMove(move)
-			board.castleAvailable = castle
-			board.enpassant = enpassant
-		}
-	}
-	// result := moveGenerationRecursive(3, board)
-	//
 	// fmt.Println(result)
-	// if result != 8902 {
-	// 	t.Errorf("Failed RecursiveMoveGeneration")
-	// }
+	if result != 8902 {
+		t.Errorf("Failed RecursiveMoveGeneration")
+	}
 }
