@@ -255,10 +255,17 @@ func TestMoveGenerationChecksStarting(t *testing.T) {
 	board.updateFromFEN("rnbqkb1r/pppppppp/7n/1B6/8/4P3/PPPP1PPP/RNBQK1NR b KQkq - 0 1")
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves()
-
-	fmt.Println(len(moves))
-	fmt.Println(moves)
 	if len(moves) != 17 {
+		t.Errorf("Failed  TestMoveGenerationChecksStarting")
+	}
+}
+
+func TestMoveGenerationDoublePin(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k1rr3Q/8/8/8/8/8/8/8 b - - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+	moves := moveGenerator.generateMoves()
+	if len(moves) != 22 {
 		t.Errorf("Failed  TestMoveGenerationChecksStarting")
 	}
 }
