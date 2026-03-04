@@ -124,32 +124,59 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) [8][8]in
 }
 
 func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) []Square {
-	pinnedRays := [8][8]int{
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-	}
-
+	var pinnedPieces []Square
 	piece := mg.board.board[kingRow][kingCol]
 	color := getColor(piece)
-	oppositeColor := oppositeColor(color)
-	pinnedRays = mg.slidingRays(kingRow, kingCol, oppositeColor, pinnedRays, true)
-	var pinnedPieces []Square
 
-	attackedSquares := mg.generateAttacks(oppositeColor, true)
+	slidingMoves := [][2]int{
+		{1, 1},
+		{-1, -1},
+		{-1, 1},
+		{1, -1},
+		{1, 0},
+		{-1, 0},
+		{0, 1},
+		{0, -1},
+	}
 
-	for i := range 8 {
-		for j := range 8 {
-			if pinnedRays[i][j] > 0 && attackedSquares[i][j] > 0 {
-				pinnedPiece := Square{row: i, col: j, piece: mg.board.board[i][j]}
-				pinnedPieces = append(pinnedPieces, pinnedPiece)
+	for slidingIdx, move := range slidingMoves {
+		isDiagonal := slidingIdx < 4
+		row := kingRow + move[0]
+		col := kingCol + move[1]
+		foundFriendly := false
+		var candidate Square
 
+		for row >= 0 && row <= 7 && col >= 0 && col <= 7 {
+			current := mg.board.board[row][col]
+			if isEmpty(current) {
+				row += move[0]
+				col += move[1]
+				continue
 			}
+
+			if sameColor(current, color) {
+				if foundFriendly {
+					break
+				}
+				foundFriendly = true
+				candidate = Square{row: row, col: col, piece: current}
+				row += move[0]
+				col += move[1]
+				continue
+			}
+
+			enemyType := pieceType(current)
+			validSlider := false
+			if isDiagonal && (isBishop(enemyType) || isQueen(enemyType)) {
+				validSlider = true
+			}
+			if !isDiagonal && (isRook(enemyType) || isQueen(enemyType)) {
+				validSlider = true
+			}
+			if foundFriendly && validSlider {
+				pinnedPieces = append(pinnedPieces, candidate)
+			}
+			break
 		}
 	}
 
@@ -231,13 +258,8 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 		{0, -1},
 	}
 
-	var isDiagonal bool
 	for slidingIdx, move := range slidingMoves {
-		if slidingIdx > 3 {
-			isDiagonal = false
-		} else {
-			isDiagonal = true
-		}
+		isDiagonal := slidingIdx < 4
 		row := kingRow + move[0]
 		col := kingCol + move[1]
 		for i := range 7 {
@@ -249,13 +271,12 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 			pieceType := pieceType(mg.board.board[row][col])
 
 			if mg.board.canCapture(row, col, color) && (isSlidingPiece(pieceType) || isPinRay) {
-
-				if !isPinRay && isDiagonal && isStriaghtSlidingPiece(pieceType) {
-					continue
+				if !isPinRay && isDiagonal && isRook(pieceType) {
+					break
 				}
 
-				if !isPinRay && !isDiagonal && isDiagonalSlidingPiece(pieceType) {
-					continue
+				if !isPinRay && !isDiagonal && isBishop(pieceType) {
+					break
 				}
 				checkMask[row][col] = 1
 				for j := range 7 {
