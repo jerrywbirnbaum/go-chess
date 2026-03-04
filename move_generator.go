@@ -26,7 +26,7 @@ func (mg *MoveGenerator) updateBoard(board Board) {
 	mg.board = board
 }
 
-func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
+func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) [8][8]int {
 	moves := []Move{}
 	attacks := [8][8]int{
 		{0, 0, 0, 0, 0, 0, 0, 0},
@@ -97,10 +97,10 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 		}
 
 		pieceType := pieceType(p.piece)
-		if isPawn(pieceType) {
+		if !slidingOnly && isPawn(pieceType) {
 			moves = append(moves, mg.generatePawnAttacks(p, color)...)
 		}
-		if isKnight(pieceType) {
+		if !slidingOnly && isKnight(pieceType) {
 			moves = append(moves, mg.generateKnightMoves(p, color, true, fullMask)...)
 		}
 
@@ -108,7 +108,7 @@ func (mg *MoveGenerator) generateAttacks(color Color) [8][8]int {
 			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType, true, fullMask)...)
 		}
 
-		if isKing(pieceType) {
+		if !slidingOnly && isKing(pieceType) {
 			moves = append(moves, mg.generateKingMoves(p, color, true, emptyMask)...)
 		}
 	}
@@ -141,7 +141,7 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) []Square {
 	pinnedRays = mg.slidingRays(kingRow, kingCol, oppositeColor, pinnedRays, true)
 	var pinnedPieces []Square
 
-	attackedSquares := mg.generateAttacks(oppositeColor)
+	attackedSquares := mg.generateAttacks(oppositeColor, true)
 
 	for i := range 8 {
 		for j := range 8 {
@@ -289,7 +289,7 @@ func (mg *MoveGenerator) generateMoves() []Move {
 	}
 
 	oppositeColor := oppositeColor(color)
-	attackedSquares := mg.generateAttacks(oppositeColor)
+	attackedSquares := mg.generateAttacks(oppositeColor, false)
 
 	var kingRow int
 	var kingCol int
