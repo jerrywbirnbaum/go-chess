@@ -272,10 +272,10 @@ func moveGenerationRecursive(depth int, board Board) int {
 
 func TestMultipleMoves(t *testing.T) {
 	board := initBoard()
-	result := moveGenerationRecursive(3, board)
+	result := moveGenerationRecursive(5, board)
 
 	// fmt.Println(result)
-	if result != 8902 {
+	if result != 4865609 {
 		t.Errorf("Failed RecursiveMoveGeneration")
 	}
 }
