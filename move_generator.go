@@ -328,7 +328,6 @@ func (mg *MoveGenerator) generateMoves(color Color) []Move {
 			continue
 		}
 		if slices.Contains(pinnedPieces, p) {
-			fmt.Println("Pinned Piece")
 			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkMask)...)
 			continue
 		}

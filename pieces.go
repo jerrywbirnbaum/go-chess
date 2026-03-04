@@ -116,6 +116,13 @@ func isBishop(pt PieceType) bool {
 	return false
 }
 
+func isQueen(pt PieceType) bool {
+	switch pt {
+	case Queen:
+		return true
+	}
+	return false
+}
 func isKing(pt PieceType) bool {
 	switch pt {
 	case King:

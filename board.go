@@ -13,9 +13,12 @@ type Square struct {
 }
 
 type Board struct {
-	board       [8][8]Piece
-	isWhiteTurn bool
-	enpassant   string
+	board         [8][8]Piece
+	isWhiteTurn   bool
+	enpassant     string
+	previousMove  Move
+	capturedPiece Piece
+	moveCount     int
 }
 
 func (b Board) cellEmpty(row int, col int) bool {
@@ -29,14 +32,16 @@ func (b Board) canCapture(row int, col int, color Color) bool {
 	return !sameColor(b.board[row][col], color)
 }
 
-func (b Board) printBoard() {
+func (b Board) printBoard() string {
+	s := ""
 	for i := range 8 {
 		for j := range 8 {
-			fmt.Printf("%q", printPiece(b.board[i][j]))
+			s += fmt.Sprintf("%q", printPiece(b.board[i][j]))
 		}
-		fmt.Println()
+		s += "\n"
 	}
-	fmt.Println("Is white's turn:", b.isWhiteTurn)
+	s += fmt.Sprintf("Is white's turn: %t", b.isWhiteTurn)
+	return s
 }
 
 func (b *Board) updateFromFEN(fen_string string) {
@@ -136,4 +141,28 @@ func initBoard() Board {
 	}
 	board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 	return board
+}
+
+func (b *Board) makeMove(move Move) {
+	startRow := move.startSquare.row
+	startCol := move.startSquare.col
+	endRow := move.endSquare.row
+	endCol := move.endSquare.col
+
+	b.capturedPiece = b.board[endRow][endCol]
+	b.previousMove = move
+
+	b.board[startRow][startCol] = newPiece('*')
+	b.board[endRow][endCol] = move.startSquare.piece
+	b.moveCount += 1
+}
+
+func (b *Board) unmakeMove() {
+	startRow := b.previousMove.startSquare.row
+	startCol := b.previousMove.startSquare.col
+	endRow := b.previousMove.endSquare.row
+	endCol := b.previousMove.endSquare.col
+	b.board[startRow][startCol] = b.previousMove.startSquare.piece
+	b.board[endRow][endCol] = b.capturedPiece
+	b.moveCount -= 1
 }
