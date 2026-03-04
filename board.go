@@ -114,7 +114,7 @@ func (b *Board) attackedBoard(color Color) [8][8]int {
 
 	moveGenerator := MoveGenerator{board: *b}
 
-	moves := moveGenerator.generateMoves(color)
+	moves := moveGenerator.generateMoves()
 	for _, move := range moves {
 		fmt.Printf("row: %dcol: %d\n", move.endSquare.row, move.endSquare.row)
 		attacks[move.endSquare.row][move.endSquare.row] += 1

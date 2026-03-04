@@ -278,8 +278,14 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 	}
 	return checkMask
 }
-func (mg *MoveGenerator) generateMoves(color Color) []Move {
+func (mg *MoveGenerator) generateMoves() []Move {
 	moves := []Move{}
+	var color Color
+	if mg.board.isWhiteTurn {
+		color = Color(White)
+	} else {
+		color = Color(Black)
+	}
 
 	oppositeColor := oppositeColor(color)
 	attackedSquares := mg.generateAttacks(oppositeColor)
@@ -705,7 +711,7 @@ func fromSquare(square string) (int, int) {
 }
 
 func (mg *MoveGenerator) randomMove() MoveString {
-	moves := mg.generateMoves(Color(Black))
+	moves := mg.generateMoves()
 
 	seed := rand.NewSource(time.Now().Unix())
 	r := rand.New(seed)

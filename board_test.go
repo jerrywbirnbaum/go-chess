@@ -33,7 +33,7 @@ func TestMakeMove(t *testing.T) {
 'P''*''*''*''*''*''*''*'
 '*''P''P''P''P''P''P''P'
 'R''N''B''Q''K''B''N''R'
-Is white's turn: true`
+Is white's turn: false`
 	result := board.printBoard()
 
 	if result != expected {
@@ -53,6 +53,6 @@ Is white's turn: true`
 	result = board.printBoard()
 
 	if result != expected {
-		t.Errorf("Failed MakeMove")
+		t.Errorf("Failed UnmakeMove")
 	}
 }
