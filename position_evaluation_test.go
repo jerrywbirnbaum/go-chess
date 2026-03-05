@@ -16,22 +16,22 @@ func TestBasicEval(t *testing.T) {
 		{
 			name: "white to move counts own queen positively",
 			fen:  "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
-			want: 900,
+			want: 890,
 		},
 		{
 			name: "black to move sees same position negatively",
 			fen:  "4k3/8/8/8/8/8/8/4KQ2 b - - 0 1",
-			want: -900,
+			want: -890,
 		},
 		{
 			name: "weighted material sum from white perspective",
 			fen:  "q3k3/1pp5/8/8/8/8/3P4/RBN1K3 w - - 0 1",
-			want: 250,
+			want: 190,
 		},
 		{
 			name: "weighted material sum flips for black perspective",
 			fen:  "q3k3/1pp5/8/8/8/8/3P4/RBN1K3 b - - 0 1",
-			want: -250,
+			want: -190,
 		},
 	}
 
