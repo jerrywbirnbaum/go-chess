@@ -28,6 +28,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 
 func searchBruteForce(depth int, alpha int, beta int, board Board) int {
 	if depth == 0 {
+		// return basicEval(board)
 		return searchOnlyCapturesForce(alpha, beta, board)
 	}
 
@@ -55,29 +56,31 @@ func searchBruteForce(depth int, alpha int, beta int, board Board) int {
 }
 
 func searchOnlyCapturesForce(alpha int, beta int, board Board) int {
+	standPat := basicEval(board)
+	if standPat >= beta {
+		return beta
+	}
+	if standPat > alpha {
+		alpha = standPat
+	}
+
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(true)
 	if len(moves) == 0 {
-		return basicEval(board)
+		return standPat
 	}
-
-	if len(moves) == 0 {
-		if board.playerInCheck() {
-			return -20000
-		} else {
-			return 0
-		}
-	}
+	sort.Sort(MoveOrder(moves))
 
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
 		currentMoveEval := -searchOnlyCapturesForce(-beta, -alpha, board)
-		alpha = max(alpha, currentMoveEval)
+		board.unmakeMove(move)
+
 		if currentMoveEval >= beta {
 			return beta
 		}
-		board.unmakeMove(move)
+		alpha = max(alpha, currentMoveEval)
 	}
 	return alpha
 }
@@ -101,5 +104,5 @@ func (a MoveOrder) Less(i, j int) bool {
 		jPieceDiff = 0
 	}
 
-	return iPieceDiff < jPieceDiff
+	return iPieceDiff > jPieceDiff
 }
