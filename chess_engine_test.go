@@ -64,7 +64,7 @@ func TestBestMoveForcedMove(t *testing.T) {
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
 	mg := MoveGenerator{board: board}
 
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 	if len(moves) != 3 {
 		t.Fatalf("expected three legal moves, got %d", len(moves))
 	}

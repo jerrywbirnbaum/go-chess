@@ -2,7 +2,7 @@ package main
 
 func (mg *MoveGenerator) bestMove() MoveString {
 	board := mg.board
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 
 	var bestMove Move
 	bestEval := -20000
@@ -29,7 +29,7 @@ func searchBruteForce(depth int, alpha int, beta int, board Board) int {
 	}
 
 	moveGenerator := MoveGenerator{board: board}
-	moves := moveGenerator.generateMoves()
+	moves := moveGenerator.generateMoves(false)
 	if len(moves) == 0 {
 		if board.playerInCheck() {
 			return -20000

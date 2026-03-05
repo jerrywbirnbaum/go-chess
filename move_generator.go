@@ -114,15 +114,15 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) [8][8]in
 			moves = append(moves, mg.generatePawnAttacks(p, color)...)
 		}
 		if !slidingOnly && isKnight(pieceType) {
-			moves = append(moves, mg.generateKnightMoves(p, color, true, fullMask)...)
+			moves = append(moves, mg.generateKnightMoves(p, color, true, fullMask, false)...)
 		}
 
 		if isSlidingPiece(pieceType) {
-			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType, true, fullMask)...)
+			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType, true, fullMask, false)...)
 		}
 
 		if !slidingOnly && isKing(pieceType) {
-			moves = append(moves, mg.generateKingMoves(p, color, true, emptyMask)...)
+			moves = append(moves, mg.generateKingMoves(p, color, true, emptyMask, false)...)
 		}
 	}
 
@@ -314,14 +314,9 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 	}
 	return checkMask
 }
-func (mg *MoveGenerator) generateMoves() []Move {
+func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	moves := []Move{}
-	var color Color
-	if mg.board.isWhiteTurn {
-		color = Color(White)
-	} else {
-		color = Color(Black)
-	}
+	color := mg.board.currentColor()
 
 	oppositeColor := oppositeColor(color)
 	attackedSquares := mg.generateAttacks(oppositeColor, false)
@@ -346,7 +341,7 @@ func (mg *MoveGenerator) generateMoves() []Move {
 	var checkMask [8][8]int
 	if kingExists && attackedSquares[kingRow][kingCol] > 1 {
 		piece := Square{row: kingRow, col: kingCol, piece: mg.board.board[kingRow][kingCol]}
-		moves = append(moves, mg.generateKingMoves(piece, color, false, attackedSquares)...)
+		moves = append(moves, mg.generateKingMoves(piece, color, false, attackedSquares, onlyCaptures)...)
 		return moves
 	} else if kingExists && attackedSquares[kingRow][kingCol] == 1 {
 		checkMask = mg.checkRays(kingRow, kingCol)
@@ -370,29 +365,31 @@ func (mg *MoveGenerator) generateMoves() []Move {
 			continue
 		}
 		if slices.Contains(pinnedPieces, p) {
-			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkMask)...)
+			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkMask, onlyCaptures)...)
 			continue
 		}
 
 		pieceType := pieceType(p.piece)
 		if isPawn(pieceType) {
-			moves = append(moves, mg.generatePawnMoves(p, color, checkMask)...)
+			moves = append(moves, mg.generatePawnMoves(p, color, checkMask, onlyCaptures)...)
 		}
 
 		if isKnight(pieceType) {
-			moves = append(moves, mg.generateKnightMoves(p, color, false, checkMask)...)
+			moves = append(moves, mg.generateKnightMoves(p, color, false, checkMask, onlyCaptures)...)
 		}
 
 		if isSlidingPiece(pieceType) {
-			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType, false, checkMask)...)
+			moves = append(moves, mg.generateSlidingMoves(p, color, pieceType, false, checkMask, onlyCaptures)...)
 		}
 
 		if isKing(pieceType) {
-			moves = append(moves, mg.generateKingMoves(p, color, false, attackedSquares)...)
+			moves = append(moves, mg.generateKingMoves(p, color, false, attackedSquares, onlyCaptures)...)
 		}
 	}
 
-	moves = append(moves, mg.generateCastles(color, attackedSquares)...)
+	if !onlyCaptures {
+		moves = append(moves, mg.generateCastles(color, attackedSquares)...)
+	}
 
 	return moves
 }
@@ -482,7 +479,7 @@ func (mg *MoveGenerator) pinDirection(kingRow int, kingCol int, row int, col int
 	return slidingMoves[0], true
 
 }
-func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int, kingCol int, checkMask [8][8]int) []Move {
+func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int, kingCol int, checkMask [8][8]int, onlyCaptures bool) []Move {
 	moves := []Move{}
 	row := p.row
 	col := p.col
@@ -557,16 +554,16 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 	}
 
 	if isPawn(currentPieceType) {
-		moves = append(moves, mg.generatePawnMoves(p, color, pinnedMask)...)
+		moves = append(moves, mg.generatePawnMoves(p, color, pinnedMask, onlyCaptures)...)
 	}
 
 	if isSlidingPiece(currentPieceType) {
-		moves = append(moves, mg.generateSlidingMoves(p, color, currentPieceType, false, pinnedMask)...)
+		moves = append(moves, mg.generateSlidingMoves(p, color, currentPieceType, false, pinnedMask, onlyCaptures)...)
 	}
 
 	return moves
 }
-func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, isAttacks bool, checkMask [8][8]int) []Move {
+func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, isAttacks bool, checkMask [8][8]int, onlyCaptures bool) []Move {
 	moves := []Move{}
 
 	slidingMoves := [][2]int{
@@ -600,13 +597,17 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 				if checkMask[row][col] == 1 {
 					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 					endSquare := Square{row: row, col: col, piece: mg.board.board[row][col]}
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
+						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					}
 				}
 			} else if mg.board.canCapture(row, col, color) {
 				if checkMask[row][col] == 1 {
 					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 					endSquare := Square{row: row, col: col, piece: mg.board.board[row][col]}
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
+						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					}
 					break
 				}
 			} else {
@@ -627,7 +628,7 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 	return moves
 }
 
-func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask [8][8]int) []Move {
+func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask [8][8]int, onlyCaptures bool) []Move {
 	moves := []Move{}
 
 	kingMoves := [][2]int{
@@ -653,7 +654,10 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool,
 				if attackMask[row][col] == 0 {
 					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 					endSquare := Square{row: row, col: col, piece: mg.board.board[row][col]}
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+
+					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
+						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					}
 				}
 			}
 		}
@@ -661,7 +665,7 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool,
 	return moves
 
 }
-func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bool, checkMask [8][8]int) []Move {
+func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bool, checkMask [8][8]int, onlyCaptures bool) []Move {
 
 	moves := []Move{}
 
@@ -688,7 +692,9 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bo
 				if checkMask[row][col] == 1 {
 					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 					endSquare := Square{row: row, col: col, piece: mg.board.board[row][col]}
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
+						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+					}
 				}
 			}
 		}
@@ -697,7 +703,7 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bo
 	return moves
 }
 
-func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][8]int) []Move {
+func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][8]int, onlyCaptures bool) []Move {
 	moves := []Move{}
 
 	directions := []int{1, 2, -1, -2}
@@ -719,7 +725,9 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 		if checkMask[currentRow+directions[0]][currentCol] == 1 {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: p.row + directions[0], col: p.col, piece: mg.board.board[p.row+directions[0]][p.col]}
-			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			if !onlyCaptures {
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
 		}
 	}
 
@@ -727,7 +735,9 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 		if checkMask[currentRow+directions[1]][currentCol] == 1 {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: p.row + directions[1], col: p.col, piece: mg.board.board[p.row+directions[1]][p.col]}
-			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			if !onlyCaptures {
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
 		}
 	}
 
@@ -736,14 +746,19 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 		if checkMask[currentRow+directions[0]][currentCol-1] == 1 {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: mg.board.board[p.row+directions[0]][p.col-1]}
-			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+
+			if !onlyCaptures || !mg.board.cellEmpty(p.row+directions[0], p.col-1) {
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
 		}
 	}
 	if p.col < 7 && mg.board.canCapture(p.row+directions[0], p.col+1, color) {
 		if checkMask[currentRow+directions[0]][currentCol+1] == 1 {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: mg.board.board[p.row+directions[0]][p.col+1]}
-			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			if !onlyCaptures || !mg.board.cellEmpty(p.row+directions[0], p.col+1) {
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			}
 		}
 	}
 
@@ -754,7 +769,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: ep_row, col: ep_col, piece: mg.board.board[ep_row][ep_col]}
 			enpassantMove := Move{startSquare: startSquare, endSquare: endSquare}
-			if !mg.enpassantCheck(enpassantMove, color) {
+			if !mg.enpassantCheck(enpassantMove, color) && (!onlyCaptures || mg.board.cellEmpty(ep_row, ep_col)) {
 				moves = append(moves, enpassantMove)
 			}
 		}
@@ -829,7 +844,7 @@ func fromSquare(square string) (int, int) {
 }
 
 func (mg *MoveGenerator) randomMove() MoveString {
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 
 	seed := rand.NewSource(time.Now().Unix())
 	r := rand.New(seed)

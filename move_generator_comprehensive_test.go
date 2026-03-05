@@ -27,7 +27,7 @@ func assertMovesExactly(t *testing.T, fen string, expected []string) {
 	board := initBoard()
 	board.updateFromFEN(fen)
 	mg := MoveGenerator{board: board}
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 	gotSet := movesToUCISet(moves)
 
 	if len(gotSet) != len(expected) {
@@ -47,7 +47,7 @@ func assertHasMove(t *testing.T, fen string, expectedMove string) {
 	board := initBoard()
 	board.updateFromFEN(fen)
 	mg := MoveGenerator{board: board}
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 
 	uciMoves := make([]string, 0, len(moves))
 	for _, move := range moves {
@@ -64,7 +64,7 @@ func assertMissingMove(t *testing.T, fen string, missingMove string) {
 	board := initBoard()
 	board.updateFromFEN(fen)
 	mg := MoveGenerator{board: board}
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 
 	uciMoves := make([]string, 0, len(moves))
 	for _, move := range moves {
@@ -72,6 +72,26 @@ func assertMissingMove(t *testing.T, fen string, missingMove string) {
 	}
 	if slices.Contains(uciMoves, missingMove) {
 		t.Fatalf("FEN %q: expected move %s to be illegal, got moves: %v", fen, missingMove, uciMoves)
+	}
+}
+
+func assertMovesExactlyWithOnlyCaptures(t *testing.T, fen string, onlyCaptures bool, expected []string) {
+	t.Helper()
+
+	board := initBoard()
+	board.updateFromFEN(fen)
+	mg := MoveGenerator{board: board}
+	moves := mg.generateMoves(onlyCaptures)
+	gotSet := movesToUCISet(moves)
+
+	if len(gotSet) != len(expected) {
+		t.Fatalf("FEN %q (onlyCaptures=%v): expected %d unique moves, got %d", fen, onlyCaptures, len(expected), len(gotSet))
+	}
+
+	for _, uci := range expected {
+		if _, ok := gotSet[uci]; !ok {
+			t.Fatalf("FEN %q (onlyCaptures=%v): missing move %s", fen, onlyCaptures, uci)
+		}
 	}
 }
 
@@ -97,7 +117,7 @@ func TestMoveGeneration_DoubleCheckOnlyKingMoves(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("1k5r/8/2N5/4Q3/8/8/8/8 b KQkq - 0 1")
 	mg := MoveGenerator{board: board}
-	moves := mg.generateMoves()
+	moves := mg.generateMoves(false)
 
 	if len(moves) == 0 {
 		t.Fatalf("expected king escapes in double-check position")
@@ -183,4 +203,26 @@ func TestBoardMakeMove_BlackDoublePushSetsEnPassant(t *testing.T) {
 	if board.enpassant != "e6" {
 		t.Fatalf("expected en-passant square e6 after e7e5, got %q", board.enpassant)
 	}
+}
+
+func TestMoveGeneration_OnlyCaptures_NoCapturesReturnsEmpty(t *testing.T) {
+	fen := "8/8/8/8/8/8/8/4K3 w - - 0 1"
+	assertMovesExactlyWithOnlyCaptures(t, fen, true, []string{})
+}
+
+func TestMoveGeneration_OnlyCaptures_FiltersQuietMoves(t *testing.T) {
+	// White knight has one capture (f5) plus multiple quiet moves; king has quiet moves.
+	fen := "8/8/8/5p2/3N4/8/8/4K3 w - - 0 1"
+	assertMovesExactlyWithOnlyCaptures(t, fen, true, []string{"d4f5"})
+}
+
+func TestMoveGeneration_OnlyCaptures_AllowsPawnDiagonalCaptures(t *testing.T) {
+	// White pawn can capture d5 from e4. Quiet pawn pushes and king moves must be excluded.
+	fen := "8/8/8/3p4/4P3/8/8/4K3 w - - 0 1"
+	assertMovesExactlyWithOnlyCaptures(t, fen, true, []string{"e4d5"})
+}
+
+func TestMoveGeneration_OnlyCaptures_AllowsEnPassant(t *testing.T) {
+	fen := "8/8/8/3Pp3/8/8/8/4K2k w - e6 0 1"
+	assertMovesExactlyWithOnlyCaptures(t, fen, true, []string{"d5e6"})
 }
