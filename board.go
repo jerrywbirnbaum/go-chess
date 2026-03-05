@@ -14,6 +14,8 @@ type Square struct {
 
 type Board struct {
 	board           [8][8]Piece
+	pieces          [32]Square
+	pieceCount      int
 	isWhiteTurn     bool
 	enpassant       string
 	castleAvailable string
@@ -59,6 +61,7 @@ func (b *Board) updateFromFEN(fen_string string) {
 	// fullmove_number := fen_list[5]
 
 	b.updateBoardFEN(board_fen_string)
+	b.rebuildPieceList()
 
 }
 func (b *Board) updateTurnFEN(turn_fen_string string) {
@@ -91,15 +94,51 @@ func (b *Board) updateBoardFEN(board_fen_string string) {
 }
 
 func (b *Board) piecesGenerator() []Square {
-	pieces := []Square{}
+	return b.pieces[:b.pieceCount]
+}
+
+func (b *Board) rebuildPieceList() {
+	b.pieceCount = 0
 	for i := range 8 {
 		for j := range 8 {
-			if !isEmpty(b.board[i][j]) {
-				pieces = append(pieces, Square{row: i, col: j, piece: b.board[i][j]})
+			p := b.board[i][j]
+			if isEmpty(p) {
+				continue
 			}
+			b.pieces[b.pieceCount] = Square{row: i, col: j, piece: p}
+			b.pieceCount += 1
 		}
 	}
-	return pieces
+}
+
+func (b *Board) removePieceFromList(row int, col int) {
+	for i := 0; i < b.pieceCount; i++ {
+		p := b.pieces[i]
+		if p.row == row && p.col == col {
+			lastIdx := b.pieceCount - 1
+			b.pieces[i] = b.pieces[lastIdx]
+			b.pieces[lastIdx] = Square{}
+			b.pieceCount -= 1
+			return
+		}
+	}
+}
+
+func (b *Board) setPieceInList(row int, col int, piece Piece) {
+	if isEmpty(piece) {
+		b.removePieceFromList(row, col)
+		return
+	}
+
+	for i := 0; i < b.pieceCount; i++ {
+		if b.pieces[i].row == row && b.pieces[i].col == col {
+			b.pieces[i].piece = piece
+			return
+		}
+	}
+
+	b.pieces[b.pieceCount] = Square{row: row, col: col, piece: piece}
+	b.pieceCount += 1
 }
 
 func (b *Board) attackedBoard(color Color) [8][8]int {
@@ -238,12 +277,16 @@ func (b *Board) makeMove(move *Move) {
 
 	//Pawn Promotion
 	if move.isPromotion {
+		var promotedPiece Piece
 		if b.isWhiteTurn {
-			b.board[endRow][endCol] = newPiece('Q')
+			promotedPiece = newPiece('Q')
 		} else {
-			b.board[endRow][endCol] = newPiece('q')
+			promotedPiece = newPiece('q')
 		}
+		b.board[endRow][endCol] = promotedPiece
 		b.board[startRow][startCol] = newPiece('*')
+		b.removePieceFromList(startRow, startCol)
+		b.setPieceInList(endRow, endCol, promotedPiece)
 		b.castleAvailable = move.nextCastleRights
 		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
@@ -255,6 +298,9 @@ func (b *Board) makeMove(move *Move) {
 		b.board[endRow][endCol] = move.startSquare.piece
 		b.board[startRow][endCol] = newPiece('*')
 		b.board[startRow][startCol] = newPiece('*')
+		b.removePieceFromList(startRow, startCol)
+		b.removePieceFromList(startRow, endCol)
+		b.setPieceInList(endRow, endCol, move.startSquare.piece)
 		b.castleAvailable = move.nextCastleRights
 		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
@@ -268,6 +314,10 @@ func (b *Board) makeMove(move *Move) {
 		b.board[startRow][5] = b.board[startRow][7]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][7] = newPiece('*')
+		b.removePieceFromList(startRow, startCol)
+		b.removePieceFromList(startRow, 7)
+		b.setPieceInList(startRow, 6, move.startSquare.piece)
+		b.setPieceInList(startRow, 5, b.board[startRow][5])
 		b.castleAvailable = move.nextCastleRights
 		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
@@ -278,6 +328,10 @@ func (b *Board) makeMove(move *Move) {
 		b.board[startRow][3] = b.board[startRow][0]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][0] = newPiece('*')
+		b.removePieceFromList(startRow, startCol)
+		b.removePieceFromList(startRow, 0)
+		b.setPieceInList(startRow, 2, move.startSquare.piece)
+		b.setPieceInList(startRow, 3, b.board[startRow][3])
 		b.castleAvailable = move.nextCastleRights
 		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
@@ -288,6 +342,8 @@ func (b *Board) makeMove(move *Move) {
 	//Normal Move
 	b.board[startRow][startCol] = newPiece('*')
 	b.board[endRow][endCol] = move.startSquare.piece
+	b.removePieceFromList(startRow, startCol)
+	b.setPieceInList(endRow, endCol, move.startSquare.piece)
 	b.castleAvailable = move.nextCastleRights
 	b.enpassant = move.nextEnpassant
 	b.moveCount += 1
@@ -304,6 +360,8 @@ func (b *Board) unmakeMove(move *Move) {
 	if move.isPromotion {
 		b.board[startRow][startCol] = move.startSquare.piece
 		b.board[endRow][endCol] = move.endSquare.piece
+		b.setPieceInList(endRow, endCol, move.endSquare.piece)
+		b.setPieceInList(startRow, startCol, move.startSquare.piece)
 		b.castleAvailable = move.previousCastleRights
 		b.enpassant = move.previousEnpassant
 		b.moveCount -= 1
@@ -315,6 +373,9 @@ func (b *Board) unmakeMove(move *Move) {
 		b.board[startRow][startCol] = move.startSquare.piece
 		b.board[endRow][endCol] = newPiece('*')
 		b.board[startRow][endCol] = move.enpassantCapture
+		b.setPieceInList(startRow, startCol, move.startSquare.piece)
+		b.setPieceInList(endRow, endCol, newPiece('*'))
+		b.setPieceInList(startRow, endCol, move.enpassantCapture)
 		b.castleAvailable = move.previousCastleRights
 		b.enpassant = move.previousEnpassant
 		b.moveCount -= 1
@@ -328,6 +389,10 @@ func (b *Board) unmakeMove(move *Move) {
 		b.board[startRow][7] = b.board[startRow][5]
 		b.board[startRow][5] = newPiece('*')
 		b.board[startRow][6] = newPiece('*')
+		b.setPieceInList(startRow, 5, newPiece('*'))
+		b.setPieceInList(startRow, 6, newPiece('*'))
+		b.setPieceInList(startRow, 4, move.startSquare.piece)
+		b.setPieceInList(startRow, 7, b.board[startRow][7])
 		b.castleAvailable = move.previousCastleRights
 		b.enpassant = move.previousEnpassant
 		b.moveCount -= 1
@@ -338,6 +403,10 @@ func (b *Board) unmakeMove(move *Move) {
 		b.board[startRow][0] = b.board[startRow][3]
 		b.board[startRow][2] = newPiece('*')
 		b.board[startRow][3] = newPiece('*')
+		b.setPieceInList(startRow, 2, newPiece('*'))
+		b.setPieceInList(startRow, 3, newPiece('*'))
+		b.setPieceInList(startRow, 4, move.startSquare.piece)
+		b.setPieceInList(startRow, 0, b.board[startRow][0])
 		b.castleAvailable = move.previousCastleRights
 		b.enpassant = move.previousEnpassant
 		b.moveCount -= 1
@@ -346,6 +415,8 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 	b.board[startRow][startCol] = move.startSquare.piece
 	b.board[endRow][endCol] = move.endSquare.piece
+	b.setPieceInList(endRow, endCol, move.endSquare.piece)
+	b.setPieceInList(startRow, startCol, move.startSquare.piece)
 	b.castleAvailable = move.previousCastleRights
 	b.enpassant = move.previousEnpassant
 	b.moveCount -= 1
