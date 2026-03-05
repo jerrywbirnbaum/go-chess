@@ -1,12 +1,12 @@
 package main
 
-func basicEval(b Board) int {
-	eval := 0
-	var sign int
+func basicEval(b Board) float64 {
+	eval := 0.0
+	var sign float64
 
 	pieces := b.piecesGenerator()
 	for _, p := range pieces {
-		if getColor(p.piece) == Color(White) {
+		if getColor(p.piece) == b.currentColor() {
 			sign = 1
 		} else {
 			sign = -1

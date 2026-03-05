@@ -269,3 +269,27 @@ func (b *Board) unmakeMove(move Move) {
 	b.moveCount -= 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
+
+func (b *Board) currentColor() Color {
+	if b.isWhiteTurn {
+		return Color(White)
+	}
+	return Color(Black)
+}
+func (b *Board) playerInCheck() bool {
+	color := b.currentColor()
+	moveGenerator := MoveGenerator{board: *b}
+	attacks := moveGenerator.generateAttacks(oppositeColor(color), false)
+	for i := range 8 {
+		for j := range 8 {
+			piece := b.board[i][j]
+			pieceType := pieceType(piece)
+			if attacks[i][j] > 0 && isKing(pieceType) && getColor(piece) == color {
+				return true
+			}
+
+		}
+	}
+	return false
+
+}
