@@ -7,7 +7,7 @@ import (
 func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/3p4/3P4/8/8/K6k w - - 0 1")
-	got := searchBruteForce(0, -20000, 20000, board)
+	got := searchBruteForce(0, -20000, 20000, &board)
 	want := basicEval(board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
@@ -20,9 +20,9 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("rq2k3/8/8/8/8/8/8/R3K3 w - - 0 1")
 
-	got := searchBruteForce(0, -20000, 20000, board)
+	got := searchBruteForce(0, -20000, 20000, &board)
 
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	firstCaptures := moveGenerator.generateMoves(true)
 	if len(firstCaptures) != 1 {
 		t.Fatalf("expected exactly one root capture, got %d", len(firstCaptures))
@@ -36,7 +36,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	afterFirst.makeMove(&firstMove)
 	stopAfterOneCaptureEval := -basicEval(afterFirst)
 
-	replyGenerator := MoveGenerator{board: afterFirst}
+	replyGenerator := MoveGenerator{board: &afterFirst}
 	secondCaptures := replyGenerator.generateMoves(true)
 	if len(secondCaptures) != 1 {
 		t.Fatalf("expected exactly one reply capture, got %d", len(secondCaptures))
@@ -62,7 +62,7 @@ func TestSearchBruteForceCheckmateReturnsNegativeInfinity(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
 
-	got := searchBruteForce(1, -20000, 20000, board)
+	got := searchBruteForce(1, -20000, 20000, &board)
 	if got != -20000 {
 		t.Fatalf("checkmate position should evaluate to -20000, got %v", got)
 	}
@@ -72,7 +72,7 @@ func TestSearchBruteForceStalemateReturnsZero(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
 
-	got := searchBruteForce(1, -20000, 20000, board)
+	got := searchBruteForce(1, -20000, 20000, &board)
 	if got != 0 {
 		t.Fatalf("stalemate position should evaluate to 0, got %v", got)
 	}
@@ -86,7 +86,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 	beforeEnpassant := board.enpassant
 	beforeTurn := board.isWhiteTurn
 
-	_ = searchBruteForce(2, -20000, 20000, board)
+	_ = searchBruteForce(2, -20000, 20000, &board)
 
 	if board.printBoard() != before {
 		t.Fatalf("search should not mutate board placement")
@@ -105,7 +105,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 func TestBestMoveForcedMove(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
-	mg := MoveGenerator{board: board}
+	mg := MoveGenerator{board: &board}
 
 	moves := mg.generateMoves(false)
 	if len(moves) != 3 {

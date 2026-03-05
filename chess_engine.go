@@ -3,8 +3,9 @@ package main
 import "sort"
 
 func (mg *MoveGenerator) bestMove() MoveString {
-	board := mg.board
-	moves := mg.generateMoves(false)
+	board := *mg.board
+	localMoveGenerator := MoveGenerator{board: &board}
+	moves := localMoveGenerator.generateMoves(false)
 	sort.Sort(MoveOrder(moves))
 
 	var bestMove Move
@@ -13,7 +14,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval := -searchBruteForce(3, -20000, 20000, board)
+		eval := -searchBruteForce(4, -20000, 20000, &board)
 		if eval > bestEval {
 			bestMove = *move
 			bestEval = eval
@@ -26,7 +27,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 	return MoveString{startSquare: startSquare, endSquare: endSquare}
 }
 
-func searchBruteForce(depth int, alpha int, beta int, board Board) int {
+func searchBruteForce(depth int, alpha int, beta int, board *Board) int {
 	if depth == 0 {
 		return searchOnlyCapturesForce(alpha, beta, board)
 	}
@@ -45,17 +46,18 @@ func searchBruteForce(depth int, alpha int, beta int, board Board) int {
 		move := &moves[i]
 		board.makeMove(move)
 		currentMoveEval := -searchBruteForce(depth-1, -beta, -alpha, board)
-		alpha = max(alpha, currentMoveEval)
 		if currentMoveEval >= beta {
+			board.unmakeMove(move)
 			return beta
 		}
+		alpha = max(alpha, currentMoveEval)
 		board.unmakeMove(move)
 	}
 	return alpha
 }
 
-func searchOnlyCapturesForce(alpha int, beta int, board Board) int {
-	standPat := basicEval(board)
+func searchOnlyCapturesForce(alpha int, beta int, board *Board) int {
+	standPat := basicEval(*board)
 	if standPat >= beta {
 		return beta
 	}

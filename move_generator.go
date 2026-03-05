@@ -27,14 +27,14 @@ type MoveString struct {
 }
 
 type MoveGenerator struct {
-	board Board
+	board *Board
 }
 
 func inBounds(row int, col int) bool {
 	return row >= 0 && row <= 7 && col >= 0 && col <= 7
 }
 
-func (mg *MoveGenerator) updateBoard(board Board) {
+func (mg *MoveGenerator) updateBoard(board *Board) {
 	mg.board = board
 }
 
@@ -783,10 +783,10 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 }
 
 func (mg *MoveGenerator) enpassantCheck(move Move, color Color) bool {
-	simulatedBoard := mg.board
+	simulatedBoard := *mg.board
 	simulatedBoard.makeMove(&move)
 
-	simulatedMoveGenerator := MoveGenerator{board: simulatedBoard}
+	simulatedMoveGenerator := MoveGenerator{board: &simulatedBoard}
 	attacks := simulatedMoveGenerator.generateAttacks(oppositeColor(color), true)
 
 	var kingRow int

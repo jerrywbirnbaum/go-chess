@@ -153,7 +153,7 @@ func (b *Board) attackedBoard(color Color) [8][8]int {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
 
-	moveGenerator := MoveGenerator{board: *b}
+	moveGenerator := MoveGenerator{board: b}
 
 	moves := moveGenerator.generateMoves(false)
 	for _, move := range moves {
@@ -431,7 +431,7 @@ func (b *Board) currentColor() Color {
 }
 func (b *Board) playerInCheck() bool {
 	color := b.currentColor()
-	moveGenerator := MoveGenerator{board: *b}
+	moveGenerator := MoveGenerator{board: b}
 	attacks := moveGenerator.generateAttacks(oppositeColor(color), false)
 	for i := range 8 {
 		for j := range 8 {

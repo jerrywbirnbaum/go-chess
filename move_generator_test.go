@@ -10,7 +10,7 @@ func TestMoveGeneration(t *testing.T) {
 	fmt.Println()
 	board := initBoard()
 	board.updateFromFEN("8/8/3p4/4P3/8/8/8/8 b KQkq - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 
 	moves := moveGenerator.generateMoves(false)
 
@@ -19,7 +19,7 @@ func TestMoveGeneration(t *testing.T) {
 	}
 
 	board.updateFromFEN("8/8/8/8/2pP4/8/8/8 b KQkq d3 0 1")
-	moveGenerator.updateBoard(board)
+	moveGenerator.updateBoard(&board)
 	moves = moveGenerator.generateMoves(false)
 
 	if len(moves) != 2 {
@@ -30,21 +30,21 @@ func TestMoveGeneration(t *testing.T) {
 func TestKnightMoveGeneration(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("n7/8/1p6/8/3n4/8/8/8 b KQkq d3 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 10 {
 		t.Errorf("Failed TestMoveGen Knight")
 	}
 
 	board.updateFromFEN("r3R3/b7/8/8/8/8/8/8 b KQkq d3 0 1")
-	moveGenerator.updateBoard(board)
+	moveGenerator.updateBoard(&board)
 	moves = moveGenerator.generateMoves(false)
 	if len(moves) != 11 {
 		t.Errorf("Failed TestMoveGen Sliding")
 	}
 
 	board.updateFromFEN("8/8/8/8/3k4/8/8/8 b KQkq d3 0 1")
-	moveGenerator.updateBoard(board)
+	moveGenerator.updateBoard(&board)
 	moves = moveGenerator.generateMoves(false)
 	if len(moves) != 8 {
 		t.Errorf("Failed TestMoveGen King")
@@ -55,7 +55,7 @@ func TestMoveGenerationDoubleCheck(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("1k5r/8/2N5/4Q3/8/8/8/8 b KQkq d3 0 1")
 
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	// fmt.Println(moves)
 	if len(moves) != 3 {
@@ -77,7 +77,7 @@ func TestAttackedBoard(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	attacks := moveGenerator.generateAttacks(Color(Black), false)
 	if !reflect.DeepEqual(attacks, expected) {
 		t.Errorf("Failed generate attacks")
@@ -94,7 +94,7 @@ func TestAttackedBoard(t *testing.T) {
 		{1, 0, 0, 0, 0, 0, 0, 0},
 		{1, 0, 0, 0, 0, 0, 0, 0},
 	}
-	moveGenerator.updateBoard(board)
+	moveGenerator.updateBoard(&board)
 	attacks = moveGenerator.generateAttacks(Color(Black), false)
 	if !reflect.DeepEqual(attacks, expected) {
 		t.Errorf("Failed generate attacks")
@@ -118,7 +118,7 @@ func TestMoveGenerationChecks(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k7/3r4/2n5/8/8/R7/8/8 b KQkq - 0 1")
 
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 5 {
 		t.Errorf("Failed TestMoveGen Check")
@@ -139,7 +139,7 @@ func TestCheckRaysPawn(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
 
 	if !reflect.DeepEqual(result, expected) {
@@ -161,7 +161,7 @@ func TestCheckRaysKnight(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
 
 	if !reflect.DeepEqual(result, expected) {
@@ -182,7 +182,7 @@ func TestCheckRaysRook(t *testing.T) {
 		{1, 0, 0, 0, 0, 0, 0, 0},
 		{1, 0, 0, 0, 0, 0, 0, 0},
 	}
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Failed Check Rays")
@@ -202,7 +202,7 @@ func TestCheckRaysBishop(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 1, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
 	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Failed Check Rays")
@@ -212,7 +212,7 @@ func TestCheckRaysBishop(t *testing.T) {
 func TestPinnedPieces(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("kn4Q1/1b6/r7/8/8/8/6B1/R7 b KQkq - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.pinnedPieces(0, 0)
 	expected := [8][8]int{
 		{0, 1, 0, 0, 0, 0, 0, 0},
@@ -233,7 +233,7 @@ func TestPinnedPieces(t *testing.T) {
 func TestMoveGenerationPinnedKnight(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k3n2R/8/8/8/8/8/8/8 b KQkq - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 3 {
 		t.Errorf("Failed TestMoveGenerationPinned")
@@ -244,7 +244,7 @@ func TestMoveGenerationPinnedKnight(t *testing.T) {
 func TestMoveGenerationPinned(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k3q2R/7R/8/8/8/8/8/1R6 b KQkq - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 6 {
 		t.Errorf("Failed TestMoveGenerationPinned")
@@ -254,7 +254,7 @@ func TestMoveGenerationPinned(t *testing.T) {
 func TestMoveGenerationCastle(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("r3k2r/8/8/8/8/8/8/7K b KQkq - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 26 {
 		t.Errorf("Failed TestMoveGenerationPinned")
@@ -264,7 +264,7 @@ func TestMoveGenerationCastle(t *testing.T) {
 func TestMoveGenerationChecksStarting(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("rnbqkb1r/pppppppp/7n/1B6/8/4P3/PPPP1PPP/RNBQK1NR b KQkq - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 17 {
 		t.Errorf("Failed  TestMoveGenerationChecksStarting")
@@ -274,7 +274,7 @@ func TestMoveGenerationChecksStarting(t *testing.T) {
 func TestGenerateAttacksPawnOutOfBoundsGuard(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k6K/P7/8/8/8/8/8/8 w - - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 
 	attacks := moveGenerator.generateAttacks(Color(White), false)
 	if attacks[0][0] != 0 {
@@ -285,7 +285,7 @@ func TestGenerateAttacksPawnOutOfBoundsGuard(t *testing.T) {
 func TestMoveGenerationDoublePin(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k1rr3Q/8/8/8/8/8/8/8 b - - 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 22 {
 		t.Errorf("Failed  TestMoveGenerationChecksStarting")
@@ -295,7 +295,7 @@ func TestMoveGenerationDoublePin(t *testing.T) {
 func TestMoveGenerationEnpassantCheck(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/8/k2Pp1R1/8/8/8 b - d3 0 1")
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 6 {
 		t.Errorf("Failed  TestMoveGenerationChecksStarting")
@@ -308,7 +308,7 @@ func moveGenerationRecursive(depth int, board Board) int {
 	}
 
 	numPositions := 0
-	moveGenerator := MoveGenerator{board: board}
+	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	for i := range moves {
 		move := &moves[i]

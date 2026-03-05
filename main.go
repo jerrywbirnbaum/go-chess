@@ -39,7 +39,7 @@ func main() {
 
 		board.updateFromFEN(receivedFen)
 
-		moveGenerator := MoveGenerator{board: board}
+		moveGenerator := MoveGenerator{board: &board}
 		random_move := moveGenerator.bestMove()
 		c.JSON(http.StatusOK, gin.H{
 			"status":       "received",

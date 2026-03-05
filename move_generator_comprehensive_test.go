@@ -26,7 +26,7 @@ func assertMovesExactly(t *testing.T, fen string, expected []string) {
 
 	board := initBoard()
 	board.updateFromFEN(fen)
-	mg := MoveGenerator{board: board}
+	mg := MoveGenerator{board: &board}
 	moves := mg.generateMoves(false)
 	gotSet := movesToUCISet(moves)
 
@@ -46,7 +46,7 @@ func assertHasMove(t *testing.T, fen string, expectedMove string) {
 
 	board := initBoard()
 	board.updateFromFEN(fen)
-	mg := MoveGenerator{board: board}
+	mg := MoveGenerator{board: &board}
 	moves := mg.generateMoves(false)
 
 	uciMoves := make([]string, 0, len(moves))
@@ -63,7 +63,7 @@ func assertMissingMove(t *testing.T, fen string, missingMove string) {
 
 	board := initBoard()
 	board.updateFromFEN(fen)
-	mg := MoveGenerator{board: board}
+	mg := MoveGenerator{board: &board}
 	moves := mg.generateMoves(false)
 
 	uciMoves := make([]string, 0, len(moves))
@@ -80,7 +80,7 @@ func assertMovesExactlyWithOnlyCaptures(t *testing.T, fen string, onlyCaptures b
 
 	board := initBoard()
 	board.updateFromFEN(fen)
-	mg := MoveGenerator{board: board}
+	mg := MoveGenerator{board: &board}
 	moves := mg.generateMoves(onlyCaptures)
 	gotSet := movesToUCISet(moves)
 
@@ -116,7 +116,7 @@ func TestMoveGeneration_StartPositionExactBlack(t *testing.T) {
 func TestMoveGeneration_DoubleCheckOnlyKingMoves(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("1k5r/8/2N5/4Q3/8/8/8/8 b KQkq - 0 1")
-	mg := MoveGenerator{board: board}
+	mg := MoveGenerator{board: &board}
 	moves := mg.generateMoves(false)
 
 	if len(moves) == 0 {
