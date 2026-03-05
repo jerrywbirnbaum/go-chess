@@ -165,7 +165,7 @@ func TestBoardUpdateCastle_WhiteQueensideRookMoveClearsQOnly(t *testing.T) {
 		startSquare: Square{row: 7, col: 0, piece: newPiece('R')},
 		endSquare:   Square{row: 7, col: 1, piece: newPiece('*')},
 	}
-	board.makeMove(move)
+	board.makeMove(&move)
 
 	if board.castleAvailable != "K" {
 		t.Fatalf("expected castle rights to be K after moving a1 rook, got %q", board.castleAvailable)
@@ -179,7 +179,7 @@ func TestBoardMakeMove_BlackDoublePushSetsEnPassant(t *testing.T) {
 		startSquare: Square{row: 1, col: 4, piece: newPiece('p')},
 		endSquare:   Square{row: 3, col: 4, piece: newPiece('*')},
 	}
-	board.makeMove(move)
+	board.makeMove(&move)
 	if board.enpassant != "e6" {
 		t.Fatalf("expected en-passant square e6 after e7e5, got %q", board.enpassant)
 	}

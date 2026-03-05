@@ -143,87 +143,143 @@ func initBoard() Board {
 	return board
 }
 
-func (b *Board) updateCastle(move Move) {
-	startCol := move.startSquare.col
-	pieceType := pieceType(move.startSquare.piece)
-	isWhite := isWhite(move.startSquare.piece)
-	if isKing(pieceType) {
-		if isWhite {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "Q", "")
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
-		}
-		if !isWhite {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "q", "")
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "k", "")
-		}
-	}
-	if isRook(pieceType) {
-		if isWhite && startCol == 7 {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "K", "")
-		} else if isWhite && startCol == 0 {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "Q", "")
-		} else if !isWhite && startCol == 7 {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "k", "")
-		} else if !isWhite && startCol == 0 {
-			b.castleAvailable = strings.ReplaceAll(b.castleAvailable, "q", "")
-		}
-	}
+func removeCastleRight(castle string, right string) string {
+	return strings.ReplaceAll(castle, right, "")
 }
-func (b *Board) makeMove(move Move) {
+
+func updateCastleRights(castle string, move *Move) string {
+	startRow := move.startSquare.row
+	startCol := move.startSquare.col
+	endRow := move.endSquare.row
+	endCol := move.endSquare.col
+	startPieceType := pieceType(move.startSquare.piece)
+	endPieceType := pieceType(move.endSquare.piece)
+	movingWhite := isWhite(move.startSquare.piece)
+
+	if isKing(startPieceType) {
+		if movingWhite {
+			castle = removeCastleRight(castle, "K")
+			castle = removeCastleRight(castle, "Q")
+		} else {
+			castle = removeCastleRight(castle, "k")
+			castle = removeCastleRight(castle, "q")
+		}
+	}
+
+	if isRook(startPieceType) {
+		if startRow == 7 && startCol == 7 {
+			castle = removeCastleRight(castle, "K")
+		} else if startRow == 7 && startCol == 0 {
+			castle = removeCastleRight(castle, "Q")
+		} else if startRow == 0 && startCol == 7 {
+			castle = removeCastleRight(castle, "k")
+		} else if startRow == 0 && startCol == 0 {
+			castle = removeCastleRight(castle, "q")
+		}
+	}
+
+	if isRook(endPieceType) {
+		if endRow == 7 && endCol == 7 {
+			castle = removeCastleRight(castle, "K")
+		} else if endRow == 7 && endCol == 0 {
+			castle = removeCastleRight(castle, "Q")
+		} else if endRow == 0 && endCol == 7 {
+			castle = removeCastleRight(castle, "k")
+		} else if endRow == 0 && endCol == 0 {
+			castle = removeCastleRight(castle, "q")
+		}
+	}
+
+	if castle == "" {
+		return "-"
+	}
+	return castle
+}
+
+func updateEnpassantSquare(move *Move) string {
+	startRow := move.startSquare.row
+	startCol := move.startSquare.col
+	endRow := move.endSquare.row
+	startPieceType := pieceType(move.startSquare.piece)
+
+	if isPawn(startPieceType) && (endRow-startRow) == 2 {
+		return toSquare(2, startCol)
+	}
+	if isPawn(startPieceType) && (endRow-startRow) == -2 {
+		return toSquare(5, startCol)
+	}
+	return "-"
+}
+
+func (b *Board) makeMove(move *Move) {
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
 	pieceType := pieceType(move.startSquare.piece)
-	b.updateCastle(move)
-	//Double Pawn Push
-	if isPawn(pieceType) && (endRow-startRow) == 2 {
-		b.enpassant = toSquare(2, startCol)
-	} else if isPawn(pieceType) && (endRow-startRow) == -2 {
-		b.enpassant = toSquare(5, startCol)
-	} else {
-		b.enpassant = "-"
+
+	move.previousCastleRights = b.castleAvailable
+	move.previousEnpassant = b.enpassant
+	move.nextCastleRights = updateCastleRights(b.castleAvailable, move)
+	move.nextEnpassant = updateEnpassantSquare(move)
+	move.isCastleKingSide = isKing(pieceType) && (endCol-startCol) == 2
+	move.isCastleQueenSide = isKing(pieceType) && (endCol-startCol) == -2
+	move.isPromotion = isPawn(pieceType) && (endRow == 0 || endRow == 7)
+	move.isEnpassant = false
+	move.enpassantCapture = newPiece('*')
+
+	if isPawn(pieceType) && move.previousEnpassant != "-" && isEmpty(move.endSquare.piece) {
+		enpassantRow, enpassantCol := fromSquare(move.previousEnpassant)
+		if endRow == enpassantRow && endCol == enpassantCol {
+			move.isEnpassant = true
+			move.enpassantCapture = b.board[startRow][enpassantCol]
+		}
 	}
 
 	//Pawn Promotion
-	if isPawn(pieceType) && (endRow == 0 || endRow == 7) {
+	if move.isPromotion {
 		if b.isWhiteTurn {
 			b.board[endRow][endCol] = newPiece('Q')
 		} else {
 			b.board[endRow][endCol] = newPiece('q')
 		}
 		b.board[startRow][startCol] = newPiece('*')
+		b.castleAvailable = move.nextCastleRights
+		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
 	}
 	//Enpassant
-	if isPawn(pieceType) && b.enpassant != "-" {
-		enpassantRow, enpassantCol := fromSquare(b.enpassant)
-		if endRow == enpassantRow && endCol == enpassantCol {
-			b.board[enpassantRow][enpassantCol] = move.startSquare.piece
-			b.board[startRow][enpassantCol] = newPiece('*')
-			b.board[startRow][startCol] = newPiece('*')
-			b.moveCount += 1
-			b.isWhiteTurn = !b.isWhiteTurn
-			return
-		}
+	if move.isEnpassant {
+		b.board[endRow][endCol] = move.startSquare.piece
+		b.board[startRow][endCol] = newPiece('*')
+		b.board[startRow][startCol] = newPiece('*')
+		b.castleAvailable = move.nextCastleRights
+		b.enpassant = move.nextEnpassant
+		b.moveCount += 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
 	}
 
 	//Castling
-	if isKing(pieceType) && (endCol-startCol) == 2 {
+	if move.isCastleKingSide {
 		b.board[startRow][6] = move.startSquare.piece
 		b.board[startRow][5] = b.board[startRow][7]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][7] = newPiece('*')
+		b.castleAvailable = move.nextCastleRights
+		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
-	} else if isKing(pieceType) && (endCol-startCol) == -2 {
+	} else if move.isCastleQueenSide {
 		b.board[startRow][2] = move.startSquare.piece
 		b.board[startRow][3] = b.board[startRow][0]
 		b.board[startRow][startCol] = newPiece('*')
 		b.board[startRow][0] = newPiece('*')
+		b.castleAvailable = move.nextCastleRights
+		b.enpassant = move.nextEnpassant
 		b.moveCount += 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
@@ -232,54 +288,66 @@ func (b *Board) makeMove(move Move) {
 	//Normal Move
 	b.board[startRow][startCol] = newPiece('*')
 	b.board[endRow][endCol] = move.startSquare.piece
+	b.castleAvailable = move.nextCastleRights
+	b.enpassant = move.nextEnpassant
 	b.moveCount += 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
 
-func (b *Board) unmakeMove(move Move) {
+func (b *Board) unmakeMove(move *Move) {
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
-	pieceType := pieceType(move.startSquare.piece)
 
 	//Enpassant
-	if isPawn(pieceType) && b.enpassant != "-" {
-		enpassantRow, enpassantCol := fromSquare(b.enpassant)
-		if endRow == enpassantRow && endCol == enpassantCol {
-			b.board[enpassantRow][enpassantCol] = newPiece('*')
-			b.board[startRow][startCol] = move.startSquare.piece
-			if endRow > startRow {
-				b.board[startRow][enpassantCol] = newPiece('P')
-			} else {
-				b.board[startRow][enpassantCol] = newPiece('p')
-			}
-			b.moveCount -= 1
-			b.isWhiteTurn = !b.isWhiteTurn
-			return
-		}
+	if move.isPromotion {
+		b.board[startRow][startCol] = move.startSquare.piece
+		b.board[endRow][endCol] = move.endSquare.piece
+		b.castleAvailable = move.previousCastleRights
+		b.enpassant = move.previousEnpassant
+		b.moveCount -= 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
 	}
+
+	if move.isEnpassant {
+		b.board[startRow][startCol] = move.startSquare.piece
+		b.board[endRow][endCol] = newPiece('*')
+		b.board[startRow][endCol] = move.enpassantCapture
+		b.castleAvailable = move.previousCastleRights
+		b.enpassant = move.previousEnpassant
+		b.moveCount -= 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
+	}
+
 	// Castling
-	if isKing(pieceType) && (endCol-startCol) == 2 {
+	if move.isCastleKingSide {
 		b.board[startRow][4] = move.startSquare.piece
 		b.board[startRow][7] = b.board[startRow][5]
 		b.board[startRow][5] = newPiece('*')
 		b.board[startRow][6] = newPiece('*')
+		b.castleAvailable = move.previousCastleRights
+		b.enpassant = move.previousEnpassant
 		b.moveCount -= 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
-	} else if isKing(pieceType) && (endCol-startCol) == -2 {
+	} else if move.isCastleQueenSide {
 		b.board[startRow][4] = move.startSquare.piece
 		b.board[startRow][0] = b.board[startRow][3]
 		b.board[startRow][2] = newPiece('*')
 		b.board[startRow][3] = newPiece('*')
+		b.castleAvailable = move.previousCastleRights
+		b.enpassant = move.previousEnpassant
 		b.moveCount -= 1
 		b.isWhiteTurn = !b.isWhiteTurn
 		return
 	}
 	b.board[startRow][startCol] = move.startSquare.piece
 	b.board[endRow][endCol] = move.endSquare.piece
-
+	b.castleAvailable = move.previousCastleRights
+	b.enpassant = move.previousEnpassant
 	b.moveCount -= 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }

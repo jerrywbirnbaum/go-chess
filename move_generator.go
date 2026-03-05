@@ -9,8 +9,17 @@ import (
 )
 
 type Move struct {
-	startSquare Square
-	endSquare   Square
+	startSquare          Square
+	endSquare            Square
+	previousEnpassant    string
+	previousCastleRights string
+	nextEnpassant        string
+	nextCastleRights     string
+	isEnpassant          bool
+	isCastleKingSide     bool
+	isCastleQueenSide    bool
+	isPromotion          bool
+	enpassantCapture     Piece
 }
 
 type MoveString struct {
@@ -756,9 +765,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 
 func (mg *MoveGenerator) enpassantCheck(move Move, color Color) bool {
 	simulatedBoard := mg.board
-	castle := simulatedBoard.castleAvailable
-	enpassant := simulatedBoard.enpassant
-	simulatedBoard.makeMove(move)
+	simulatedBoard.makeMove(&move)
 
 	simulatedMoveGenerator := MoveGenerator{board: simulatedBoard}
 	attacks := simulatedMoveGenerator.generateAttacks(oppositeColor(color), true)
@@ -783,9 +790,7 @@ func (mg *MoveGenerator) enpassantCheck(move Move, color Color) bool {
 
 	inCheck := kingFound && attacks[kingRow][kingCol] > 0
 
-	simulatedBoard.unmakeMove(move)
-	simulatedBoard.castleAvailable = castle
-	simulatedBoard.enpassant = enpassant
+	simulatedBoard.unmakeMove(&move)
 	return inCheck
 }
 func (mg *MoveGenerator) generatePawnAttacks(p Square, color Color) []Move {

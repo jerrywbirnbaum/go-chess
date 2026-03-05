@@ -8,19 +8,16 @@ func (mg *MoveGenerator) bestMove() MoveString {
 
 	var bestMove Move
 	bestEval := math.Inf(-1)
-	for _, move := range moves {
-		castle := board.castleAvailable
-		enpassant := board.enpassant
+	for i := range moves {
+		move := &moves[i]
 		board.makeMove(move)
 
 		eval := -searchBruteForce(5, math.Inf(-1), math.Inf(1), board)
 		if eval > bestEval {
-			bestMove = move
+			bestMove = *move
 			bestEval = eval
 		}
 		board.unmakeMove(move)
-		board.castleAvailable = castle
-		board.enpassant = enpassant
 	}
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
@@ -44,9 +41,8 @@ func searchBruteForce(depth int, alpha float64, beta float64, board Board) float
 	}
 
 	// bestMoveEval := math.Inf(-1)
-	for _, move := range moves {
-		castle := board.castleAvailable
-		enpassant := board.enpassant
+	for i := range moves {
+		move := &moves[i]
 		board.makeMove(move)
 		currentMoveEval := -searchBruteForce(depth-1, -beta, -alpha, board)
 		alpha = max(alpha, currentMoveEval)
@@ -54,8 +50,6 @@ func searchBruteForce(depth int, alpha float64, beta float64, board Board) float
 			return beta
 		}
 		board.unmakeMove(move)
-		board.castleAvailable = castle
-		board.enpassant = enpassant
 	}
 	return alpha
 }
