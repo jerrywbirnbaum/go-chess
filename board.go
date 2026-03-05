@@ -181,8 +181,22 @@ func (b *Board) makeMove(move Move) {
 		b.enpassant = toSquare(2, startCol)
 	} else if isPawn(pieceType) && (endRow-startRow) == -2 {
 		b.enpassant = toSquare(5, startCol)
+	} else {
+		b.enpassant = "-"
 	}
 
+	//Pawn Promotion
+	if isPawn(pieceType) && (endRow == 0 || endRow == 7) {
+		if b.isWhiteTurn {
+			b.board[endRow][endCol] = newPiece('Q')
+		} else {
+			b.board[endRow][endCol] = newPiece('q')
+		}
+		b.board[startRow][startCol] = newPiece('*')
+		b.moveCount += 1
+		b.isWhiteTurn = !b.isWhiteTurn
+		return
+	}
 	//Enpassant
 	if isPawn(pieceType) && b.enpassant != "-" {
 		enpassantRow, enpassantCol := fromSquare(b.enpassant)
