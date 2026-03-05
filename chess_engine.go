@@ -90,9 +90,16 @@ func (a MoveOrder) Less(i, j int) bool {
 	startPieceType := pieceType(a[i].startSquare.piece)
 	endPieceType := pieceType(a[i].endSquare.piece)
 	iPieceDiff := getPieceValue(endPieceType) - getPieceValue(startPieceType)
+	if endPieceType == 0 {
+		iPieceDiff = 0
+	}
 
 	startPieceType = pieceType(a[j].startSquare.piece)
 	endPieceType = pieceType(a[j].endSquare.piece)
 	jPieceDiff := getPieceValue(endPieceType) - getPieceValue(startPieceType)
+	if endPieceType == 0 {
+		jPieceDiff = 0
+	}
+
 	return iPieceDiff < jPieceDiff
 }
