@@ -5,13 +5,29 @@ import { Loader } from 'react-overlay-loader';
 
 import 'react-overlay-loader/styles.css';
 
+const STORED_FEN_KEY = 'go-chess:fen';
+
 type PieceDropHandlerArgs = {
   sourceSquare: string;
   targetSquare: string | null;
 };
 
 function App() {
-  const chessGameRef = useRef(new Chess());
+  const getInitialGame = () => {
+    const storedFen = localStorage.getItem(STORED_FEN_KEY);
+    if (!storedFen) {
+      return new Chess();
+    }
+
+    try {
+      return new Chess(storedFen);
+    } catch {
+      return new Chess();
+    }
+  };
+
+  const chessGameRef = useRef(getInitialGame());
+  const engineMoveTimeoutRef = useRef<number | null>(null);
   const chessGame = chessGameRef.current;
   const getBoardSize = () => {
     const horizontalPadding = 32;
@@ -28,6 +44,10 @@ function App() {
   const [boardSize, setBoardSize] = useState(getBoardSize);
 
   useEffect(() => {
+    localStorage.setItem(STORED_FEN_KEY, chessPosition);
+  }, [chessPosition]);
+
+  useEffect(() => {
     const handleResize = () => {
       setBoardSize(getBoardSize());
     };
@@ -35,6 +55,9 @@ function App() {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
+      if (engineMoveTimeoutRef.current) {
+        window.clearTimeout(engineMoveTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -136,7 +159,7 @@ function App() {
 
       // make engine move after a short delay unless game is over
       if (!chessGame.isGameOver()) {
-        setTimeout(makeEngineMove, 5);
+        engineMoveTimeoutRef.current = window.setTimeout(makeEngineMove, 5);
       }
 
       // return true as the move was successful
@@ -145,6 +168,16 @@ function App() {
       // return false as the move was not successful
       return false;
     }
+  }
+
+  function onNewGame() {
+    if (engineMoveTimeoutRef.current) {
+      window.clearTimeout(engineMoveTimeoutRef.current);
+      engineMoveTimeoutRef.current = null;
+    }
+    chessGame.reset();
+    setLoading(false);
+    setChessPosition(chessGame.fen());
   }
 
   // set the chessboard options
@@ -170,8 +203,32 @@ function App() {
       className="chessboard-container"
     >
       <h3 style={{ margin: '0 0 1rem' }}>{getGameStatus()}</h3>
-      <div style={{ width: `${boardSize}px`, height: `${boardSize}px`, maxWidth: '100%' }}>
-        <Chessboard options={chessboardOptions} />
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '1rem',
+          width: '100%',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ width: `${boardSize}px`, height: `${boardSize}px`, maxWidth: '100%' }}>
+          <Chessboard options={chessboardOptions} />
+        </div>
+        <button
+          type="button"
+          onClick={onNewGame}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            alignSelf: 'center',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          New Game
+        </button>
       </div>
       <Loader fullPage loading={isLoading} />
     </div>
