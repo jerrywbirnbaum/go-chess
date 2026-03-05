@@ -13,7 +13,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 		enpassant := board.enpassant
 		board.makeMove(move)
 
-		eval := -searchBruteForce(3, board)
+		eval := -searchBruteForce(3, math.Inf(-1), math.Inf(1), board)
 		if eval > bestEval {
 			bestMove = move
 			bestEval = eval
@@ -28,7 +28,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 	return MoveString{startSquare: startSquare, endSquare: endSquare}
 }
 
-func searchBruteForce(depth int, board Board) float64 {
+func searchBruteForce(depth int, alpha float64, beta float64, board Board) float64 {
 	if depth == 0 {
 		return basicEval(board)
 	}
@@ -43,16 +43,19 @@ func searchBruteForce(depth int, board Board) float64 {
 		}
 	}
 
-	bestMoveEval := math.Inf(-1)
+	// bestMoveEval := math.Inf(-1)
 	for _, move := range moves {
 		castle := board.castleAvailable
 		enpassant := board.enpassant
 		board.makeMove(move)
-		currentMoveEval := -searchBruteForce(depth-1, board)
-		bestMoveEval = max(bestMoveEval, currentMoveEval)
+		currentMoveEval := -searchBruteForce(depth-1, -beta, -alpha, board)
+		alpha = max(alpha, currentMoveEval)
+		if currentMoveEval >= beta {
+			return beta
+		}
 		board.unmakeMove(move)
 		board.castleAvailable = castle
 		board.enpassant = enpassant
 	}
-	return bestMoveEval
+	return alpha
 }
