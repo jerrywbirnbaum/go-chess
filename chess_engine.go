@@ -1,18 +1,16 @@
 package main
 
-import "math"
-
 func (mg *MoveGenerator) bestMove() MoveString {
 	board := mg.board
 	moves := mg.generateMoves()
 
 	var bestMove Move
-	bestEval := math.Inf(-1)
+	bestEval := -20000
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval := -searchBruteForce(5, math.Inf(-1), math.Inf(1), board)
+		eval := -searchBruteForce(5, -20000, 20000, board)
 		if eval > bestEval {
 			bestMove = *move
 			bestEval = eval
@@ -25,7 +23,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 	return MoveString{startSquare: startSquare, endSquare: endSquare}
 }
 
-func searchBruteForce(depth int, alpha float64, beta float64, board Board) float64 {
+func searchBruteForce(depth int, alpha int, beta int, board Board) int {
 	if depth == 0 {
 		return basicEval(board)
 	}
@@ -34,13 +32,12 @@ func searchBruteForce(depth int, alpha float64, beta float64, board Board) float
 	moves := moveGenerator.generateMoves()
 	if len(moves) == 0 {
 		if board.playerInCheck() {
-			return math.Inf(-1)
+			return -20000
 		} else {
 			return 0
 		}
 	}
 
-	// bestMoveEval := math.Inf(-1)
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)

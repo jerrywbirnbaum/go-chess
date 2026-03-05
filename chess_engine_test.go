@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"testing"
 )
 
@@ -9,7 +8,7 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/3p4/4P3/8/8/K6k w - - 0 1")
 
-	got := searchBruteForce(0, math.Inf(-1), math.Inf(1), board)
+	got := searchBruteForce(0, -20000, 20000, board)
 	want := basicEval(board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
@@ -20,9 +19,9 @@ func TestSearchBruteForceCheckmateReturnsNegativeInfinity(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
 
-	got := searchBruteForce(1, math.Inf(-1), math.Inf(1), board)
-	if !math.IsInf(got, -1) {
-		t.Fatalf("checkmate position should evaluate to -Inf, got %v", got)
+	got := searchBruteForce(1, -20000, 20000, board)
+	if got != -20000 {
+		t.Fatalf("checkmate position should evaluate to -20000, got %v", got)
 	}
 }
 
@@ -30,7 +29,7 @@ func TestSearchBruteForceStalemateReturnsZero(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
 
-	got := searchBruteForce(1, math.Inf(-1), math.Inf(1), board)
+	got := searchBruteForce(1, -20000, 20000, board)
 	if got != 0 {
 		t.Fatalf("stalemate position should evaluate to 0, got %v", got)
 	}
@@ -44,7 +43,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 	beforeEnpassant := board.enpassant
 	beforeTurn := board.isWhiteTurn
 
-	_ = searchBruteForce(2, math.Inf(-1), math.Inf(1), board)
+	_ = searchBruteForce(2, -20000, 20000, board)
 
 	if board.printBoard() != before {
 		t.Fatalf("search should not mutate board placement")

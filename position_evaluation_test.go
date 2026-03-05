@@ -6,7 +6,7 @@ func TestBasicEval(t *testing.T) {
 	tests := []struct {
 		name string
 		fen  string
-		want float64
+		want int
 	}{
 		{
 			name: "starting position is equal",
@@ -16,22 +16,22 @@ func TestBasicEval(t *testing.T) {
 		{
 			name: "white to move counts own queen positively",
 			fen:  "4k3/8/8/8/8/8/8/4KQ2 w - - 0 1",
-			want: 9,
+			want: 900,
 		},
 		{
 			name: "black to move sees same position negatively",
 			fen:  "4k3/8/8/8/8/8/8/4KQ2 b - - 0 1",
-			want: -9,
+			want: -900,
 		},
 		{
 			name: "weighted material sum from white perspective",
 			fen:  "q3k3/1pp5/8/8/8/8/3P4/RBN1K3 w - - 0 1",
-			want: 1,
+			want: 250,
 		},
 		{
 			name: "weighted material sum flips for black perspective",
 			fen:  "q3k3/1pp5/8/8/8/8/3P4/RBN1K3 b - - 0 1",
-			want: -1,
+			want: -250,
 		},
 	}
 
