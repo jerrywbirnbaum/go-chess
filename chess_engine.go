@@ -13,7 +13,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval := -searchBruteForce(3, -20000, 20000, board)
+		eval := -searchBruteForce(4, -20000, 20000, board)
 		if eval > bestEval {
 			bestMove = *move
 			bestEval = eval
@@ -28,7 +28,6 @@ func (mg *MoveGenerator) bestMove() MoveString {
 
 func searchBruteForce(depth int, alpha int, beta int, board Board) int {
 	if depth == 0 {
-		// return basicEval(board)
 		return searchOnlyCapturesForce(alpha, beta, board)
 	}
 
