@@ -13,7 +13,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval := -searchBruteForce(4, -20000, 20000, board)
+		eval := -searchBruteForce(3, -20000, 20000, board)
 		if eval > bestEval {
 			bestMove = *move
 			bestEval = eval
