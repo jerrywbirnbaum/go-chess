@@ -6,12 +6,55 @@ import (
 
 func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	board := initBoard()
-	board.updateFromFEN("8/8/8/3p4/4P3/8/8/K6k w - - 0 1")
-
+	board.updateFromFEN("8/8/8/3p4/3P4/8/8/K6k w - - 0 1")
 	got := searchBruteForce(0, -20000, 20000, board)
 	want := basicEval(board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
+	}
+}
+
+func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
+	// Forced line:
+	// 1. Rxa8 Qxa8, then no captures remain.
+	board := initBoard()
+	board.updateFromFEN("rq2k3/8/8/8/8/8/8/R3K3 w - - 0 1")
+
+	got := searchBruteForce(0, -20000, 20000, board)
+
+	moveGenerator := MoveGenerator{board: board}
+	firstCaptures := moveGenerator.generateMoves(true)
+	if len(firstCaptures) != 1 {
+		t.Fatalf("expected exactly one root capture, got %d", len(firstCaptures))
+	}
+	firstMove := firstCaptures[0]
+	if toSquare(firstMove.startSquare.row, firstMove.startSquare.col)+toSquare(firstMove.endSquare.row, firstMove.endSquare.col) != "a1a8" {
+		t.Fatalf("expected forced capture a1a8")
+	}
+
+	afterFirst := board
+	afterFirst.makeMove(&firstMove)
+	stopAfterOneCaptureEval := -basicEval(afterFirst)
+
+	replyGenerator := MoveGenerator{board: afterFirst}
+	secondCaptures := replyGenerator.generateMoves(true)
+	if len(secondCaptures) != 1 {
+		t.Fatalf("expected exactly one reply capture, got %d", len(secondCaptures))
+	}
+	secondMove := secondCaptures[0]
+	if toSquare(secondMove.startSquare.row, secondMove.startSquare.col)+toSquare(secondMove.endSquare.row, secondMove.endSquare.col) != "b8a8" {
+		t.Fatalf("expected forced recapture b8a8")
+	}
+
+	afterSecond := afterFirst
+	afterSecond.makeMove(&secondMove)
+	want := basicEval(afterSecond)
+
+	if got != want {
+		t.Fatalf("depth 0 should evaluate after full capture sequence: got %d, want %d", got, want)
+	}
+	if got == stopAfterOneCaptureEval {
+		t.Fatalf("depth 0 stopped after one capture (got %d), expected it to continue searching captures", got)
 	}
 }
 
