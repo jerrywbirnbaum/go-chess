@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"slices"
 	"strings"
 	"time"
 )
@@ -136,8 +135,17 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) [8][8]in
 	return attacks
 }
 
-func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) []Square {
-	var pinnedPieces []Square
+func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) [8][8]int {
+	pinnedPieces := [8][8]int{
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
 	piece := mg.board.board[kingRow][kingCol]
 	color := getColor(piece)
 
@@ -187,7 +195,7 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) []Square {
 				validSlider = true
 			}
 			if foundFriendly && validSlider {
-				pinnedPieces = append(pinnedPieces, candidate)
+				pinnedPieces[candidate.row][candidate.col] = 1
 			}
 			break
 		}
@@ -365,7 +373,7 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 		if getColor(p.piece) != color {
 			continue
 		}
-		if slices.Contains(pinnedPieces, p) {
+		if pinnedPieces[p.row][p.col] == 1 {
 			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkMask, onlyCaptures)...)
 			continue
 		}

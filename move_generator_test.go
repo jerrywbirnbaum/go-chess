@@ -214,7 +214,18 @@ func TestPinnedPieces(t *testing.T) {
 	board.updateFromFEN("kn4Q1/1b6/r7/8/8/8/6B1/R7 b KQkq - 0 1")
 	moveGenerator := MoveGenerator{board: board}
 	result := moveGenerator.pinnedPieces(0, 0)
-	if len(result) != 3 {
+	expected := [8][8]int{
+		{0, 1, 0, 0, 0, 0, 0, 0},
+		{0, 1, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+
+	if !reflect.DeepEqual(result, expected) {
 		t.Errorf("Failed Pinned Pieces")
 	}
 }
