@@ -260,6 +260,17 @@ func TestMoveGenerationChecksStarting(t *testing.T) {
 	}
 }
 
+func TestGenerateAttacksPawnOutOfBoundsGuard(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k6K/P7/8/8/8/8/8/8 w - - 0 1")
+	moveGenerator := MoveGenerator{board: board}
+
+	attacks := moveGenerator.generateAttacks(Color(White), false)
+	if attacks[0][0] != 0 {
+		t.Errorf("unexpected attack count on a8: got %d", attacks[0][0])
+	}
+}
+
 func TestMoveGenerationDoublePin(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k1rr3Q/8/8/8/8/8/8/8 b - - 0 1")

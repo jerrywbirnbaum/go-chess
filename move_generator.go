@@ -22,6 +22,10 @@ type MoveGenerator struct {
 	board Board
 }
 
+func inBounds(row int, col int) bool {
+	return row >= 0 && row <= 7 && col >= 0 && col <= 7
+}
+
 func (mg *MoveGenerator) updateBoard(board Board) {
 	mg.board = board
 }
@@ -205,12 +209,13 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) [8][8]int {
 		directions = directions[1:]
 	}
 
-	if kingCol > 0 && mg.board.canCapture(kingRow+directions[0], kingCol-1, color) && isPawn(pieceType(mg.board.board[kingRow+directions[0]][kingCol-1])) {
-		checkMask[kingRow+directions[0]][kingCol-1] = 1
+	pawnAttackRow := kingRow + directions[0]
+	if inBounds(pawnAttackRow, kingCol-1) && mg.board.canCapture(pawnAttackRow, kingCol-1, color) && isPawn(pieceType(mg.board.board[pawnAttackRow][kingCol-1])) {
+		checkMask[pawnAttackRow][kingCol-1] = 1
 		return checkMask
 	}
-	if kingCol < 7 && mg.board.canCapture(kingRow+directions[0], kingCol+1, color) && isPawn(pieceType(mg.board.board[kingRow+directions[0]][kingCol+1])) {
-		checkMask[kingRow+directions[0]][kingCol+1] = 1
+	if inBounds(pawnAttackRow, kingCol+1) && mg.board.canCapture(pawnAttackRow, kingCol+1, color) && isPawn(pieceType(mg.board.board[pawnAttackRow][kingCol+1])) {
+		checkMask[pawnAttackRow][kingCol+1] = 1
 		return checkMask
 	}
 
@@ -794,14 +799,15 @@ func (mg *MoveGenerator) generatePawnAttacks(p Square, color Color) []Move {
 		directions = directions[:2]
 	}
 
-	if p.col > 0 {
+	targetRow := p.row + directions[0]
+	if inBounds(targetRow, p.col-1) {
 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-		endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: mg.board.board[p.row+directions[0]][p.col-1]}
+		endSquare := Square{row: targetRow, col: p.col - 1, piece: mg.board.board[targetRow][p.col-1]}
 		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
-	if p.col < 7 {
+	if inBounds(targetRow, p.col+1) {
 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-		endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: mg.board.board[p.row+directions[0]][p.col+1]}
+		endSquare := Square{row: targetRow, col: p.col + 1, piece: mg.board.board[targetRow][p.col+1]}
 		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
 
