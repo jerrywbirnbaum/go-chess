@@ -1,8 +1,11 @@
 package main
 
+import "sort"
+
 func (mg *MoveGenerator) bestMove() MoveString {
 	board := mg.board
 	moves := mg.generateMoves(false)
+	sort.Sort(MoveOrder(moves))
 
 	var bestMove Move
 	bestEval := -20000
@@ -10,7 +13,7 @@ func (mg *MoveGenerator) bestMove() MoveString {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval := -searchBruteForce(4, -20000, 20000, board)
+		eval := -searchBruteForce(3, -20000, 20000, board)
 		if eval > bestEval {
 			bestMove = *move
 			bestEval = eval
@@ -77,4 +80,19 @@ func searchOnlyCapturesForce(alpha int, beta int, board Board) int {
 		board.unmakeMove(move)
 	}
 	return alpha
+}
+
+type MoveOrder []Move
+
+func (a MoveOrder) Len() int      { return len(a) }
+func (a MoveOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a MoveOrder) Less(i, j int) bool {
+	startPieceType := pieceType(a[i].startSquare.piece)
+	endPieceType := pieceType(a[i].endSquare.piece)
+	iPieceDiff := getPieceValue(endPieceType) - getPieceValue(startPieceType)
+
+	startPieceType = pieceType(a[j].startSquare.piece)
+	endPieceType = pieceType(a[j].endSquare.piece)
+	jPieceDiff := getPieceValue(endPieceType) - getPieceValue(startPieceType)
+	return iPieceDiff < jPieceDiff
 }
