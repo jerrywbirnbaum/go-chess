@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"strings"
 	"unicode"
 )
@@ -20,6 +21,7 @@ type Board struct {
 	enpassant       string
 	castleAvailable string
 	moveCount       int
+	zobrishTable    [781]int64
 }
 
 func (b Board) cellEmpty(row int, col int) bool {
@@ -179,6 +181,7 @@ func initBoard() Board {
 		isWhiteTurn: true,
 	}
 	board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+	board.zobrishTable = board.zobrishHashTable()
 	return board
 }
 
@@ -429,4 +432,59 @@ func (b *Board) playerInCheck() bool {
 	}
 	return false
 
+}
+
+func (b *Board) zobrishHashTable() [781]int64 {
+	hashTable := [781]int64{}
+
+	seed1 := uint64(123)
+	seed2 := uint64(456)
+	r := rand.New(rand.NewPCG(seed1, seed2))
+
+	for i := range 781 {
+		hashTable[i] = r.Int64()
+	}
+	return hashTable
+}
+
+func calculateZobristIndex(piece Piece, row int, col int) int {
+	index := 0
+	index += (int(piece) - int(WhitePawn)) * 64
+	index += row * 8
+	index += col
+	return index
+
+}
+func (b *Board) calculateZobrishHash() int64 {
+	var hash int64
+	hash = 0
+	for _, square := range b.piecesGenerator() {
+		index := calculateZobristIndex(square.piece, square.row, square.col)
+		hash = hash ^ b.zobrishTable[index]
+	}
+	if !b.isWhiteTurn {
+		hash = hash ^ b.zobrishTable[768]
+	}
+
+	if strings.Contains(b.castleAvailable, "K") {
+		hash = hash ^ b.zobrishTable[769]
+	}
+	if strings.Contains(b.castleAvailable, "Q") {
+		hash = hash ^ b.zobrishTable[770]
+	}
+	if strings.Contains(b.castleAvailable, "k") {
+		hash = hash ^ b.zobrishTable[771]
+	}
+	if strings.Contains(b.castleAvailable, "q") {
+		hash = hash ^ b.zobrishTable[772]
+	}
+
+	if b.enpassant != "-" {
+		enpassant_idx := 733
+		enpassant_idx += int(b.enpassant[0]) - int('a')
+		hash = hash ^ b.zobrishTable[enpassant_idx]
+
+	}
+
+	return hash
 }
