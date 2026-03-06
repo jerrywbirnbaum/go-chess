@@ -10,13 +10,13 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 
 	var bestMove Move
 	bestEval := -20000
-	totalEvaluted := 0
+	totalEvaluated := 0
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval, positionsEvaluated := searchBruteForce(4, -20000, 20000, &board)
-		totalEvaluted = positionsEvaluated
+		eval, positionsEvaluated := searchBruteForce(3, -20000, 20000, &board)
+		totalEvaluated += positionsEvaluated
 		eval = -eval
 		if eval > bestEval {
 			bestMove = *move
@@ -27,7 +27,7 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
 	endSquare := toSquare(bestMove.endSquare.row, bestMove.endSquare.col)
-	return MoveString{startSquare: startSquare, endSquare: endSquare}, totalEvaluted, bestEval
+	return MoveString{startSquare: startSquare, endSquare: endSquare}, totalEvaluated, bestEval
 }
 
 func searchBruteForce(depth int, alpha int, beta int, board *Board) (int, int) {
@@ -40,9 +40,9 @@ func searchBruteForce(depth int, alpha int, beta int, board *Board) (int, int) {
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) == 0 {
 		if board.playerInCheck() {
-			return -20000, positionsEvaluated
+			return -20000, 1
 		} else {
-			return 0, positionsEvaluated
+			return 0, 1
 		}
 	}
 
