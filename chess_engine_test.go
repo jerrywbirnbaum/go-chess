@@ -108,6 +108,85 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 	}
 }
 
+func TestSearchBruteForceTranspositionExactHitReturnsCachedEval(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
+	tt := initTranspositionTable()
+
+	key := board.calculateZobrishHash()
+	tt.push(key, 4, 0, 321)
+
+	gotEval, gotPositions := searchBruteForce(2, -20000, 20000, &board, &tt)
+	if gotEval != 321 {
+		t.Fatalf("expected exact TT hit to return cached eval 321, got %d", gotEval)
+	}
+	if gotPositions != 1 {
+		t.Fatalf("expected exact TT hit to count one position, got %d", gotPositions)
+	}
+}
+
+func TestSearchBruteForceTranspositionLowerBoundHitReturnsCachedEval(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
+	tt := initTranspositionTable()
+
+	key := board.calculateZobrishHash()
+	tt.push(key, 4, 1, 50)
+
+	gotEval, gotPositions := searchBruteForce(2, -20000, 40, &board, &tt)
+	if gotEval != 50 {
+		t.Fatalf("expected lower-bound TT hit to return cached eval 50, got %d", gotEval)
+	}
+	if gotPositions != 1 {
+		t.Fatalf("expected lower-bound TT hit to count one position, got %d", gotPositions)
+	}
+}
+
+func TestSearchBruteForceTranspositionUpperBoundHitReturnsCachedEval(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
+	tt := initTranspositionTable()
+
+	key := board.calculateZobrishHash()
+	tt.push(key, 4, 2, -50)
+
+	gotEval, gotPositions := searchBruteForce(2, -40, 20000, &board, &tt)
+	if gotEval != -50 {
+		t.Fatalf("expected upper-bound TT hit to return cached eval -50, got %d", gotEval)
+	}
+	if gotPositions != 1 {
+		t.Fatalf("expected upper-bound TT hit to count one position, got %d", gotPositions)
+	}
+}
+
+func TestSearchBruteForceTranspositionIgnoresShallowEntry(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
+	tt := initTranspositionTable()
+
+	key := board.calculateZobrishHash()
+	tt.push(key, 0, 0, 123)
+
+	gotEval, _ := searchBruteForce(1, -20000, 20000, &board, &tt)
+	if gotEval != -20000 {
+		t.Fatalf("expected shallow TT entry to be ignored; got %d", gotEval)
+	}
+}
+
+func TestSearchBruteForceTranspositionIgnoresUnmetLowerBound(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
+	tt := initTranspositionTable()
+
+	key := board.calculateZobrishHash()
+	tt.push(key, 4, 1, 30)
+
+	gotEval, _ := searchBruteForce(2, -20000, 40, &board, &tt)
+	if gotEval != -20000 {
+		t.Fatalf("expected unmet lower-bound TT entry to be ignored; got %d", gotEval)
+	}
+}
+
 func TestBestMoveForcedMove(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
