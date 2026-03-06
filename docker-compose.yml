@@ -1,0 +1,16 @@
+services:
+  api:
+    build:
+      context: ./go-api
+    container_name: go-chess-api
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./go-chess-react
+    container_name: go-chess-frontend
+    depends_on:
+      - api
+    ports:
+      - "5173:80"
