@@ -38,6 +38,7 @@ func searchBruteForce(depth int, alpha int, beta int, board *Board) (int, int) {
 
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(false)
+	sort.Sort(MoveOrder(moves))
 	if len(moves) == 0 {
 		if board.playerInCheck() {
 			return -20000, 1
@@ -73,6 +74,7 @@ func searchOnlyCapturesForce(alpha int, beta int, board *Board) int {
 
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(true)
+
 	if len(moves) == 0 {
 		return standPat
 	}
