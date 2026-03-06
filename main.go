@@ -40,13 +40,17 @@ func main() {
 		board.updateFromFEN(receivedFen)
 
 		moveGenerator := MoveGenerator{board: &board}
-		random_move := moveGenerator.bestMove()
+		random_move, positions_evaluated, engine_evauluation := moveGenerator.bestMove()
+		fmt.Println("engine_evauluation")
+		fmt.Println(engine_evauluation)
 		c.JSON(http.StatusOK, gin.H{
-			"status":       "received",
-			"start_square": random_move.startSquare,
-			"end_square":   random_move.endSquare,
-			"promotion":    "q",
-			"fen":          receivedFen,
+			"status":              "received",
+			"start_square":        random_move.startSquare,
+			"end_square":          random_move.endSquare,
+			"promotion":           "q",
+			"fen":                 receivedFen,
+			"positions_evaluated": positions_evaluated,
+			"engine_evaluation":   engine_evauluation,
 		})
 	})
 

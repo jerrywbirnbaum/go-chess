@@ -2,7 +2,7 @@ package main
 
 import "sort"
 
-func (mg *MoveGenerator) bestMove() MoveString {
+func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 	board := *mg.board
 	localMoveGenerator := MoveGenerator{board: &board}
 	moves := localMoveGenerator.generateMoves(false)
@@ -10,11 +10,14 @@ func (mg *MoveGenerator) bestMove() MoveString {
 
 	var bestMove Move
 	bestEval := -20000
+	totalEvaluted := 0
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval := -searchBruteForce(4, -20000, 20000, &board)
+		eval, positionsEvaluated := searchBruteForce(4, -20000, 20000, &board)
+		totalEvaluted = positionsEvaluated
+		eval = -eval
 		if eval > bestEval {
 			bestMove = *move
 			bestEval = eval
@@ -24,36 +27,39 @@ func (mg *MoveGenerator) bestMove() MoveString {
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
 	endSquare := toSquare(bestMove.endSquare.row, bestMove.endSquare.col)
-	return MoveString{startSquare: startSquare, endSquare: endSquare}
+	return MoveString{startSquare: startSquare, endSquare: endSquare}, totalEvaluted, bestEval
 }
 
-func searchBruteForce(depth int, alpha int, beta int, board *Board) int {
+func searchBruteForce(depth int, alpha int, beta int, board *Board) (int, int) {
 	if depth == 0 {
-		return searchOnlyCapturesForce(alpha, beta, board)
+		return searchOnlyCapturesForce(alpha, beta, board), 1
 	}
+	positionsEvaluated := 0
 
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) == 0 {
 		if board.playerInCheck() {
-			return -20000
+			return -20000, positionsEvaluated
 		} else {
-			return 0
+			return 0, positionsEvaluated
 		}
 	}
 
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval := -searchBruteForce(depth-1, -beta, -alpha, board)
+		currentMoveEval, currentPositionsEvaluated := searchBruteForce(depth-1, -beta, -alpha, board)
+		positionsEvaluated += currentPositionsEvaluated
+		currentMoveEval = -currentMoveEval
 		if currentMoveEval >= beta {
 			board.unmakeMove(move)
-			return beta
+			return beta, positionsEvaluated
 		}
 		alpha = max(alpha, currentMoveEval)
 		board.unmakeMove(move)
 	}
-	return alpha
+	return alpha, positionsEvaluated
 }
 
 func searchOnlyCapturesForce(alpha int, beta int, board *Board) int {

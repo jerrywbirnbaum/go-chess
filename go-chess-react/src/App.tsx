@@ -42,6 +42,8 @@ function App() {
   const [chessPosition, setChessPosition] = useState(chessGame.fen());
   const [isLoading, setLoading] = useState(false);
   const [boardSize, setBoardSize] = useState(getBoardSize);
+  const [positionsEvaluated, setPositionsEvaluated] = useState(0);
+  const [engineEvaluation, setEngineEvaluation] = useState(0);
 
   useEffect(() => {
     localStorage.setItem(STORED_FEN_KEY, chessPosition);
@@ -80,7 +82,6 @@ function App() {
     return `${sideToMove} to move.`;
   }
 
-  // make a random "CPU" move
   async function makeEngineMove() {
     if (chessGame.isGameOver()) {
       setLoading(false);
@@ -117,22 +118,16 @@ function App() {
         to: data.end_square,
         promotion: "q",
       });
+      setPositionsEvaluated(data.positions_evaluated)
+      setEngineEvaluation(data.engine_evaluation)
     } catch (error) {
       console.log(error);
     }
 
-    // pick a random move
-    // const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-
-    // make the move
-    // chessGame.move(randomMove);
-
-    // update the position state
     setChessPosition(chessGame.fen());
     setLoading(false);
   }
 
-  // handle piece drop
   function onPieceDrop({
     sourceSquare,
     targetSquare
@@ -141,12 +136,10 @@ function App() {
       return false;
     }
 
-    // type narrow targetSquare potentially being null (e.g. if dropped off board)
     if (!targetSquare) {
       return false;
     }
 
-    // try to make the move according to chess.js logic
     try {
       chessGame.move({
         from: sourceSquare,
@@ -154,18 +147,14 @@ function App() {
         promotion: 'q' // always promote to a queen for example simplicity
       });
 
-      // update the position state upon successful move to trigger a re-render of the chessboard
       setChessPosition(chessGame.fen());
 
-      // make engine move after a short delay unless game is over
       if (!chessGame.isGameOver()) {
-        engineMoveTimeoutRef.current = window.setTimeout(makeEngineMove, 5);
+        engineMoveTimeoutRef.current = window.setTimeout(makeEngineMove, 1);
       }
 
-      // return true as the move was successful
       return true;
     } catch {
-      // return false as the move was not successful
       return false;
     }
   }
@@ -203,6 +192,8 @@ function App() {
       className="chessboard-container"
     >
       <h3 style={{ margin: '0 0 1rem' }}>{getGameStatus()}</h3>
+      <h3 style={{ margin: '0 0 1rem' }}>Positions Evaluated: {positionsEvaluated}</h3>
+      <h3 style={{ margin: '0 0 1rem' }}>Engine Evaluation: {engineEvaluation}</h3>
       <div
         style={{
           display: 'flex',

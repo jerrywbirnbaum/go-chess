@@ -7,7 +7,7 @@ import (
 func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/3p4/3P4/8/8/K6k w - - 0 1")
-	got := searchBruteForce(0, -20000, 20000, &board)
+	got, _ := searchBruteForce(0, -20000, 20000, &board)
 	want := basicEval(board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
@@ -20,7 +20,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("rq2k3/8/8/8/8/8/8/R3K3 w - - 0 1")
 
-	got := searchBruteForce(0, -20000, 20000, &board)
+	got, _ := searchBruteForce(0, -20000, 20000, &board)
 
 	moveGenerator := MoveGenerator{board: &board}
 	firstCaptures := moveGenerator.generateMoves(true)
@@ -62,7 +62,7 @@ func TestSearchBruteForceCheckmateReturnsNegativeInfinity(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
 
-	got := searchBruteForce(1, -20000, 20000, &board)
+	got, _ := searchBruteForce(1, -20000, 20000, &board)
 	if got != -20000 {
 		t.Fatalf("checkmate position should evaluate to -20000, got %v", got)
 	}
@@ -72,7 +72,7 @@ func TestSearchBruteForceStalemateReturnsZero(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
 
-	got := searchBruteForce(1, -20000, 20000, &board)
+	got, _ := searchBruteForce(1, -20000, 20000, &board)
 	if got != 0 {
 		t.Fatalf("stalemate position should evaluate to 0, got %v", got)
 	}
@@ -86,7 +86,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 	beforeEnpassant := board.enpassant
 	beforeTurn := board.isWhiteTurn
 
-	_ = searchBruteForce(2, -20000, 20000, &board)
+	_, _ = searchBruteForce(2, -20000, 20000, &board)
 
 	if board.printBoard() != before {
 		t.Fatalf("search should not mutate board placement")
@@ -112,7 +112,7 @@ func TestBestMoveForcedMove(t *testing.T) {
 		t.Fatalf("expected three legal moves, got %d", len(moves))
 	}
 
-	got := mg.bestMove()
+	got, _, _ := mg.bestMove()
 	if got.startSquare != "h1" || got.endSquare != "g2" {
 		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
 	}

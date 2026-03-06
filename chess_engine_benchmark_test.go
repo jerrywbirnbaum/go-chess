@@ -35,7 +35,7 @@ func BenchmarkBestMove_StartPosition(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		benchmarkMoveSink = moveGenerator.bestMove()
+		benchmarkMoveSink, _, _ = moveGenerator.bestMove()
 	}
 }
 
@@ -47,6 +47,6 @@ func BenchmarkBestMove_MidgamePosition(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		benchmarkMoveSink = moveGenerator.bestMove()
+		benchmarkMoveSink, _, _ = moveGenerator.bestMove()
 	}
 }
