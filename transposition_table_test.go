@@ -4,7 +4,7 @@ import "testing"
 
 func TestTranspositionTableInitCreatesMap(t *testing.T) {
 	var tt TranspositionTable
-	tt.init()
+	tt = initTranspositionTable()
 
 	if tt.table == nil {
 		t.Fatal("expected init to allocate table map")
@@ -13,12 +13,12 @@ func TestTranspositionTableInitCreatesMap(t *testing.T) {
 
 func TestTranspositionTablePushAndLookup(t *testing.T) {
 	var tt TranspositionTable
-	tt.init()
+	tt = initTranspositionTable()
 
 	const key int64 = 42
 	tt.push(key, 5, 1, 320)
 
-	depth, flag, evaluation := tt.lookup(key)
+	_, depth, flag, evaluation := tt.lookup(key)
 	if depth != 5 || flag != 1 || evaluation != 320 {
 		t.Fatalf("unexpected lookup values: got (%d, %d, %d), expected (%d, %d, %d)", depth, flag, evaluation, 5, 1, 320)
 	}
@@ -26,13 +26,13 @@ func TestTranspositionTablePushAndLookup(t *testing.T) {
 
 func TestTranspositionTablePushOverwritesExistingKey(t *testing.T) {
 	var tt TranspositionTable
-	tt.init()
+	tt = initTranspositionTable()
 
 	const key int64 = 99
 	tt.push(key, 2, 0, 100)
 	tt.push(key, 7, 2, -50)
 
-	depth, flag, evaluation := tt.lookup(key)
+	_, depth, flag, evaluation := tt.lookup(key)
 	if depth != 7 || flag != 2 || evaluation != -50 {
 		t.Fatalf("unexpected lookup after overwrite: got (%d, %d, %d), expected (%d, %d, %d)", depth, flag, evaluation, 7, 2, -50)
 	}
@@ -40,9 +40,9 @@ func TestTranspositionTablePushOverwritesExistingKey(t *testing.T) {
 
 func TestTranspositionTableLookupMissingKeyReturnsZeroValues(t *testing.T) {
 	var tt TranspositionTable
-	tt.init()
+	tt = initTranspositionTable()
 
-	depth, flag, evaluation := tt.lookup(123456)
+	_, depth, flag, evaluation := tt.lookup(123456)
 	if depth != 0 || flag != 0 || evaluation != 0 {
 		t.Fatalf("unexpected missing-key values: got (%d, %d, %d), expected (0, 0, 0)", depth, flag, evaluation)
 	}

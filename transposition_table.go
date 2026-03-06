@@ -9,8 +9,10 @@ type TranspositionTable struct {
 	table map[int64]TranspositionData
 }
 
-func (tt *TranspositionTable) init() {
+func initTranspositionTable() TranspositionTable {
+	var tt TranspositionTable
 	tt.table = make(map[int64]TranspositionData)
+	return tt
 }
 
 func (tt *TranspositionTable) push(key int64, depth int, flag int, evaluation int) {
@@ -21,7 +23,10 @@ func (tt *TranspositionTable) push(key int64, depth int, flag int, evaluation in
 	}
 }
 
-func (tt *TranspositionTable) lookup(key int64) (int, int, int) {
-	data := tt.table[key]
-	return data.depth, data.flag, data.evaluation
+func (tt *TranspositionTable) lookup(key int64) (bool, int, int, int) {
+	data, ok := tt.table[key]
+	if !ok {
+		return false, 0, 0, 0
+	}
+	return true, data.depth, data.flag, data.evaluation
 }
