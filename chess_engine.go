@@ -33,15 +33,7 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 
 func searchBruteForce(depth int, alpha int, beta int, board *Board, tt *TranspositionTable) (int, int) {
 	originalAlpha := alpha
-	// (* Transposition Table Lookup; node is the lookup key for ttEntry *)
-	//     ttEntry := transpositionTableLookup(node)
-	//     if ttEntry.is_valid and ttEntry.depth ≥ depth then
-	//         if ttEntry.flag = EXACT then
-	//             return ttEntry.value
-	//         else if ttEntry.flag = LOWERBOUND and ttEntry.value ≥ beta then
-	//             return ttEntry.value
-	//         else if ttEntry.flag = UPPERBOUND and ttEntry.value ≤ alpha then
-	//             return ttEntry.value
+
 	zHash := board.calculateZobrishHash()
 	isValid, ttDepth, flag, evaluation := tt.lookup(zHash)
 	if isValid && ttDepth >= depth {
