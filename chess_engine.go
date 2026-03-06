@@ -10,7 +10,7 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 	tt := initTranspositionTable()
 
 	var bestMove Move
-	bestEval := -20000
+	bestEval := -40000
 	totalEvaluated := 0
 	for i := range moves {
 		move := &moves[i]

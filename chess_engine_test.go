@@ -7,7 +7,6 @@ import (
 func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/3p4/3P4/8/8/K6k w - - 0 1")
-
 	tt := initTranspositionTable()
 	got, _ := searchBruteForce(0, -20000, 20000, &board, &tt)
 	want := basicEval(board)
@@ -199,6 +198,17 @@ func TestBestMoveForcedMove(t *testing.T) {
 
 	got, _, _ := mg.bestMove()
 	if got.startSquare != "h1" || got.endSquare != "g2" {
+		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
+	}
+}
+
+func TestBestMoveForcedCheckmate(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("8/1p6/8/8/8/1k4K1/1Q4P1/2Q5 b - - 10 74")
+	mg := MoveGenerator{board: &board}
+
+	got, _, _ := mg.bestMove()
+	if got.startSquare != "b3" || got.endSquare != "a4" {
 		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
 	}
 }
