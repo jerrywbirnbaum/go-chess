@@ -88,6 +88,50 @@ var queenMask = [8][8]int{
 	{-20, -10, -10, -5, -5, -10, -10, -20},
 }
 
+var whiteKingEarlyMask = [8][8]int{
+	{-50, -40, -30, -20, -20, -30, -40, -50},
+	{-30, -20, -10, 0, 0, -10, -20, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -30, 0, 0, 0, 0, -30, -30},
+	{-50, -30, -30, -30, -30, -30, -30, -50},
+}
+
+var blackKingEarlyMask = [8][8]int{
+	{-50, -30, -30, -30, -30, -30, -30, -50},
+	{-30, -30, 0, 0, 0, 0, -30, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -20, -10, 0, 0, -10, -20, -30},
+	{-50, -40, -30, -20, -20, -30, -40, -50},
+}
+
+var whiteKingEndMask = [8][8]int{
+	{-50, -40, -30, -20, -20, -30, -40, -50},
+	{-30, -20, -10, 0, 0, -10, -20, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -30, 0, 0, 0, 0, -30, -30},
+	{-50, -30, -30, -30, -30, -30, -30, -50},
+}
+
+var blackKingEndMask = [8][8]int{
+	{-50, -30, -30, -30, -30, -30, -30, -50},
+	{-30, -30, 0, 0, 0, 0, -30, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -10, 30, 40, 40, 30, -10, -30},
+	{-30, -10, 20, 30, 30, 20, -10, -30},
+	{-30, -20, -10, 0, 0, -10, -20, -30},
+	{-50, -40, -30, -20, -20, -30, -40, -50},
+}
+
 func getPieceValue(p PieceType) int {
 	switch p {
 	case EmptyPieceType:
@@ -108,7 +152,7 @@ func getPieceValue(p PieceType) int {
 	return 0
 }
 
-func getPositionFactor(p PieceType, color Color, row int, col int) int {
+func getPositionFactor(p PieceType, color Color, row int, col int, isEndGame bool) int {
 	if isPawn(p) {
 		if color == Color(White) {
 			return whitePawnMask[row][col]
@@ -141,13 +185,49 @@ func getPositionFactor(p PieceType, color Color, row int, col int) int {
 		return queenMask[row][col]
 
 	}
+
+	if isKing(p) {
+		if !isEndGame {
+			if color == Color(White) {
+				return whiteKingEarlyMask[row][col]
+			} else {
+				return blackKingEarlyMask[row][col]
+			}
+		} else {
+
+			if color == Color(White) {
+				return whiteKingEndMask[row][col]
+			} else {
+				return blackKingEndMask[row][col]
+			}
+		}
+
+	}
 	return 0
 }
 func basicEval(b Board) int {
 	eval := 0
 	var sign int
+	isEndGame := false
 
 	pieces := b.piecesGenerator()
+	whiteMaterial := 0
+	blackMaterial := 0
+
+	for _, p := range pieces {
+		color := getColor(p.piece)
+		pieceType := pieceType(p.piece)
+		if color == Color(White) {
+			whiteMaterial += getPieceValue(pieceType)
+		} else {
+			blackMaterial += getPieceValue(pieceType)
+		}
+	}
+
+	if whiteMaterial < 22400 && blackMaterial < 22400 {
+		isEndGame = true
+
+	}
 	for _, p := range pieces {
 		color := getColor(p.piece)
 		if color == b.currentColor() {
@@ -158,7 +238,7 @@ func basicEval(b Board) int {
 
 		pieceType := pieceType(p.piece)
 		eval += sign * getPieceValue(pieceType)
-		eval += sign * getPositionFactor(pieceType, color, p.row, p.col)
+		eval += sign * getPositionFactor(pieceType, color, p.row, p.col, isEndGame)
 	}
 	return eval
 }
