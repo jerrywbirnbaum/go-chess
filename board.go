@@ -250,6 +250,13 @@ func updateEnpassantSquare(move *Move) string {
 	return "-"
 }
 
+func (b *Board) makeMoveUpdateSide(move *Move) {
+	b.castleAvailable = move.nextCastleRights
+	b.enpassant = move.nextEnpassant
+	b.moveCount += 1
+	b.isWhiteTurn = !b.isWhiteTurn
+}
+
 func (b *Board) makeMove(move *Move) {
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
@@ -287,10 +294,7 @@ func (b *Board) makeMove(move *Move) {
 		b.board[startRow][startCol] = newPiece('*')
 		b.removePieceFromList(startRow, startCol)
 		b.setPieceInList(endRow, endCol, promotedPiece)
-		b.castleAvailable = move.nextCastleRights
-		b.enpassant = move.nextEnpassant
-		b.moveCount += 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.makeMoveUpdateSide(move)
 		return
 	}
 	//Enpassant
@@ -301,10 +305,7 @@ func (b *Board) makeMove(move *Move) {
 		b.removePieceFromList(startRow, startCol)
 		b.removePieceFromList(startRow, endCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
-		b.castleAvailable = move.nextCastleRights
-		b.enpassant = move.nextEnpassant
-		b.moveCount += 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.makeMoveUpdateSide(move)
 		return
 	}
 
@@ -318,10 +319,7 @@ func (b *Board) makeMove(move *Move) {
 		b.removePieceFromList(startRow, 7)
 		b.setPieceInList(startRow, 6, move.startSquare.piece)
 		b.setPieceInList(startRow, 5, b.board[startRow][5])
-		b.castleAvailable = move.nextCastleRights
-		b.enpassant = move.nextEnpassant
-		b.moveCount += 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.makeMoveUpdateSide(move)
 		return
 	} else if move.isCastleQueenSide {
 		b.board[startRow][2] = move.startSquare.piece
@@ -332,10 +330,7 @@ func (b *Board) makeMove(move *Move) {
 		b.removePieceFromList(startRow, 0)
 		b.setPieceInList(startRow, 2, move.startSquare.piece)
 		b.setPieceInList(startRow, 3, b.board[startRow][3])
-		b.castleAvailable = move.nextCastleRights
-		b.enpassant = move.nextEnpassant
-		b.moveCount += 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.makeMoveUpdateSide(move)
 		return
 	}
 
@@ -344,9 +339,13 @@ func (b *Board) makeMove(move *Move) {
 	b.board[endRow][endCol] = move.startSquare.piece
 	b.removePieceFromList(startRow, startCol)
 	b.setPieceInList(endRow, endCol, move.startSquare.piece)
-	b.castleAvailable = move.nextCastleRights
-	b.enpassant = move.nextEnpassant
-	b.moveCount += 1
+	b.makeMoveUpdateSide(move)
+}
+
+func (b *Board) unmakeMoveUpdateSide(move *Move) {
+	b.castleAvailable = move.previousCastleRights
+	b.enpassant = move.previousEnpassant
+	b.moveCount -= 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
 
@@ -362,10 +361,7 @@ func (b *Board) unmakeMove(move *Move) {
 		b.board[endRow][endCol] = move.endSquare.piece
 		b.setPieceInList(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
-		b.castleAvailable = move.previousCastleRights
-		b.enpassant = move.previousEnpassant
-		b.moveCount -= 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.unmakeMoveUpdateSide(move)
 		return
 	}
 
@@ -376,10 +372,7 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
 		b.setPieceInList(endRow, endCol, newPiece('*'))
 		b.setPieceInList(startRow, endCol, move.enpassantCapture)
-		b.castleAvailable = move.previousCastleRights
-		b.enpassant = move.previousEnpassant
-		b.moveCount -= 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.unmakeMoveUpdateSide(move)
 		return
 	}
 
@@ -393,10 +386,7 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, 6, newPiece('*'))
 		b.setPieceInList(startRow, 4, move.startSquare.piece)
 		b.setPieceInList(startRow, 7, b.board[startRow][7])
-		b.castleAvailable = move.previousCastleRights
-		b.enpassant = move.previousEnpassant
-		b.moveCount -= 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.unmakeMoveUpdateSide(move)
 		return
 	} else if move.isCastleQueenSide {
 		b.board[startRow][4] = move.startSquare.piece
@@ -407,20 +397,14 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, 3, newPiece('*'))
 		b.setPieceInList(startRow, 4, move.startSquare.piece)
 		b.setPieceInList(startRow, 0, b.board[startRow][0])
-		b.castleAvailable = move.previousCastleRights
-		b.enpassant = move.previousEnpassant
-		b.moveCount -= 1
-		b.isWhiteTurn = !b.isWhiteTurn
+		b.unmakeMoveUpdateSide(move)
 		return
 	}
 	b.board[startRow][startCol] = move.startSquare.piece
 	b.board[endRow][endCol] = move.endSquare.piece
 	b.setPieceInList(endRow, endCol, move.endSquare.piece)
 	b.setPieceInList(startRow, startCol, move.startSquare.piece)
-	b.castleAvailable = move.previousCastleRights
-	b.enpassant = move.previousEnpassant
-	b.moveCount -= 1
-	b.isWhiteTurn = !b.isWhiteTurn
+	b.unmakeMoveUpdateSide(move)
 }
 
 func (b *Board) currentColor() Color {
