@@ -92,6 +92,8 @@ func getPieceValue(p PieceType) int {
 	switch p {
 	case EmptyPieceType:
 		return 0
+	case Pawn:
+		return 100
 	case Knight:
 		return 320
 	case Bishop:
