@@ -220,6 +220,19 @@ function App() {
         >
           New Game
         </button>
+        <button
+          type="button"
+          onClick={makeEngineMove}
+          style={{
+            padding: '0.5rem 1rem',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            alignSelf: 'center',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Engine Move
+        </button>
       </div>
       <Loader fullPage loading={isLoading} />
     </div>
