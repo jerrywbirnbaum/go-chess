@@ -44,9 +44,12 @@ function App() {
   const [boardSize, setBoardSize] = useState(getBoardSize);
   const [positionsEvaluated, setPositionsEvaluated] = useState(0);
   const [engineEvaluation, setEngineEvaluation] = useState(0);
+  const [fenInput, setFenInput] = useState(chessGame.fen());
+  const [fenError, setFenError] = useState('');
 
   useEffect(() => {
     localStorage.setItem(STORED_FEN_KEY, chessPosition);
+    setFenInput(chessPosition);
   }, [chessPosition]);
 
   useEffect(() => {
@@ -166,7 +169,26 @@ function App() {
     }
     chessGame.reset();
     setLoading(false);
+    setFenError('');
     setChessPosition(chessGame.fen());
+  }
+
+  function onImportFen() {
+    if (engineMoveTimeoutRef.current) {
+      window.clearTimeout(engineMoveTimeoutRef.current);
+      engineMoveTimeoutRef.current = null;
+    }
+
+    try {
+      chessGame.load(fenInput.trim());
+      setLoading(false);
+      setFenError('');
+      setPositionsEvaluated(0);
+      setEngineEvaluation(0);
+      setChessPosition(chessGame.fen());
+    } catch {
+      setFenError('Invalid FEN');
+    }
   }
 
   // set the chessboard options
@@ -233,6 +255,52 @@ function App() {
         >
           Engine Move
         </button>
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            width: '100%',
+            maxWidth: '960px',
+            alignItems: 'center',
+            marginBottom: '1rem',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+          }}
+        >
+          <input
+            type="text"
+            value={fenInput}
+            onChange={(event) => {
+              setFenInput(event.target.value);
+              if (fenError) {
+                setFenError('');
+              }
+            }}
+            placeholder="Paste a FEN string"
+            style={{
+              flex: '1 1 520px',
+              minWidth: '280px',
+              padding: '0.5rem 0.75rem',
+              fontSize: '0.95rem',
+            }}
+          />
+          <button
+            type="button"
+            onClick={onImportFen}
+            style={{
+              padding: '0.5rem 1rem',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            Import FEN
+          </button>
+        </div>
+        {fenError ? (
+          <p style={{ margin: '0 0 1rem', color: '#b00020' }}>{fenError}</p>
+        ) : null}
       </div>
       <Loader fullPage loading={isLoading} />
     </div>
