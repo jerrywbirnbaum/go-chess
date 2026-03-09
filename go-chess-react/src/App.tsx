@@ -44,9 +44,9 @@ function App() {
   const [engineEvaluation, setEngineEvaluation] = useState(0);
   const [fenInput, setFenInput] = useState(chessGame.fen());
   const [fenError, setFenError] = useState('');
-  const [timerInput, setTimerInput] = useState('1');
+  const [timerInput, setTimerInput] = useState('1000');
   const [timerError, setTimerError] = useState('');
-  const [timerStatus, setTimerStatus] = useState('Engine timer is 1 second.');
+  const [timerStatus, setTimerStatus] = useState('Engine timer is 1000 milliseconds.');
   const [isSubmittingTimer, setIsSubmittingTimer] = useState(false);
 
   useEffect(() => {
@@ -92,7 +92,7 @@ function App() {
 
     const parsedTimer = Number(timerInput);
     if (!Number.isInteger(parsedTimer) || parsedTimer < 1) {
-      setTimerError('Enter a whole number of seconds greater than 0.');
+      setTimerError('Enter a whole number of milliseconds greater than 0.');
       setTimerStatus('');
       return;
     }
@@ -122,7 +122,7 @@ function App() {
 
       const data = await response.json();
       setTimerInput(String(data.timer));
-      setTimerStatus(`Engine timer updated to ${data.timer} second${data.timer === 1 ? '' : 's'}.`);
+      setTimerStatus(`Engine timer updated to ${data.timer} millisecond${data.timer === 1 ? '' : 's'}.`);
     } catch (error) {
       console.log(error);
       setTimerError('Unable to update the engine timer.');
@@ -266,20 +266,20 @@ function App() {
             </div>
           </div>
           <div className="control-stack">
-          <button
-            type="button"
-            onClick={onNewGame}
-            className="action-button"
-          >
-            New Game
-          </button>
-          <button
-            type="button"
-            onClick={makeEngineMove}
-            className="action-button action-button--secondary"
-          >
-            Engine Move
-          </button>
+            <button
+              type="button"
+              onClick={onNewGame}
+              className="action-button"
+            >
+              New Game
+            </button>
+            <button
+              type="button"
+              onClick={makeEngineMove}
+              className="action-button action-button--secondary"
+            >
+              Engine Move
+            </button>
           </div>
 
           <form

@@ -20,6 +20,7 @@ func main() {
 	board := initBoard()
 	moveGenerator := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: moveGenerator}
+	chessEngine.setTimer(1000)
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -45,8 +46,6 @@ func main() {
 
 		board.updateFromFEN(receivedFen)
 
-		moveGenerator := MoveGenerator{board: &board}
-		chessEngine := ChessEngine{moveGenerator: moveGenerator}
 		random_move, positions_evaluated, engine_evauluation := chessEngine.bestMove()
 		fmt.Println("engine_evauluation")
 		fmt.Println(engine_evauluation)
