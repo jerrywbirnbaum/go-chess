@@ -1,0 +1,251 @@
+:root {
+  font-family: 'Noto Sans', 'Segoe UI', sans-serif;
+  color: #d6d6d6;
+  background:
+    radial-gradient(circle at top, rgba(76, 76, 76, 0.35), transparent 34%),
+    linear-gradient(180deg, #312e2b 0%, #262421 100%);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top, rgba(76, 76, 76, 0.35), transparent 34%),
+    linear-gradient(180deg, #312e2b 0%, #262421 100%);
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.app-layout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.board-panel {
+  flex: 0 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.side-panel {
+  width: 340px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  background: linear-gradient(180deg, rgba(49, 46, 43, 0.96), rgba(38, 36, 33, 0.96));
+  border-radius: 10px;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.panel-kicker {
+  margin: 0;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a09a8f;
+}
+
+.panel-title {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: #f0f0f0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #9f9788;
+}
+
+.stat-value {
+  font-size: 1.2rem;
+  color: #f7f7f7;
+}
+
+.control-stack,
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-label {
+  font-size: 0.9rem;
+  color: #c9c5bd;
+}
+
+.control-input {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid #4a4742;
+  border-radius: 6px;
+  background: #201e1c;
+  color: #f0f0f0;
+  outline: none;
+}
+
+.control-input::placeholder {
+  color: #8b857b;
+}
+
+.control-input:focus {
+  border-color: #759900;
+  box-shadow: 0 0 0 3px rgba(117, 153, 0, 0.18);
+}
+
+.action-button {
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #8aa83c 0%, #6f8b2f 100%);
+  color: #fff;
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.action-button:hover {
+  filter: brightness(1.05);
+}
+
+.action-button:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.action-button--secondary {
+  background: linear-gradient(180deg, #4b4844 0%, #3e3b37 100%);
+}
+
+.message {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.message--error {
+  color: #ff8f8f;
+}
+
+.message--success {
+  color: #a7d97a;
+}
+
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(24, 22, 20, 0.74);
+  backdrop-filter: blur(3px);
+  z-index: 1000;
+}
+
+.loading-dialog {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 220px;
+  padding: 24px 28px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(49, 46, 43, 0.98), rgba(38, 36, 33, 0.98));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.loading-spinner {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.12);
+  border-top-color: #88a23f;
+  animation: spin 0.85s linear infinite;
+}
+
+.loading-text {
+  margin: 0;
+  color: #ece9e2;
+  font-size: 0.96rem;
+  letter-spacing: 0.01em;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    padding: 16px;
+  }
+
+  .app-layout {
+    gap: 16px;
+  }
+
+  .side-panel {
+    width: min(100%, 560px);
+  }
+}
