@@ -45,6 +45,9 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
 	originalAlpha := alpha
+	if s.transpositionTable.table == nil {
+		s.initSearchTranspositionTable()
+	}
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
 
