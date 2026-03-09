@@ -102,6 +102,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	_, _ = chessEngine.searchBruteForce(2, -20000, 20000)
 
 	if board.printBoard() != before {

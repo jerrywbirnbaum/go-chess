@@ -1,6 +1,9 @@
 package main
 
-import "sort"
+import (
+	"sort"
+	"time"
+)
 
 type ChessEngine struct {
 	moveGenerator      MoveGenerator
@@ -12,6 +15,10 @@ func (s *ChessEngine) initSearchTranspositionTable() {
 	s.transpositionTable = initTranspositionTable()
 }
 
+func (s *ChessEngine) startSearchTimer() {
+	time.Sleep(1 * time.Second)
+	s.searchCancelled = true
+}
 func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	s.searchCancelled = false
 	board := s.moveGenerator.board
@@ -21,21 +28,26 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	s.initSearchTranspositionTable()
 	bestEval := -40000
 	totalEvaluated := 0
-	searchDepth := 2
 
 	var bestMove Move
-	for i := range moves {
-		move := &moves[i]
-		board.makeMove(move)
-
-		eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000)
-		totalEvaluated += positionsEvaluated
-		eval = -eval
-		if eval > bestEval {
-			bestMove = *move
-			bestEval = eval
+	go s.startSearchTimer()
+	for searchDepth := range 200 {
+		if s.searchCancelled {
+			break
 		}
-		board.unmakeMove(move)
+		for i := range moves {
+			move := &moves[i]
+			board.makeMove(move)
+
+			eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000)
+			totalEvaluated += positionsEvaluated
+			eval = -eval
+			if eval > bestEval {
+				bestMove = *move
+				bestEval = eval
+			}
+			board.unmakeMove(move)
+		}
 	}
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
@@ -45,9 +57,8 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
 	originalAlpha := alpha
-	if s.transpositionTable.table == nil {
-		s.initSearchTranspositionTable()
-	}
+	// if s.transpositionTable.table == nil {
+	// }
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
 
@@ -63,7 +74,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		}
 	}
 
-	if depth <= 0 {
+	if depth <= 0 || s.searchCancelled {
 		return s.searchOnlyCapturesForce(alpha, beta), 1
 	}
 	positionsEvaluated := 0
