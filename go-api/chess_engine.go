@@ -35,6 +35,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 		if s.searchCancelled {
 			break
 		}
+
 		for i := range moves {
 			move := &moves[i]
 			board.makeMove(move)
@@ -57,8 +58,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
 	originalAlpha := alpha
-	// if s.transpositionTable.table == nil {
-	// }
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
 
