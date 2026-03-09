@@ -212,3 +212,14 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
 	}
 }
+
+func TestMoveOrdering(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
+	mg := MoveGenerator{board: &board}
+
+	got, _, _ := mg.bestMove()
+	if got.startSquare != "b3" || got.endSquare != "a4" {
+		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
+	}
+}

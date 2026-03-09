@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -325,5 +326,20 @@ func TestMultipleMoves(t *testing.T) {
 
 	if result != 197281 {
 		t.Errorf("Failed RecursiveMoveGeneration")
+	}
+}
+
+func TestMoveOrdering(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
+	mg := MoveGenerator{board: &board}
+	moves := mg.generateMoves(false)
+	sort.Sort(MoveOrder(moves))
+
+	expected := []Move{
+		Move{},
+	}
+	if !reflect.DeepEqual(moves, expected) {
+		t.Errorf("Failed Move Ordering Test")
 	}
 }

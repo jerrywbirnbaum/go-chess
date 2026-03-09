@@ -10,7 +10,7 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 	tt := initTranspositionTable()
 	bestEval := -40000
 	totalEvaluated := 0
-	searchDepth := 3
+	searchDepth := 2
 
 	var bestMove Move
 	for i := range moves {
