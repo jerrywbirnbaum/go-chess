@@ -2,9 +2,6 @@ import { Chessboard } from 'react-chessboard';
 import { Chess } from 'chess.js';
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
-import { Loader } from 'react-overlay-loader';
-
-import 'react-overlay-loader/styles.css';
 
 const STORED_FEN_KEY = 'go-chess:fen';
 
@@ -248,88 +245,48 @@ function App() {
   };
 
   return (
-    <div
-      style={{
-        width: '100%',
-        minHeight: '100vh',
-        margin: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '1rem',
-        boxSizing: 'border-box',
-      }}
-      className="chessboard-container"
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '1rem',
-          width: '100%',
-          justifyContent: 'center',
-          flexWrap: 'wrap',
-        }}
-      >
-        <div style={{ width: `${boardSize}px`, height: `${boardSize}px`, maxWidth: '100%' }}>
+    <div className="app-shell">
+      <div className="app-layout">
+        <div className="board-panel" style={{ width: `${boardSize}px`, height: `${boardSize}px`, maxWidth: '100%' }}>
           <Chessboard options={chessboardOptions} />
         </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'stretch',
-            gap: '1rem',
-            width: '320px',
-            maxWidth: '100%',
-          }}
-        >
-          <h3 style={{ margin: 0 }}>{getGameStatus()}</h3>
-          <h3 style={{ margin: 0 }}>Positions Evaluated: {positionsEvaluated}</h3>
-          <h3 style={{ margin: 0 }}>Engine Evaluation: {engineEvaluation}</h3>
-
+        <aside className="side-panel">
+          <div className="panel-header">
+            <p className="panel-kicker">Play vs Engine</p>
+            <h1 className="panel-title">{getGameStatus()}</h1>
+          </div>
+          <div className="stats-grid">
+            <div className="stat-card">
+              <span className="stat-label">Positions Evaluated</span>
+              <strong className="stat-value">{positionsEvaluated}</strong>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Engine Evaluation</span>
+              <strong className="stat-value">{engineEvaluation}</strong>
+            </div>
+          </div>
+          <div className="control-stack">
           <button
             type="button"
             onClick={onNewGame}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
+            className="action-button"
           >
             New Game
           </button>
           <button
             type="button"
             onClick={makeEngineMove}
-            style={{
-              padding: '0.5rem 1rem',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-            }}
+            className="action-button action-button--secondary"
           >
             Engine Move
           </button>
+          </div>
 
           <form
             onSubmit={postTimer}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'stretch',
-              gap: '0.5rem',
-            }}
+            className="control-group"
           >
-            <label
-              htmlFor="engine-timer"
-              style={{
-                fontSize: '0.95rem',
-              }}
-            >
-              Engine timer
-            </label>
+            <label htmlFor="engine-timer" className="control-label">Engine timer</label>
             <input
               id="engine-timer"
               type="number"
@@ -347,40 +304,27 @@ function App() {
                 }
               }}
               placeholder="1"
-              style={{
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.95rem',
-                boxSizing: 'border-box',
-              }}
+              className="control-input"
             />
             <button
               type="submit"
               disabled={isSubmittingTimer}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                cursor: isSubmittingTimer ? 'wait' : 'pointer',
-                whiteSpace: 'nowrap',
-              }}
+              className="action-button"
             >
               {isSubmittingTimer ? 'Updating...' : 'Set Engine Time'}
             </button>
             {timerError ? (
-              <p style={{ margin: 0, color: '#b00020', fontSize: '0.9rem' }}>{timerError}</p>
+              <p className="message message--error">{timerError}</p>
             ) : null}
             {timerStatus ? (
-              <p style={{ margin: 0, color: '#1f5d2f', fontSize: '0.9rem' }}>{timerStatus}</p>
+              <p className="message message--success">{timerStatus}</p>
             ) : null}
           </form>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.5rem',
-            }}
-          >
+          <div className="control-group">
+            <label htmlFor="fen-input" className="control-label">Position (FEN)</label>
             <input
+              id="fen-input"
               type="text"
               value={fenInput}
               onChange={(event) => {
@@ -390,31 +334,29 @@ function App() {
                 }
               }}
               placeholder="Paste a FEN string"
-              style={{
-                padding: '0.5rem 0.75rem',
-                fontSize: '0.95rem',
-                boxSizing: 'border-box',
-              }}
+              className="control-input"
             />
             <button
               type="button"
               onClick={onImportFen}
-              style={{
-                padding: '0.5rem 1rem',
-                fontSize: '1rem',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-              }}
+              className="action-button action-button--secondary"
             >
               Import FEN
             </button>
           </div>
           {fenError ? (
-            <p style={{ margin: '0 0 1rem', color: '#b00020' }}>{fenError}</p>
+            <p className="message message--error">{fenError}</p>
           ) : null}
-        </div>
+        </aside>
       </div>
-      <Loader fullPage loading={isLoading} />
+      {isLoading ? (
+        <div className="loading-overlay" aria-live="polite" aria-label="Engine is thinking">
+          <div className="loading-dialog">
+            <div className="loading-spinner" aria-hidden="true" />
+            <p className="loading-text">Engine is thinking...</p>
+          </div>
+        </div>
+      ) : null}
     </div>
   )
 }
