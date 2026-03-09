@@ -17,6 +17,9 @@ func (s *ChessEngine) initSearchTranspositionTable() {
 }
 
 func (s *ChessEngine) startSearchTimer() {
+	if s.timer == 0 {
+		s.timer = 1000
+	}
 	time.Sleep(time.Duration(s.timer) * time.Millisecond)
 	s.searchCancelled = true
 }
