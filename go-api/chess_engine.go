@@ -9,6 +9,7 @@ type ChessEngine struct {
 	moveGenerator      MoveGenerator
 	transpositionTable TranspositionTable
 	searchCancelled    bool
+	timer              int
 }
 
 func (s *ChessEngine) initSearchTranspositionTable() {
@@ -16,9 +17,17 @@ func (s *ChessEngine) initSearchTranspositionTable() {
 }
 
 func (s *ChessEngine) startSearchTimer() {
-	time.Sleep(1 * time.Second)
+	if s.timer == 0 {
+		s.timer = 1
+	}
+	time.Sleep(time.Duration(s.timer) * time.Second)
 	s.searchCancelled = true
 }
+
+func (s *ChessEngine) setTimer(timer int) {
+	s.timer = timer
+}
+
 func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	s.searchCancelled = false
 	board := s.moveGenerator.board

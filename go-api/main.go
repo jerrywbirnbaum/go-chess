@@ -12,8 +12,14 @@ type ChessRequest struct {
 	FenString string `json:"fen" binding:"required"`
 }
 
+type TimerRequest struct {
+	TimeSeconds int `json:"timer" binding:"required"`
+}
+
 func main() {
 	board := initBoard()
+	moveGenerator := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: moveGenerator}
 
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
@@ -52,6 +58,23 @@ func main() {
 			"fen":                 receivedFen,
 			"positions_evaluated": positions_evaluated,
 			"engine_evaluation":   engine_evauluation,
+		})
+	})
+
+	r.POST("/set-timer", func(c *gin.Context) {
+		var json TimerRequest
+
+		if err := c.ShouldBindJSON(&json); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		timeSeconds := json.TimeSeconds
+		chessEngine.setTimer(timeSeconds)
+
+		c.JSON(http.StatusOK, gin.H{
+			"status": "success",
+			"timer":  timeSeconds,
 		})
 	})
 
