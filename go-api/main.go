@@ -40,7 +40,8 @@ func main() {
 		board.updateFromFEN(receivedFen)
 
 		moveGenerator := MoveGenerator{board: &board}
-		random_move, positions_evaluated, engine_evauluation := moveGenerator.bestMove()
+		chessEngine := ChessEngine{moveGenerator: moveGenerator}
+		random_move, positions_evaluated, engine_evauluation := chessEngine.bestMove()
 		fmt.Println("engine_evauluation")
 		fmt.Println(engine_evauluation)
 		c.JSON(http.StatusOK, gin.H{

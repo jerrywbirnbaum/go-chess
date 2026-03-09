@@ -2,12 +2,20 @@ package main
 
 import "sort"
 
-func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
-	board := *mg.board
-	localMoveGenerator := MoveGenerator{board: &board}
+type ChessEngine struct {
+	moveGenerator      MoveGenerator
+	transpositionTable TranspositionTable
+}
+
+func (s *ChessEngine) initSearchTranspositionTable() {
+	s.transpositionTable = initTranspositionTable()
+}
+func (s *ChessEngine) bestMove() (MoveString, int, int) {
+	board := s.moveGenerator.board
+	localMoveGenerator := MoveGenerator{board: board}
 	moves := localMoveGenerator.generateMoves(false)
 	sort.Sort(MoveOrder(moves))
-	tt := initTranspositionTable()
+	s.initSearchTranspositionTable()
 	bestEval := -40000
 	totalEvaluated := 0
 	searchDepth := 2
@@ -17,7 +25,7 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval, positionsEvaluated := searchBruteForce(searchDepth, -20000, 20000, &board, &tt)
+		eval, positionsEvaluated := searchBruteForce(searchDepth, -20000, 20000, board, &s.transpositionTable)
 		totalEvaluated += positionsEvaluated
 		eval = -eval
 		if eval > bestEval {

@@ -190,13 +190,14 @@ func TestBestMoveForcedMove(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
 	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
 
 	moves := mg.generateMoves(false)
 	if len(moves) != 3 {
 		t.Fatalf("expected three legal moves, got %d", len(moves))
 	}
 
-	got, _, _ := mg.bestMove()
+	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "h1" || got.endSquare != "g2" {
 		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
 	}
@@ -207,7 +208,8 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 	board.updateFromFEN("8/1p6/8/8/8/1k4K1/1Q4P1/2Q5 b - - 10 74")
 	mg := MoveGenerator{board: &board}
 
-	got, _, _ := mg.bestMove()
+	chessEngine := ChessEngine{moveGenerator: mg}
+	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "b3" || got.endSquare != "a4" {
 		t.Fatalf("bestMove selected %s%s, want b3a4", got.startSquare, got.endSquare)
 	}
@@ -217,8 +219,9 @@ func TestMoveOrdering(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
 	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
 
-	got, _, _ := mg.bestMove()
+	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "c4" || got.endSquare != "b2" {
 		t.Fatalf("bestMove selected %s%s, want c4b2", got.startSquare, got.endSquare)
 	}

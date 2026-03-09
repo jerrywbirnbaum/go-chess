@@ -31,11 +31,12 @@ func BenchmarkSearchOnlyCapturesForce_TacticalPosition(b *testing.B) {
 func BenchmarkBestMove_StartPosition(b *testing.B) {
 	board := initBoard()
 	moveGenerator := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: moveGenerator}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		benchmarkMoveSink, _, _ = moveGenerator.bestMove()
+		benchmarkMoveSink, _, _ = chessEngine.bestMove()
 	}
 }
 
@@ -43,10 +44,11 @@ func BenchmarkBestMove_MidgamePosition(b *testing.B) {
 	board := initBoard()
 	board.updateFromFEN("r3k2r/pp1n1ppp/2p1pn2/2bp4/2B5/2NP1NP1/PPQ1PPBP/R3K2R w KQkq - 0 11")
 	moveGenerator := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: moveGenerator}
 
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		benchmarkMoveSink, _, _ = moveGenerator.bestMove()
+		benchmarkMoveSink, _, _ = chessEngine.bestMove()
 	}
 }
