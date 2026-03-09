@@ -285,6 +285,11 @@ func (b *Board) makeMove(move *Move) {
 		}
 	}
 
+	//Null move
+	if move.isNull {
+		b.makeMoveUpdateSide(move)
+		return
+	}
 	//Pawn Promotion
 	if move.isPromotion {
 		var promotedPiece Piece
@@ -358,6 +363,11 @@ func (b *Board) unmakeMove(move *Move) {
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
 
+	//Null move
+	if move.isNull {
+		b.unmakeMoveUpdateSide(move)
+		return
+	}
 	//Enpassant
 	if move.isPromotion {
 		b.board[startRow][startCol] = move.startSquare.piece

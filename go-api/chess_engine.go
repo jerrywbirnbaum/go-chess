@@ -8,15 +8,16 @@ func (mg *MoveGenerator) bestMove() (MoveString, int, int) {
 	moves := localMoveGenerator.generateMoves(false)
 	sort.Sort(MoveOrder(moves))
 	tt := initTranspositionTable()
-
-	var bestMove Move
 	bestEval := -40000
 	totalEvaluated := 0
+	searchDepth := 3
+
+	var bestMove Move
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval, positionsEvaluated := searchBruteForce(3, -20000, 20000, &board, &tt)
+		eval, positionsEvaluated := searchBruteForce(searchDepth, -20000, 20000, &board, &tt)
 		totalEvaluated += positionsEvaluated
 		eval = -eval
 		if eval > bestEval {
@@ -46,7 +47,7 @@ func searchBruteForce(depth int, alpha int, beta int, board *Board, tt *Transpos
 		}
 	}
 
-	if depth == 0 {
+	if depth <= 0 {
 		return searchOnlyCapturesForce(alpha, beta, board), 1
 	}
 	positionsEvaluated := 0
@@ -64,6 +65,20 @@ func searchBruteForce(depth int, alpha int, beta int, board *Board, tt *Transpos
 
 	var currentMoveEval int
 	var currentPositionsEvaluated int
+
+	//null move pruning
+	nullMove := Move{isNull: true}
+	board.makeMove(&nullMove)
+	nullMoveDepthFactor := 2
+	eval, positionsEvaluated := searchBruteForce(depth-nullMoveDepthFactor, -beta, -alpha, board, tt)
+	eval = -eval
+	currentPositionsEvaluated += positionsEvaluated
+	board.unmakeMove(&nullMove)
+
+	if eval >= beta {
+		return eval, currentPositionsEvaluated
+	}
+
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)

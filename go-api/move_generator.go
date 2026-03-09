@@ -18,6 +18,7 @@ type Move struct {
 	isCastleKingSide     bool
 	isCastleQueenSide    bool
 	isPromotion          bool
+	isNull               bool
 	enpassantCapture     Piece
 }
 

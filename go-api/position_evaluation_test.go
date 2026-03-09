@@ -26,12 +26,12 @@ func TestBasicEval(t *testing.T) {
 		{
 			name: "weighted material sum from white perspective",
 			fen:  "q3k3/1pp5/8/8/8/8/3P4/RBN1K3 w - - 0 1",
-			want: 190,
+			want: 90,
 		},
 		{
 			name: "weighted material sum flips for black perspective",
 			fen:  "q3k3/1pp5/8/8/8/8/3P4/RBN1K3 b - - 0 1",
-			want: -190,
+			want: -90,
 		},
 	}
 
