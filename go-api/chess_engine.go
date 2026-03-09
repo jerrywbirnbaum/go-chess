@@ -5,12 +5,15 @@ import "sort"
 type ChessEngine struct {
 	moveGenerator      MoveGenerator
 	transpositionTable TranspositionTable
+	searchCancelled    bool
 }
 
 func (s *ChessEngine) initSearchTranspositionTable() {
 	s.transpositionTable = initTranspositionTable()
 }
+
 func (s *ChessEngine) bestMove() (MoveString, int, int) {
+	s.searchCancelled = false
 	board := s.moveGenerator.board
 	localMoveGenerator := MoveGenerator{board: board}
 	moves := localMoveGenerator.generateMoves(false)
@@ -25,7 +28,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 		move := &moves[i]
 		board.makeMove(move)
 
-		eval, positionsEvaluated := searchBruteForce(searchDepth, -20000, 20000, board, &s.transpositionTable)
+		eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000)
 		totalEvaluated += positionsEvaluated
 		eval = -eval
 		if eval > bestEval {
@@ -40,8 +43,10 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	return MoveString{startSquare: startSquare, endSquare: endSquare}, totalEvaluated, bestEval
 }
 
-func searchBruteForce(depth int, alpha int, beta int, board *Board, tt *TranspositionTable) (int, int) {
+func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
 	originalAlpha := alpha
+	board := s.moveGenerator.board
+	tt := s.transpositionTable
 
 	zHash := board.calculateZobrishHash()
 	isValid, ttDepth, flag, evaluation := tt.lookup(zHash)
@@ -78,7 +83,7 @@ func searchBruteForce(depth int, alpha int, beta int, board *Board, tt *Transpos
 	nullMove := Move{isNull: true}
 	board.makeMove(&nullMove)
 	nullMoveDepthFactor := 2
-	eval, positionsEvaluated := searchBruteForce(depth-nullMoveDepthFactor, -beta, -alpha, board, tt)
+	eval, positionsEvaluated := s.searchBruteForce(depth-nullMoveDepthFactor, -beta, -alpha)
 	eval = -eval
 	currentPositionsEvaluated += positionsEvaluated
 	board.unmakeMove(&nullMove)
@@ -90,7 +95,7 @@ func searchBruteForce(depth int, alpha int, beta int, board *Board, tt *Transpos
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval, currentPositionsEvaluated = searchBruteForce(depth-1, -beta, -alpha, board, tt)
+		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, -beta, -alpha)
 		positionsEvaluated += currentPositionsEvaluated
 		currentMoveEval = -currentMoveEval
 		if currentMoveEval >= beta {
