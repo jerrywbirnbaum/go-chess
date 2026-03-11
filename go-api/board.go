@@ -293,6 +293,7 @@ func (b *Board) makeMove(move *Move) {
 	//Pawn Promotion
 	if move.isPromotion {
 		var promotedPiece Piece
+		promotedPiece = newPieceTypeColor(move.promotionPieceType, b.currentColor())
 		if b.isWhiteTurn {
 			promotedPiece = newPiece('Q')
 		} else {

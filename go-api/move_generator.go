@@ -18,6 +18,7 @@ type Move struct {
 	isCastleKingSide     bool
 	isCastleQueenSide    bool
 	isPromotion          bool
+	promotionPieceType   PieceType
 	isNull               bool
 	enpassantCapture     Piece
 }
@@ -324,8 +325,7 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 	return checkMask
 }
 func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
-	// moves := []Move{}
-	moves := make([]Move, 0, 90)
+	moves := make([]Move, 0, 150)
 	color := mg.board.currentColor()
 
 	oppositeColor := oppositeColor(color)
@@ -726,21 +726,29 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 	// Forward Moves
 	currentRow := p.row
 	currentCol := p.col
-	if mg.board.cellEmpty(p.row+directions[0], p.col) {
-		if checkMask[currentRow+directions[0]][currentCol] == 1 {
-			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-			endSquare := Square{row: p.row + directions[0], col: p.col, piece: mg.board.board[p.row+directions[0]][p.col]}
-			if !onlyCaptures {
-				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	if !onlyCaptures {
+		if mg.board.cellEmpty(p.row+directions[0], p.col) {
+			if checkMask[currentRow+directions[0]][currentCol] == 1 {
+
+				startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+				endSquare := Square{row: p.row + directions[0], col: p.col, piece: mg.board.board[p.row+directions[0]][p.col]}
+				if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
+				} else {
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+				}
 			}
 		}
 	}
 
-	if p.row == startRow && mg.board.cellEmpty(p.row+directions[1], p.col) && mg.board.cellEmpty(p.row+directions[0], p.col) {
-		if checkMask[currentRow+directions[1]][currentCol] == 1 {
-			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-			endSquare := Square{row: p.row + directions[1], col: p.col, piece: mg.board.board[p.row+directions[1]][p.col]}
-			if !onlyCaptures {
+	if !onlyCaptures {
+		if p.row == startRow && mg.board.cellEmpty(p.row+directions[1], p.col) && mg.board.cellEmpty(p.row+directions[0], p.col) {
+			if checkMask[currentRow+directions[1]][currentCol] == 1 {
+				startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+				endSquare := Square{row: p.row + directions[1], col: p.col, piece: mg.board.board[p.row+directions[1]][p.col]}
 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 			}
 		}
@@ -751,9 +759,15 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 		if checkMask[currentRow+directions[0]][currentCol-1] == 1 {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: mg.board.board[p.row+directions[0]][p.col-1]}
-
-			if !onlyCaptures || !mg.board.cellEmpty(p.row+directions[0], p.col-1) {
-				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			if !mg.board.cellEmpty(p.row+directions[0], p.col-1) {
+				if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
+				} else {
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+				}
 			}
 		}
 	}
@@ -761,8 +775,15 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 		if checkMask[currentRow+directions[0]][currentCol+1] == 1 {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: mg.board.board[p.row+directions[0]][p.col+1]}
-			if !onlyCaptures || !mg.board.cellEmpty(p.row+directions[0], p.col+1) {
-				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+			if !mg.board.cellEmpty(p.row+directions[0], p.col+1) {
+				if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
+				} else {
+					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+				}
 			}
 		}
 	}
@@ -774,7 +795,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask [8][
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: ep_row, col: ep_col, piece: mg.board.board[ep_row][ep_col]}
 			enpassantMove := Move{startSquare: startSquare, endSquare: endSquare}
-			if !mg.enpassantCheck(enpassantMove, color) && (!onlyCaptures || mg.board.cellEmpty(ep_row, ep_col)) {
+			if !mg.enpassantCheck(enpassantMove, color) && (mg.board.cellEmpty(ep_row, ep_col)) {
 				moves = append(moves, enpassantMove)
 			}
 		}

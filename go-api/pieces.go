@@ -177,6 +177,7 @@ func pieceType(p Piece) PieceType {
 	}
 	return EmptyPieceType
 }
+
 func newPiece(r rune) Piece {
 	switch r {
 	case 'P':
@@ -248,4 +249,40 @@ func oppositeColor(c Color) Color {
 		return White
 	}
 	return White
+}
+
+func newPieceTypeColor(pt PieceType, c Color) Piece {
+	switch c {
+	case White:
+		switch pt {
+		case Pawn:
+			return WhitePawn
+		case Knight:
+			return WhiteKnight
+		case Bishop:
+			return WhiteBishop
+		case Rook:
+			return WhiteRook
+		case Queen:
+			return WhiteQueen
+		case King:
+			return WhiteKing
+		}
+	case Black:
+		switch pt {
+		case Pawn:
+			return BlackPawn
+		case Knight:
+			return BlackKnight
+		case Bishop:
+			return BlackBishop
+		case Rook:
+			return BlackRook
+		case Queen:
+			return BlackQueen
+		case King:
+			return BlackKing
+		}
+	}
+	return EmptyPiece
 }

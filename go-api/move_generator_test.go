@@ -272,6 +272,16 @@ func TestMoveGenerationChecksStarting(t *testing.T) {
 	}
 }
 
+func TestMoveGenerationPromotion(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("7k/3P4/8/8/8/8/8/8 w - - 0 1")
+	moveGenerator := MoveGenerator{board: &board}
+	moves := moveGenerator.generateMoves(false)
+	if len(moves) != 4 {
+		t.Errorf("Failed TestMoveGenerationPromotion")
+	}
+}
+
 func TestGenerateAttacksPawnOutOfBoundsGuard(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k6K/P7/8/8/8/8/8/8 w - - 0 1")
