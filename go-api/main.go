@@ -46,14 +46,12 @@ func main() {
 
 		board.updateFromFEN(receivedFen)
 
-		random_move, positions_evaluated, engine_evauluation := chessEngine.bestMove()
-		fmt.Println("engine_evauluation")
-		fmt.Println(engine_evauluation)
+		engine_move, positions_evaluated, engine_evauluation := chessEngine.bestMove()
 		c.JSON(http.StatusOK, gin.H{
 			"status":              "received",
-			"start_square":        random_move.startSquare,
-			"end_square":          random_move.endSquare,
-			"promotion":           "q",
+			"start_square":        engine_move.startSquare,
+			"end_square":          engine_move.endSquare,
+			"promotion":           engine_move.promotion,
 			"fen":                 receivedFen,
 			"positions_evaluated": positions_evaluated,
 			"engine_evaluation":   engine_evauluation,

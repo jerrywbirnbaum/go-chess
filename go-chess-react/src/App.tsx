@@ -164,8 +164,9 @@ function App() {
       chessGame.move({
         from: data.start_square,
         to: data.end_square,
-        promotion: "q",
+        promotion: data.promotion,
       });
+
       setPositionsEvaluated(data.positions_evaluated)
       setEngineEvaluation(data.engine_evaluation)
     } catch (error) {
@@ -192,7 +193,7 @@ function App() {
       chessGame.move({
         from: sourceSquare,
         to: targetSquare,
-        promotion: 'q' // always promote to a queen for example simplicity
+        promotion: 'q'
       });
 
       setChessPosition(chessGame.fen());

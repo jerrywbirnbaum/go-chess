@@ -26,6 +26,7 @@ type Move struct {
 type MoveString struct {
 	startSquare string
 	endSquare   string
+	promotion   string
 }
 
 type MoveGenerator struct {

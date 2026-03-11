@@ -65,7 +65,18 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
 	endSquare := toSquare(bestMove.endSquare.row, bestMove.endSquare.col)
-	return MoveString{startSquare: startSquare, endSquare: endSquare}, totalEvaluated, bestEval
+	promotion := "q"
+	if bestMove.isPromotion {
+		if bestMove.promotionPieceType == PieceType(Rook) {
+			promotion = "r"
+		} else if bestMove.promotionPieceType == PieceType(Bishop) {
+			promotion = "b"
+		} else if bestMove.promotionPieceType == PieceType(Knight) {
+			promotion = "n"
+		}
+
+	}
+	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion}, totalEvaluated, bestEval
 }
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
