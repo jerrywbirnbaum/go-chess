@@ -18,6 +18,20 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	}
 }
 
+func TestSearchBruteForceStalemate(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("K1kb2Q1/P1p5/2P5/8/8/8/8/8 b - - 0 1")
+
+	mg := MoveGenerator{board: &board}
+
+	chessEngine := ChessEngine{moveGenerator: mg}
+	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	want := 0
+	if got != want {
+		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
+	}
+}
+
 func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	// Forced line:
 	// 1. Rxa8 Qxa8, then no captures remain.

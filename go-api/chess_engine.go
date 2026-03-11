@@ -41,6 +41,9 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	var bestMove Move
 	go s.startSearchTimer()
 	for searchDepth := range 200 {
+		if searchDepth == 0 {
+			continue
+		}
 		if s.searchCancelled {
 			break
 		}
