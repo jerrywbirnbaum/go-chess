@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+type MoveEvaluation struct {
+	evaluation int
+	move       *Move
+}
 type ChessEngine struct {
 	moveGenerator      MoveGenerator
 	transpositionTable TranspositionTable
@@ -36,8 +40,10 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	sort.Sort(MoveOrder(moves))
 	bestEval := -40000
 	totalEvaluated := 0
+	sortedMoves := make([]MoveEvaluation, len(moves))
 
 	var bestMove Move
+	var bestMoveCurrentIteration Move
 	go s.startSearchTimer()
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
@@ -54,13 +60,22 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000)
 			totalEvaluated += positionsEvaluated
 			eval = -eval
+			sortedMoves[i] = MoveEvaluation{evaluation: eval, move: move}
 			if eval > bestEval {
-				bestMove = *move
+				bestMoveCurrentIteration = *move
 				bestEval = eval
 			}
 			board.unmakeMove(move)
 		}
+
+		//Sort moves for one iteration deeper in the order of the previous iteration
+		moves = nil
+		sort.Sort(MoveEvaluationOrder(sortedMoves))
+		for i := range sortedMoves {
+			moves = append(moves, *sortedMoves[i].move)
+		}
 	}
+	bestMove = bestMoveCurrentIteration
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
 	endSquare := toSquare(bestMove.endSquare.row, bestMove.endSquare.col)
@@ -205,4 +220,12 @@ func (a MoveOrder) Less(i, j int) bool {
 	}
 
 	return iPieceDiff > jPieceDiff
+}
+
+type MoveEvaluationOrder []MoveEvaluation
+
+func (a MoveEvaluationOrder) Len() int      { return len(a) }
+func (a MoveEvaluationOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a MoveEvaluationOrder) Less(i, j int) bool {
+	return a[i].evaluation > a[j].evaluation
 }
