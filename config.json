@@ -22,9 +22,9 @@
         "enabled": false
     },
     "opening": {
-        "file": "Silver_Suite.epd",
-        "format": 0,
-        "order": 0,
+        "file": "",
+        "format": 2,
+        "order": 1,
         "plies": -1,
         "start": 1
     },
@@ -60,7 +60,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 1344749396237376424,
+    "seed": 3476102771071846827,
     "variant": 0,
     "type": 0,
     "gauntlet_seeds": 1,
@@ -99,7 +99,7 @@
                 "tc": {
                     "increment": 100,
                     "fixed_time": 0,
-                    "time": 10000,
+                    "time": 100000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -124,7 +124,7 @@
                 "tc": {
                     "increment": 100,
                     "fixed_time": 0,
-                    "time": 10000,
+                    "time": 100000,
                     "moves": 0,
                     "timemargin": 0
                 },

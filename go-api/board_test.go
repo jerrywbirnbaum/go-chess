@@ -149,7 +149,7 @@ func TestCalculateZobrishHashPiecesOnly(t *testing.T) {
 	table := testZobrishTable()
 	board := Board{
 		isWhiteTurn:     true,
-		castleAvailable: "-",
+		castleAvailable: 0,
 		enpassant:       "-",
 		zobrishTable:    table,
 		pieceCount:      3,
@@ -172,7 +172,7 @@ func TestCalculateZobrishHashIncludesState(t *testing.T) {
 	table := testZobrishTable()
 	board := Board{
 		isWhiteTurn:     false,
-		castleAvailable: "Kq",
+		castleAvailable: CastleWK | CastleBQ,
 		enpassant:       "e3",
 		zobrishTable:    table,
 		pieceCount:      2,

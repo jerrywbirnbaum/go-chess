@@ -98,7 +98,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
 
-	zHash := board.calculateZobrishHash()
+	zHash := board.zobristHash
 	isValid, ttDepth, flag, evaluation := tt.lookup(zHash)
 	if isValid && ttDepth >= depth {
 		if flag == 0 {

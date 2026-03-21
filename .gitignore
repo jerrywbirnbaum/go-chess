@@ -3,3 +3,4 @@
 /go-api/go-chess
 /games/*
 *.epd
+config.json

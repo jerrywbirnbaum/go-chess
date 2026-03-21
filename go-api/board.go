@@ -13,15 +13,23 @@ type Square struct {
 	piece Piece
 }
 
+const (
+	CastleWK uint8 = 1 << iota
+	CastleWQ
+	CastleBK
+	CastleBQ
+)
+
 type Board struct {
 	board           [8][8]Piece
 	pieces          [32]Square
 	pieceCount      int
 	isWhiteTurn     bool
 	enpassant       string
-	castleAvailable string
+	castleAvailable uint8
 	moveCount       int
 	zobrishTable    [781]int64
+	zobristHash     int64
 }
 
 func (b Board) cellEmpty(row int, col int) bool {
@@ -54,9 +62,8 @@ func (b *Board) updateFromFEN(fen_string string) {
 	turn := fen_list[1]
 	b.updateTurnFEN(turn)
 
-	// TODO: Update castle and enpassant rules
 	castle := fen_list[2]
-	b.castleAvailable = castle
+	b.castleAvailable = parseCastleRights(castle)
 	en_passant := fen_list[3]
 	b.enpassant = en_passant
 	// halfmove_clock := fen_list[4]
@@ -64,7 +71,7 @@ func (b *Board) updateFromFEN(fen_string string) {
 
 	b.updateBoardFEN(board_fen_string)
 	b.rebuildPieceList()
-
+	b.zobristHash = b.calculateZobrishHash()
 }
 func (b *Board) updateTurnFEN(turn_fen_string string) {
 	if strings.ContainsRune(turn_fen_string, 'w') {
@@ -180,16 +187,29 @@ func initBoard() Board {
 		},
 		isWhiteTurn: true,
 	}
-	board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 	board.zobrishTable = board.zobrishHashTable()
+	board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 	return board
 }
 
-func removeCastleRight(castle string, right string) string {
-	return strings.ReplaceAll(castle, right, "")
+func parseCastleRights(s string) uint8 {
+	var rights uint8
+	for _, c := range s {
+		switch c {
+		case 'K':
+			rights |= CastleWK
+		case 'Q':
+			rights |= CastleWQ
+		case 'k':
+			rights |= CastleBK
+		case 'q':
+			rights |= CastleBQ
+		}
+	}
+	return rights
 }
 
-func updateCastleRights(castle string, move *Move) string {
+func updateCastleRights(castle uint8, move *Move) uint8 {
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
 	endRow := move.endSquare.row
@@ -200,41 +220,36 @@ func updateCastleRights(castle string, move *Move) string {
 
 	if isKing(startPieceType) {
 		if movingWhite {
-			castle = removeCastleRight(castle, "K")
-			castle = removeCastleRight(castle, "Q")
+			castle &^= CastleWK | CastleWQ
 		} else {
-			castle = removeCastleRight(castle, "k")
-			castle = removeCastleRight(castle, "q")
+			castle &^= CastleBK | CastleBQ
 		}
 	}
 
 	if isRook(startPieceType) {
 		if startRow == 7 && startCol == 7 {
-			castle = removeCastleRight(castle, "K")
+			castle &^= CastleWK
 		} else if startRow == 7 && startCol == 0 {
-			castle = removeCastleRight(castle, "Q")
+			castle &^= CastleWQ
 		} else if startRow == 0 && startCol == 7 {
-			castle = removeCastleRight(castle, "k")
+			castle &^= CastleBK
 		} else if startRow == 0 && startCol == 0 {
-			castle = removeCastleRight(castle, "q")
+			castle &^= CastleBQ
 		}
 	}
 
 	if isRook(endPieceType) {
 		if endRow == 7 && endCol == 7 {
-			castle = removeCastleRight(castle, "K")
+			castle &^= CastleWK
 		} else if endRow == 7 && endCol == 0 {
-			castle = removeCastleRight(castle, "Q")
+			castle &^= CastleWQ
 		} else if endRow == 0 && endCol == 7 {
-			castle = removeCastleRight(castle, "k")
+			castle &^= CastleBK
 		} else if endRow == 0 && endCol == 0 {
-			castle = removeCastleRight(castle, "q")
+			castle &^= CastleBQ
 		}
 	}
 
-	if castle == "" {
-		return "-"
-	}
 	return castle
 }
 
@@ -254,6 +269,15 @@ func updateEnpassantSquare(move *Move) string {
 }
 
 func (b *Board) makeMoveUpdateSide(move *Move) {
+	if b.castleAvailable != move.nextCastleRights {
+		b.xorCastleKey(b.castleAvailable)
+		b.xorCastleKey(move.nextCastleRights)
+	}
+	if b.enpassant != move.nextEnpassant {
+		b.xorEnpassantKey(b.enpassant)
+		b.xorEnpassantKey(move.nextEnpassant)
+	}
+	b.zobristHash ^= b.zobrishTable[768] // toggle side to move
 	b.castleAvailable = move.nextCastleRights
 	b.enpassant = move.nextEnpassant
 	b.moveCount += 1
@@ -285,6 +309,8 @@ func (b *Board) makeMove(move *Move) {
 		}
 	}
 
+	move.previousZobristHash = b.zobristHash
+
 	//Null move
 	if move.isNull {
 		b.makeMoveUpdateSide(move)
@@ -299,6 +325,9 @@ func (b *Board) makeMove(move *Move) {
 		} else {
 			promotedPiece = newPiece('q')
 		}
+		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
+		b.xorPieceSquare(promotedPiece, endRow, endCol)
 		b.board[endRow][endCol] = promotedPiece
 		b.board[startRow][startCol] = newPiece('*')
 		b.removePieceFromList(startRow, startCol)
@@ -308,6 +337,9 @@ func (b *Board) makeMove(move *Move) {
 	}
 	//Enpassant
 	if move.isEnpassant {
+		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(move.enpassantCapture, startRow, endCol)
+		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
 		b.board[endRow][endCol] = move.startSquare.piece
 		b.board[startRow][endCol] = newPiece('*')
 		b.board[startRow][startCol] = newPiece('*')
@@ -320,6 +352,11 @@ func (b *Board) makeMove(move *Move) {
 
 	//Castling
 	if move.isCastleKingSide {
+		rookPiece := b.board[startRow][7]
+		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(rookPiece, startRow, 7)
+		b.xorPieceSquare(move.startSquare.piece, startRow, 6)
+		b.xorPieceSquare(rookPiece, startRow, 5)
 		b.board[startRow][6] = move.startSquare.piece
 		b.board[startRow][5] = b.board[startRow][7]
 		b.board[startRow][startCol] = newPiece('*')
@@ -331,6 +368,11 @@ func (b *Board) makeMove(move *Move) {
 		b.makeMoveUpdateSide(move)
 		return
 	} else if move.isCastleQueenSide {
+		rookPiece := b.board[startRow][0]
+		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(rookPiece, startRow, 0)
+		b.xorPieceSquare(move.startSquare.piece, startRow, 2)
+		b.xorPieceSquare(rookPiece, startRow, 3)
 		b.board[startRow][2] = move.startSquare.piece
 		b.board[startRow][3] = b.board[startRow][0]
 		b.board[startRow][startCol] = newPiece('*')
@@ -344,6 +386,9 @@ func (b *Board) makeMove(move *Move) {
 	}
 
 	//Normal Move
+	b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+	b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
+	b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
 	b.board[startRow][startCol] = newPiece('*')
 	b.board[endRow][endCol] = move.startSquare.piece
 	b.removePieceFromList(startRow, startCol)
@@ -359,6 +404,8 @@ func (b *Board) unmakeMoveUpdateSide(move *Move) {
 }
 
 func (b *Board) unmakeMove(move *Move) {
+	b.zobristHash = move.previousZobristHash
+
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
 	endRow := move.endSquare.row
@@ -466,6 +513,33 @@ func calculateZobristIndex(piece Piece, row int, col int) int {
 	return index
 
 }
+func (b *Board) xorPieceSquare(piece Piece, row, col int) {
+	if !isEmpty(piece) {
+		b.zobristHash ^= b.zobrishTable[calculateZobristIndex(piece, row, col)]
+	}
+}
+
+func (b *Board) xorCastleKey(castle uint8) {
+	if castle&CastleWK != 0 {
+		b.zobristHash ^= b.zobrishTable[769]
+	}
+	if castle&CastleWQ != 0 {
+		b.zobristHash ^= b.zobrishTable[770]
+	}
+	if castle&CastleBK != 0 {
+		b.zobristHash ^= b.zobrishTable[771]
+	}
+	if castle&CastleBQ != 0 {
+		b.zobristHash ^= b.zobrishTable[772]
+	}
+}
+
+func (b *Board) xorEnpassantKey(ep string) {
+	if ep != "-" {
+		b.zobristHash ^= b.zobrishTable[733+int(ep[0]-'a')]
+	}
+}
+
 func (b *Board) calculateZobrishHash() int64 {
 	var hash int64
 	hash = 0
@@ -477,16 +551,16 @@ func (b *Board) calculateZobrishHash() int64 {
 		hash = hash ^ b.zobrishTable[768]
 	}
 
-	if strings.Contains(b.castleAvailable, "K") {
+	if b.castleAvailable&CastleWK != 0 {
 		hash = hash ^ b.zobrishTable[769]
 	}
-	if strings.Contains(b.castleAvailable, "Q") {
+	if b.castleAvailable&CastleWQ != 0 {
 		hash = hash ^ b.zobrishTable[770]
 	}
-	if strings.Contains(b.castleAvailable, "k") {
+	if b.castleAvailable&CastleBK != 0 {
 		hash = hash ^ b.zobrishTable[771]
 	}
-	if strings.Contains(b.castleAvailable, "q") {
+	if b.castleAvailable&CastleBQ != 0 {
 		hash = hash ^ b.zobrishTable[772]
 	}
 

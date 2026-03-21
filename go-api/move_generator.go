@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"strings"
 	"time"
 )
 
@@ -11,9 +10,9 @@ type Move struct {
 	startSquare          Square
 	endSquare            Square
 	previousEnpassant    string
-	previousCastleRights string
+	previousCastleRights uint8
 	nextEnpassant        string
-	nextCastleRights     string
+	nextCastleRights     uint8
 	isEnpassant          bool
 	isCastleKingSide     bool
 	isCastleQueenSide    bool
@@ -21,6 +20,7 @@ type Move struct {
 	promotionPieceType   PieceType
 	isNull               bool
 	enpassantCapture     Piece
+	previousZobristHash  int64
 }
 
 type MoveString struct {
@@ -410,7 +410,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask [8][8]int) []Mov
 	moves := []Move{}
 	availability := mg.board.castleAvailable
 
-	if color == Color(White) && strings.Contains(availability, "K") {
+	if color == Color(White) && availability&CastleWK != 0 {
 		if checkMask[7][4] == 0 && checkMask[7][5] == 0 && checkMask[7][6] == 0 {
 			if mg.board.cellEmpty(7, 5) && mg.board.cellEmpty(7, 6) && mg.board.board[7][7] == newPiece('R') && mg.board.board[7][4] == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
@@ -420,7 +420,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask [8][8]int) []Mov
 		}
 	}
 
-	if color == Color(White) && strings.Contains(availability, "Q") {
+	if color == Color(White) && availability&CastleWQ != 0 {
 		if checkMask[7][4] == 0 && checkMask[7][3] == 0 && checkMask[7][2] == 0 {
 			if mg.board.cellEmpty(7, 1) && mg.board.cellEmpty(7, 2) && mg.board.cellEmpty(7, 3) && mg.board.board[7][0] == newPiece('R') && mg.board.board[7][4] == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
@@ -430,7 +430,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask [8][8]int) []Mov
 		}
 	}
 
-	if color == Color(Black) && strings.Contains(availability, "k") {
+	if color == Color(Black) && availability&CastleBK != 0 {
 		if checkMask[0][4] == 0 && checkMask[0][5] == 0 && checkMask[0][6] == 0 {
 			if mg.board.cellEmpty(0, 5) && mg.board.cellEmpty(0, 6) && mg.board.board[0][7] == newPiece('r') && mg.board.board[0][4] == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
@@ -440,7 +440,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask [8][8]int) []Mov
 		}
 	}
 
-	if color == Color(Black) && strings.Contains(availability, "q") {
+	if color == Color(Black) && availability&CastleBQ != 0 {
 		if checkMask[0][4] == 0 && checkMask[0][3] == 0 && checkMask[0][2] == 0 {
 			if mg.board.cellEmpty(0, 1) && mg.board.cellEmpty(0, 2) && mg.board.cellEmpty(0, 3) && mg.board.board[0][0] == newPiece('r') && mg.board.board[0][4] == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}

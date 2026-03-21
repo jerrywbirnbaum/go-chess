@@ -187,8 +187,8 @@ func TestBoardUpdateCastle_WhiteQueensideRookMoveClearsQOnly(t *testing.T) {
 	}
 	board.makeMove(&move)
 
-	if board.castleAvailable != "K" {
-		t.Fatalf("expected castle rights to be K after moving a1 rook, got %q", board.castleAvailable)
+	if board.castleAvailable != CastleWK {
+		t.Fatalf("expected castle rights to be CastleWK after moving a1 rook, got %d", board.castleAvailable)
 	}
 }
 
