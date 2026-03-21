@@ -157,19 +157,23 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 
 func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) int {
 	board := s.moveGenerator.board
+	playerInCheck := board.playerInCheck()
 	standPat := basicEval(*board)
-	if standPat >= beta {
-		return beta
-	}
-	if standPat > alpha {
-		alpha = standPat
+
+	if !playerInCheck {
+		if standPat >= beta {
+			return beta
+		}
+		if standPat > alpha {
+			alpha = standPat
+		}
 	}
 
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(true)
 
 	if len(moves) == 0 {
-		if board.playerInCheck() {
+		if board.playerInCheck() && len(moveGenerator.generateMoves(false)) == 0 {
 			return -20000
 		} else {
 			return standPat
