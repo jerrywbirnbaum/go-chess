@@ -4,3 +4,4 @@
 /games/*
 *.epd
 config.json
+./config.json

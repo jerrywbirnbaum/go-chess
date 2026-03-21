@@ -22,9 +22,9 @@
         "enabled": false
     },
     "opening": {
-        "file": "",
-        "format": 2,
-        "order": 1,
+        "file": "Silver_Suite.epd",
+        "format": 0,
+        "order": 0,
         "plies": -1,
         "start": 1
     },
@@ -32,7 +32,7 @@
         "additional_lines_rgx": [],
         "event_name": "Fastchess Tournament",
         "site": "?",
-        "file": "./games/round1.pgn",
+        "file": "./games/new-vs-old-book.pgn",
         "notation": 0,
         "append_file": false,
         "track_nodes": true,
@@ -60,7 +60,7 @@
     },
     "config_name": "config.json",
     "output": 0,
-    "seed": 15326431903036514866,
+    "seed": 5029238738881845365,
     "variant": 0,
     "type": 0,
     "gauntlet_seeds": 1,
@@ -69,7 +69,7 @@
     "wait": 0,
     "autosaveinterval": 20,
     "games": 2,
-    "rounds": 1,
+    "rounds": 10,
     "concurrency": 4,
     "force_concurrency": false,
     "recover": false,
@@ -99,7 +99,7 @@
                 "tc": {
                     "increment": 100,
                     "fixed_time": 0,
-                    "time": 100000,
+                    "time": 10000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -109,22 +109,17 @@
             "variant": 0
         },
         {
-            "name": "Stockfish",
+            "name": "GoChessOld",
             "dir": "",
-            "cmd": "stockfish",
-            "args": "",
+            "cmd": "./go-api/go-chess-old",
+            "args": "uci",
             "restart": false,
-            "options": [
-                [
-                    "UCI_Elo",
-                    "1320"
-                ]
-            ],
+            "options": [],
             "limit": {
                 "tc": {
                     "increment": 100,
                     "fixed_time": 0,
-                    "time": 100000,
+                    "time": 10000,
                     "moves": 0,
                     "timemargin": 0
                 },
@@ -135,16 +130,16 @@
         }
     ],
     "stats": {
-        "GoChess vs Stockfish": {
-            "wins": 0,
-            "losses": 2,
-            "draws": 0,
+        "GoChess vs GoChessOld": {
+            "wins": 5,
+            "losses": 10,
+            "draws": 5,
             "penta_WW": 0,
-            "penta_WD": 0,
-            "penta_WL": 0,
-            "penta_DD": 0,
-            "penta_LD": 0,
-            "penta_LL": 1
+            "penta_WD": 1,
+            "penta_WL": 4,
+            "penta_DD": 1,
+            "penta_LD": 2,
+            "penta_LL": 2
         }
     }
 }
