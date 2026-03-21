@@ -90,7 +90,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 		}
 
 	}
-	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion}, totalEvaluated, bestEval
+	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.isPromotion}, totalEvaluated, bestEval
 }
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {

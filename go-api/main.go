@@ -1,5 +1,7 @@
 package main
 
+import "os"
+
 type ChessRequest struct {
 	FenString string `json:"fen" binding:"required"`
 }
@@ -14,7 +16,12 @@ func main() {
 	chessEngine := ChessEngine{moveGenerator: moveGenerator}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.setTimer(1000)
-	router := NewRouter(&chessEngine, &board)
 
+	if len(os.Args) > 1 && os.Args[1] == "uci" {
+		runUCI(&chessEngine, &board)
+		return
+	}
+
+	router := NewRouter(&chessEngine, &board)
 	router.Run()
 }
