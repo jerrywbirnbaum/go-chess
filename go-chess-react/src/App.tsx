@@ -208,7 +208,7 @@ function App() {
     }
   }
 
-  function onNewGame() {
+  async function onNewGame() {
     if (engineMoveTimeoutRef.current) {
       window.clearTimeout(engineMoveTimeoutRef.current);
       engineMoveTimeoutRef.current = null;
@@ -217,6 +217,17 @@ function App() {
     setLoading(false);
     setFenError('');
     setChessPosition(chessGame.fen());
+    try {
+      const response = await fetch(
+        "/api/new-game",
+        {
+          method: "POST",
+        },
+      );
+      await response.json();
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   function onImportFen() {

@@ -16,6 +16,7 @@ type TimerRequest struct {
 	TimeSeconds int `json:"timer" binding:"required"`
 }
 
+
 func main() {
 	board := initBoard()
 	moveGenerator := MoveGenerator{board: &board}
@@ -32,6 +33,14 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
+
+	r.POST("/new-game", func(c *gin.Context) {
+		chessEngine.initSearchTranspositionTable()
+		board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+		})
+	})
 
 	r.POST("/generate-moves", func(c *gin.Context) {
 		var json ChessRequest
