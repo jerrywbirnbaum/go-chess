@@ -102,7 +102,9 @@ func handleGo(engine *ChessEngine, board *Board, args []string) {
 	}
 
 	engine.setTimer(timeMs)
-	move, _, _ := engine.bestMove()
+	move, nodes, eval := engine.bestMove()
+
+	fmt.Printf("info nodes %d score cp %d\n", nodes, eval)
 
 	moveStr := move.startSquare + move.endSquare
 	if move.isPromotion {

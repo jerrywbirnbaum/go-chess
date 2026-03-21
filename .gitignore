@@ -1,3 +1,5 @@
 .DS_Store
 /go-api/chess-engine
 /go-api/go-chess
+/games/*
+*.epd
