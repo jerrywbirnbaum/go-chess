@@ -34,7 +34,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	localMoveGenerator := MoveGenerator{board: board}
 	moves := localMoveGenerator.generateMoves(false)
 	sort.Sort(MoveOrder(moves))
-	s.initSearchTranspositionTable()
 	bestEval := -40000
 	totalEvaluated := 0
 

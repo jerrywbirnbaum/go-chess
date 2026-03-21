@@ -20,6 +20,7 @@ func main() {
 	board := initBoard()
 	moveGenerator := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: moveGenerator}
+	chessEngine.initSearchTranspositionTable()
 	chessEngine.setTimer(1000)
 
 	r := gin.Default()

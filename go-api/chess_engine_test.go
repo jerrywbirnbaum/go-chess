@@ -11,6 +11,7 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(0, -20000, 20000)
 	want := basicEval(board)
 	if got != want {
@@ -25,6 +26,7 @@ func TestSearchBruteForceStalemate(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
 	want := 0
 	if got != want {
@@ -41,6 +43,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(0, -20000, 20000)
 
 	moveGenerator := MoveGenerator{board: &board}
@@ -86,6 +89,7 @@ func TestSearchBruteForceCheckmateReturnsNegativeInfinity(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
 	if got != -20000 {
 		t.Fatalf("checkmate position should evaluate to -20000, got %v", got)
@@ -99,6 +103,7 @@ func TestSearchBruteForceStalemateReturnsZero(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
 	if got != 0 {
 		t.Fatalf("stalemate position should evaluate to 0, got %v", got)
@@ -235,6 +240,7 @@ func TestBestMoveForcedMove(t *testing.T) {
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
 	mg := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 
 	moves := mg.generateMoves(false)
 	if len(moves) != 3 {
@@ -253,6 +259,7 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "b3" || got.endSquare != "a4" {
 		t.Fatalf("bestMove selected %s%s, want b3a4", got.startSquare, got.endSquare)
@@ -264,6 +271,7 @@ func TestMoveOrdering(t *testing.T) {
 	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
 	mg := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
 
 	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "c4" || got.endSquare != "b2" {
