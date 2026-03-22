@@ -20,12 +20,16 @@ func (s *ChessEngine) initSearchTranspositionTable() {
 	s.transpositionTable = initTranspositionTable()
 }
 
-func (s *ChessEngine) startSearchTimer() {
-	if s.timer == 0 {
-		s.timer = 1000
+func (s *ChessEngine) startSearchTimer(done <-chan struct{}) {
+	timer := s.timer
+	if timer == 0 {
+		timer = 1000
 	}
-	time.Sleep(time.Duration(s.timer) * time.Millisecond)
-	s.searchCancelled = true
+	select {
+	case <-time.After(time.Duration(timer) * time.Millisecond):
+		s.searchCancelled = true
+	case <-done:
+	}
 }
 
 func (s *ChessEngine) setTimer(timer int) {
@@ -45,7 +49,9 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	var bestMove Move
 	var bestMoveCurrentIteration Move
 
-	go s.startSearchTimer()
+	done := make(chan struct{})
+	defer close(done)
+	go s.startSearchTimer(done)
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
 			continue
