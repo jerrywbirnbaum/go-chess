@@ -214,6 +214,10 @@ func basicEval(b Board) int {
 	whiteMaterial := 0
 	blackMaterial := 0
 
+	if b.isThreeFoldRepitition {
+		return 0
+	}
+
 	for _, p := range pieces {
 		color := getColor(p.piece)
 		pieceType := pieceType(p.piece)

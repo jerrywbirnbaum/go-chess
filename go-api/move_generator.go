@@ -31,7 +31,8 @@ type MoveString struct {
 }
 
 type MoveGenerator struct {
-	board *Board
+	board           *Board
+	repititionTable *RepititionTable
 }
 
 func inBounds(row int, col int) bool {
