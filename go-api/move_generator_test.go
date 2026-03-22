@@ -372,3 +372,33 @@ func TestMoveSortFunction(t *testing.T) {
 		t.Errorf("Failed Move Ordering Test")
 	}
 }
+
+func TestMoveGenerationFailingPosition(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("1r1R1k2/b4ppp/p7/p1p5/4p1q1/2P5/5P1P/5Q1K b - - 1 22")
+	moveGenerator := MoveGenerator{board: &board}
+	moves := moveGenerator.generateMoves(false)
+	if len(moves) != 2 {
+		t.Errorf("Failed TestMoveGenerationFailingPosition")
+	}
+}
+
+func TestMoveGenerationPinnedFriendlyPawn(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("1r1R1k2/b4ppp/p7/p1p5/4p1q1/2P5/7P/5Q1K b - - 1 22")
+	moveGenerator := MoveGenerator{board: &board}
+	moves := moveGenerator.generateMoves(false)
+	if len(moves) != 2 {
+		t.Errorf("Failed TestMoveGenerationPinnedFriendlyPawn")
+	}
+}
+
+func TestMoveGenerationPinnedEnemyPawn(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("1r1R1k2/b5pp/p7/p1p5/4p1q1/2P5/5P1P/5Q1K b - - 1 22")
+	moveGenerator := MoveGenerator{board: &board}
+	moves := moveGenerator.generateMoves(false)
+	if len(moves) != 3 {
+		t.Errorf("Failed TestMoveGenerationPinnedEnemyPawn")
+	}
+}

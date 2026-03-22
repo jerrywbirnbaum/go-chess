@@ -2,6 +2,7 @@
 /go-api/chess-engine
 /go-api/go-chess
 /games/*
+/binaries/*
 *.epd
 config.json
 ./config.json

@@ -320,8 +320,6 @@ func (b *Board) makeMove(move *Move) {
 	if move.isPromotion {
 		var promotedPiece Piece
 		promotedPiece = newPieceTypeColor(move.promotionPieceType, b.currentColor())
-
-		promotedPiece = newPieceTypeColor(move.promotionPieceType, b.currentColor())
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
 		b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
 		b.xorPieceSquare(promotedPiece, endRow, endCol)

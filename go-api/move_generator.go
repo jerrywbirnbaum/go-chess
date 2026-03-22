@@ -296,6 +296,13 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 
 			pieceType := pieceType(mg.board.board[row][col])
 
+			if !mg.board.cellEmpty(row, col) && !mg.board.canCapture(row, col, color) {
+				break
+			}
+
+			if !mg.board.cellEmpty(row, col) && !isSlidingPiece(pieceType) {
+				break
+			}
 			if mg.board.canCapture(row, col, color) && (isSlidingPiece(pieceType) || isPinRay) {
 				if !isPinRay && isDiagonal && isRook(pieceType) {
 					break
@@ -561,6 +568,8 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 		for j := range 8 {
 			if pinnedMask[i][j] > 0 && checkMask[i][j] > 0 {
 				pinnedMask[i][j] = 1
+			} else {
+				pinnedMask[i][j] = 0
 			}
 		}
 	}
