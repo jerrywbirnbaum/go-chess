@@ -44,14 +44,17 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 
 	var bestMove Move
 	var bestMoveCurrentIteration Move
+
 	go s.startSearchTimer()
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
 			continue
 		}
+
 		if s.searchCancelled {
 			break
 		}
+		bestEval = -40000
 
 		for i := range moves {
 			move := &moves[i]
@@ -110,9 +113,15 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		}
 	}
 
-	if depth <= 0 || s.searchCancelled {
+	if depth <= 0 {
 		return s.searchOnlyCapturesForce(alpha, beta), 1
 	}
+
+	if s.searchCancelled {
+		//Return a high number if search is cancelled so opponent will not take unevaluated moves
+		return 60000, 0
+	}
+
 	positionsEvaluated := 0
 
 	moveGenerator := MoveGenerator{board: board}
