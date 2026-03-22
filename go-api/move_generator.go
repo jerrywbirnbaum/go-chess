@@ -628,8 +628,9 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
 						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 					}
-					break
 				}
+
+				break
 			} else {
 				if isAttacks {
 					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}

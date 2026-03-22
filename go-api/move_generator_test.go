@@ -402,3 +402,13 @@ func TestMoveGenerationPinnedEnemyPawn(t *testing.T) {
 		t.Errorf("Failed TestMoveGenerationPinnedEnemyPawn")
 	}
 }
+
+func TestMoveGenerationCheckBlocked(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("5rk1/5pp1/1Q2p2p/r1n5/1p1bP3/8/PP3qPP/RR4K1 w - - 0 18")
+	moveGenerator := MoveGenerator{board: &board}
+	moves := moveGenerator.generateMoves(false)
+	if len(moves) != 1 {
+		t.Errorf("Failed TestMoveGenerationCheck")
+	}
+}
