@@ -21,3 +21,13 @@ docker compose up --build
 
 The UI then can be accessed at:
 http://localhost:5173
+
+## Running against stockfish
+To run against stockfish install fastchess, compile the project and then run a command similar to this:
+
+fastchess \
+      -engine cmd="./go-api/go-chess" args="uci" name=GoChess \
+      -engine cmd="stockfish" name=Stockfish \
+      -each tc=20+0.2 -openings file=piece_odds.epd format=epd \
+      -rounds 3 -concurrency 4 -pgnout append=false notation=san nodes=true file=./games/round1.pgn \
+      -resign movecount=60 score=1500 -recover
