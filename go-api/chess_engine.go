@@ -132,7 +132,6 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(false)
-	sort.Sort(MoveOrder(moves))
 	if len(moves) == 0 {
 		if board.playerInCheck() {
 			return -20000 - depth, 1
@@ -140,6 +139,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 			return 0, 1
 		}
 	}
+	sort.Sort(MoveOrder(moves))
 
 	var currentMoveEval int
 	var currentPositionsEvaluated int

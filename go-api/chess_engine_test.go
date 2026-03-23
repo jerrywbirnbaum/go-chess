@@ -235,6 +235,18 @@ func TestSearchBruteForceTranspositionIgnoresUnmetLowerBound(t *testing.T) {
 	}
 }
 
+func TestSearchAvoidCheckmate(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("8/p1kr2p1/2p5/b7/6Q1/PP1b4/1R3PPP/3r1BKR b - - 10 29")
+
+	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
+	gotEval, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	if gotEval != 20000 {
+		t.Fatalf("Failed TestSearchAvoidCheckmate: got %d", gotEval)
+	}
+}
 func TestBestMoveForcedMove(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
@@ -263,6 +275,19 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "b3" || got.endSquare != "a4" {
 		t.Fatalf("bestMove selected %s%s, want b3a4", got.startSquare, got.endSquare)
+	}
+}
+
+func TestBestMoveQueenCapturesRookWithCheck(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("8/p1kr2p1/2p5/b7/8/PP1b3Q/1R3PPP/3r1BKR w - - 9 29")
+	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
+
+	got, _, _ := chessEngine.bestMove()
+	if got.startSquare != "h3" || got.endSquare != "g3" {
+		t.Fatalf("bestMove selected %s%s, want g2g3", got.startSquare, got.endSquare)
 	}
 }
 
