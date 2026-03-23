@@ -306,6 +306,19 @@ func TestBestMoveQueenFork(t *testing.T) {
 	}
 }
 
+func TestBestMoveIllegal(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("1r3rk1/ppp1qppp/2Pbb3/6N1/2P2p2/3BB3/P1P2PPP/RQ3RK1 b - - 0 1")
+	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.setTimer(100)
+	chessEngine.initSearchTranspositionTable()
+
+	got, _, _ := chessEngine.bestMove()
+	if got.endSquare == "a8" {
+		t.Fatalf("bestMove selected %s%s, can't be a8a8", got.startSquare, got.endSquare)
+	}
+}
 func TestMoveOrdering(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")

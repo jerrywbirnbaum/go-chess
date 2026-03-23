@@ -77,6 +77,9 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			board.unmakeMove(move)
 		}
 		if s.searchCancelled {
+			if bestMove == (Move{}) {
+				bestMove = bestMoveCurrentIteration
+			}
 			break
 		}
 
