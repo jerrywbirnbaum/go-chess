@@ -198,8 +198,8 @@ func TestCalculateZobrishHashRestoresAfterUnmakeMove(t *testing.T) {
 	initialHash := board.calculateZobrishHash()
 
 	move := Move{
-		startSquare: Square{row: 6, col: 4, piece: board.board[6][4]},
-		endSquare:   Square{row: 4, col: 4, piece: board.board[4][4]},
+		startSquare: Square{row: 6, col: 4, piece: board.getCell(6, 4)},
+		endSquare:   Square{row: 4, col: 4, piece: board.getCell(4, 4)},
 	}
 	board.makeMove(&move)
 	board.unmakeMove(&move)

@@ -34,22 +34,30 @@ type Board struct {
 	isThreeFoldRepitition bool
 }
 
-func (b Board) cellEmpty(row int, col int) bool {
-	return isEmpty(b.board[row][col])
+func (b *Board) getCell(row int, col int) Piece {
+	return b.board[row][col]
 }
 
-func (b Board) canCapture(row int, col int, color Color) bool {
-	if isEmpty(b.board[row][col]) {
+func (b *Board) setCell(row int, col int, piece Piece) {
+	b.board[row][col] = piece
+}
+
+func (b *Board) cellEmpty(row int, col int) bool {
+	return isEmpty(b.getCell(row, col))
+}
+
+func (b *Board) canCapture(row int, col int, color Color) bool {
+	if isEmpty(b.getCell(row, col)) {
 		return false
 	}
-	return !sameColor(b.board[row][col], color)
+	return !sameColor(b.getCell(row, col), color)
 }
 
-func (b Board) printBoard() string {
+func (b *Board) printBoard() string {
 	s := ""
 	for i := range 8 {
 		for j := range 8 {
-			s += fmt.Sprintf("%q", printPiece(b.board[i][j]))
+			s += fmt.Sprintf("%q", printPiece(b.getCell(i, j)))
 		}
 		s += "\n"
 	}
@@ -94,11 +102,11 @@ func (b *Board) updateBoardFEN(board_fen_string string) {
 				digit := int(c - '0')
 				for k := range digit {
 					_ = k
-					b.board[i][j] = newPiece('*')
+					b.setCell(i, j, newPiece('*'))
 					j += 1
 				}
 			} else {
-				b.board[i][j] = newPiece(c)
+				b.setCell(i, j, newPiece(c))
 				j += 1
 			}
 		}
@@ -113,7 +121,7 @@ func (b *Board) rebuildPieceList() {
 	b.pieceCount = 0
 	for i := range 8 {
 		for j := range 8 {
-			p := b.board[i][j]
+			p := b.getCell(i, j)
 			if isEmpty(p) {
 				continue
 			}
@@ -310,7 +318,7 @@ func (b *Board) makeMove(move *Move) {
 		enpassantRow, enpassantCol := fromSquare(move.previousEnpassant)
 		if endRow == enpassantRow && endCol == enpassantCol {
 			move.isEnpassant = true
-			move.enpassantCapture = b.board[startRow][enpassantCol]
+			move.enpassantCapture = b.getCell(startRow, enpassantCol)
 		}
 	}
 
@@ -328,8 +336,8 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
 		b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
-		b.board[endRow][endCol] = promotedPiece
-		b.board[startRow][startCol] = newPiece('*')
+		b.setCell(endRow, endCol, promotedPiece)
+		b.setCell(startRow, startCol, newPiece('*'))
 		b.removePieceFromList(startRow, startCol)
 		b.setPieceInList(endRow, endCol, promotedPiece)
 	} else if move.isEnpassant {
@@ -337,48 +345,48 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
 		b.xorPieceSquare(move.enpassantCapture, startRow, endCol)
 		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
-		b.board[endRow][endCol] = move.startSquare.piece
-		b.board[startRow][endCol] = newPiece('*')
-		b.board[startRow][startCol] = newPiece('*')
+		b.setCell(endRow, endCol, move.startSquare.piece)
+		b.setCell(startRow, endCol, newPiece('*'))
+		b.setCell(startRow, startCol, newPiece('*'))
 		b.removePieceFromList(startRow, startCol)
 		b.removePieceFromList(startRow, endCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
 	} else if move.isCastleKingSide {
 		//Castling
-		rookPiece := b.board[startRow][7]
+		rookPiece := b.getCell(startRow, 7)
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
 		b.xorPieceSquare(rookPiece, startRow, 7)
 		b.xorPieceSquare(move.startSquare.piece, startRow, 6)
 		b.xorPieceSquare(rookPiece, startRow, 5)
-		b.board[startRow][6] = move.startSquare.piece
-		b.board[startRow][5] = b.board[startRow][7]
-		b.board[startRow][startCol] = newPiece('*')
-		b.board[startRow][7] = newPiece('*')
+		b.setCell(startRow, 6, move.startSquare.piece)
+		b.setCell(startRow, 5, b.getCell(startRow, 7))
+		b.setCell(startRow, startCol, newPiece('*'))
+		b.setCell(startRow, 7, newPiece('*'))
 		b.removePieceFromList(startRow, startCol)
 		b.removePieceFromList(startRow, 7)
 		b.setPieceInList(startRow, 6, move.startSquare.piece)
-		b.setPieceInList(startRow, 5, b.board[startRow][5])
+		b.setPieceInList(startRow, 5, b.getCell(startRow, 5))
 	} else if move.isCastleQueenSide {
-		rookPiece := b.board[startRow][0]
+		rookPiece := b.getCell(startRow, 0)
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
 		b.xorPieceSquare(rookPiece, startRow, 0)
 		b.xorPieceSquare(move.startSquare.piece, startRow, 2)
 		b.xorPieceSquare(rookPiece, startRow, 3)
-		b.board[startRow][2] = move.startSquare.piece
-		b.board[startRow][3] = b.board[startRow][0]
-		b.board[startRow][startCol] = newPiece('*')
-		b.board[startRow][0] = newPiece('*')
+		b.setCell(startRow, 2, move.startSquare.piece)
+		b.setCell(startRow, 3, b.getCell(startRow, 0))
+		b.setCell(startRow, startCol, newPiece('*'))
+		b.setCell(startRow, 0, newPiece('*'))
 		b.removePieceFromList(startRow, startCol)
 		b.removePieceFromList(startRow, 0)
 		b.setPieceInList(startRow, 2, move.startSquare.piece)
-		b.setPieceInList(startRow, 3, b.board[startRow][3])
+		b.setPieceInList(startRow, 3, b.getCell(startRow, 3))
 	} else {
 		//Normal Move
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
 		b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
 		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
-		b.board[startRow][startCol] = newPiece('*')
-		b.board[endRow][endCol] = move.startSquare.piece
+		b.setCell(startRow, startCol, newPiece('*'))
+		b.setCell(endRow, endCol, move.startSquare.piece)
 		b.removePieceFromList(startRow, startCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
 	}
@@ -410,38 +418,38 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 	//Enpassant
 	if move.isPromotion {
-		b.board[startRow][startCol] = move.startSquare.piece
-		b.board[endRow][endCol] = move.endSquare.piece
+		b.setCell(startRow, startCol, move.startSquare.piece)
+		b.setCell(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
 	} else if move.isEnpassant {
-		b.board[startRow][startCol] = move.startSquare.piece
-		b.board[endRow][endCol] = newPiece('*')
-		b.board[startRow][endCol] = move.enpassantCapture
+		b.setCell(startRow, startCol, move.startSquare.piece)
+		b.setCell(endRow, endCol, newPiece('*'))
+		b.setCell(startRow, endCol, move.enpassantCapture)
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
 		b.setPieceInList(endRow, endCol, newPiece('*'))
 		b.setPieceInList(startRow, endCol, move.enpassantCapture)
 	} else if move.isCastleKingSide {
-		b.board[startRow][4] = move.startSquare.piece
-		b.board[startRow][7] = b.board[startRow][5]
-		b.board[startRow][5] = newPiece('*')
-		b.board[startRow][6] = newPiece('*')
+		b.setCell(startRow, 4, move.startSquare.piece)
+		b.setCell(startRow, 7, b.getCell(startRow, 5))
+		b.setCell(startRow, 5, newPiece('*'))
+		b.setCell(startRow, 6, newPiece('*'))
 		b.setPieceInList(startRow, 5, newPiece('*'))
 		b.setPieceInList(startRow, 6, newPiece('*'))
 		b.setPieceInList(startRow, 4, move.startSquare.piece)
-		b.setPieceInList(startRow, 7, b.board[startRow][7])
+		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
 	} else if move.isCastleQueenSide {
-		b.board[startRow][4] = move.startSquare.piece
-		b.board[startRow][0] = b.board[startRow][3]
-		b.board[startRow][2] = newPiece('*')
-		b.board[startRow][3] = newPiece('*')
+		b.setCell(startRow, 4, move.startSquare.piece)
+		b.setCell(startRow, 0, b.getCell(startRow, 3))
+		b.setCell(startRow, 2, newPiece('*'))
+		b.setCell(startRow, 3, newPiece('*'))
 		b.setPieceInList(startRow, 2, newPiece('*'))
 		b.setPieceInList(startRow, 3, newPiece('*'))
 		b.setPieceInList(startRow, 4, move.startSquare.piece)
-		b.setPieceInList(startRow, 0, b.board[startRow][0])
+		b.setPieceInList(startRow, 0, b.getCell(startRow, 0))
 	} else {
-		b.board[startRow][startCol] = move.startSquare.piece
-		b.board[endRow][endCol] = move.endSquare.piece
+		b.setCell(startRow, startCol, move.startSquare.piece)
+		b.setCell(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
 	}
@@ -462,7 +470,7 @@ func (b *Board) playerInCheck() bool {
 	attacks := moveGenerator.generateAttacks(oppositeColor(color), false)
 	for i := range 8 {
 		for j := range 8 {
-			piece := b.board[i][j]
+			piece := b.getCell(i, j)
 			pieceType := pieceType(piece)
 			if attacks[i][j] > 0 && isKing(pieceType) && getColor(piece) == color {
 				return true
