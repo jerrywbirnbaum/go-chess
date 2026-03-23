@@ -42,17 +42,17 @@ func TestMoveGeneration(t *testing.T) {
 
 func TestKnightMoveGeneration(t *testing.T) {
 	board := initBoard()
-	board.updateFromFEN("n7/8/1p6/8/3n4/8/8/8 b KQkq d3 0 1")
+	board.updateFromFEN("n6k/8/1p6/8/3n4/8/8/7K b KQkq d3 0 1")
 	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
-	if len(moves) != 10 {
+	if len(moves) != 13 {
 		t.Errorf("Failed TestMoveGen Knight")
 	}
 
-	board.updateFromFEN("r3R3/b7/8/8/8/8/8/8 b KQkq d3 0 1")
+	board.updateFromFEN("r3R3/b7/8/8/8/8/8/k6K b KQkq d3 0 1")
 	moveGenerator.updateBoard(&board)
 	moves = moveGenerator.generateMoves(false)
-	if len(moves) != 11 {
+	if len(moves) != 14 {
 		t.Errorf("Failed TestMoveGen Sliding")
 	}
 
@@ -96,7 +96,7 @@ func TestAttackedBoard(t *testing.T) {
 		t.Errorf("Failed generate attacks")
 	}
 
-	board.updateFromFEN("rK6/8/8/8/8/8/8/8 w KQkq - 0 1")
+	board.updateFromFEN("rK6/8/8/8/8/8/8/7k w KQkq - 0 1")
 	expected = [8][8]int{
 		{0, 1, 1, 1, 1, 1, 1, 1},
 		{1, 0, 0, 0, 0, 0, 0, 0},
@@ -104,8 +104,8 @@ func TestAttackedBoard(t *testing.T) {
 		{1, 0, 0, 0, 0, 0, 0, 0},
 		{1, 0, 0, 0, 0, 0, 0, 0},
 		{1, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 0, 0, 0, 0, 0, 0},
-		{1, 0, 0, 0, 0, 0, 0, 0},
+		{1, 0, 0, 0, 0, 0, 1, 1},
+		{1, 0, 0, 0, 0, 0, 1, 0},
 	}
 	moveGenerator.updateBoard(&board)
 	attacks, _ = moveGenerator.generateAttacks(Color(Black), false)

@@ -32,6 +32,10 @@ type Board struct {
 	zobristHash           int64
 	repitionTable         *RepititionTable
 	isThreeFoldRepitition bool
+	whiteKingRow          int
+	whiteKingCol          int
+	blackKingRow          int
+	blackKingCol          int
 }
 
 func (b *Board) getCell(row int, col int) Piece {
@@ -127,7 +131,33 @@ func (b *Board) rebuildPieceList() {
 			}
 			b.pieces[b.pieceCount] = Square{row: i, col: j, piece: p}
 			b.pieceCount += 1
+			if isKing(pieceType(p)) {
+				if isWhite(p) {
+					b.whiteKingRow = i
+					b.whiteKingCol = j
+				} else {
+					b.blackKingRow = i
+					b.blackKingCol = j
+				}
+			}
 		}
+	}
+}
+
+func (b *Board) kingPos(color Color) (int, int) {
+	if color == White {
+		return b.whiteKingRow, b.whiteKingCol
+	}
+	return b.blackKingRow, b.blackKingCol
+}
+
+func (b *Board) updateKingPos(king Piece, row, col int) {
+	if isWhite(king) {
+		b.whiteKingRow = row
+		b.whiteKingCol = col
+	} else {
+		b.blackKingRow = row
+		b.blackKingCol = col
 	}
 }
 
@@ -366,6 +396,7 @@ func (b *Board) makeMove(move *Move) {
 		b.removePieceFromList(startRow, 7)
 		b.setPieceInList(startRow, 6, move.startSquare.piece)
 		b.setPieceInList(startRow, 5, b.getCell(startRow, 5))
+		b.updateKingPos(move.startSquare.piece, startRow, 6)
 	} else if move.isCastleQueenSide {
 		rookPiece := b.getCell(startRow, 0)
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
@@ -380,6 +411,7 @@ func (b *Board) makeMove(move *Move) {
 		b.removePieceFromList(startRow, 0)
 		b.setPieceInList(startRow, 2, move.startSquare.piece)
 		b.setPieceInList(startRow, 3, b.getCell(startRow, 3))
+		b.updateKingPos(move.startSquare.piece, startRow, 2)
 	} else {
 		//Normal Move
 		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
@@ -389,6 +421,9 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(endRow, endCol, move.startSquare.piece)
 		b.removePieceFromList(startRow, startCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
+		if isKing(pieceType) {
+			b.updateKingPos(move.startSquare.piece, endRow, endCol)
+		}
 	}
 
 	b.makeMoveUpdateSide(move)
@@ -438,6 +473,7 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, 6, newPiece('*'))
 		b.setPieceInList(startRow, 4, move.startSquare.piece)
 		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
+		b.updateKingPos(move.startSquare.piece, startRow, 4)
 	} else if move.isCastleQueenSide {
 		b.setCell(startRow, 4, move.startSquare.piece)
 		b.setCell(startRow, 0, b.getCell(startRow, 3))
@@ -447,11 +483,15 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, 3, newPiece('*'))
 		b.setPieceInList(startRow, 4, move.startSquare.piece)
 		b.setPieceInList(startRow, 0, b.getCell(startRow, 0))
+		b.updateKingPos(move.startSquare.piece, startRow, 4)
 	} else {
 		b.setCell(startRow, startCol, move.startSquare.piece)
 		b.setCell(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
+		if isKing(pieceType(move.startSquare.piece)) {
+			b.updateKingPos(move.startSquare.piece, startRow, startCol)
+		}
 	}
 
 	b.unmakeMoveUpdateSide(move)

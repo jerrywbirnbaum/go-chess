@@ -65,34 +65,11 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 	moves := []Move{}
 	attacks := emptyMask
 
-	var kingRune rune
-	if color == Color(White) {
-		kingRune = 'k'
-	} else {
-		kingRune = 'K'
-	}
 	oppositeColor := oppositeColor(color)
 
 	//Remove king
-	var kingRow int
-	var kingCol int
-	kingExists := false
-	for i := range 8 {
-		for j := range 8 {
-			piece := mg.board.getCell(i, j)
-			pieceType := pieceType(piece)
-			if sameColor(piece, oppositeColor) && isKing(pieceType) {
-				kingExists = true
-				kingRow = i
-				kingCol = j
-			}
-
-		}
-	}
-
-	if kingExists {
-		mg.board.setCell(kingRow, kingCol, EmptyPiece)
-	}
+	kingRow, kingCol := mg.board.kingPos(oppositeColor)
+	mg.board.setCell(kingRow, kingCol, newPiece('*'))
 
 	emptyMask := emptyMask
 	fullMask := fullMask
@@ -120,14 +97,12 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 		}
 	}
 
-	if kingExists {
-		mg.board.setCell(kingRow, kingCol, newPiece(kingRune))
-	}
+	mg.board.setCell(kingRow, kingCol, newPieceTypeColor(PieceType(King), oppositeColor))
 
 	checkers := 0
 	for _, move := range moves {
 		attacks = bitboardAddOne(attacks, move.endSquare.row, move.endSquare.col)
-		if kingExists && move.endSquare.row == kingRow && move.endSquare.col == kingCol {
+		if move.endSquare.row == kingRow && move.endSquare.col == kingCol {
 			checkers += 1
 		}
 	}
@@ -318,29 +293,15 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	oppositeColor := oppositeColor(color)
 	attackedSquares, checkers := mg.generateAttacks(oppositeColor, false)
 
-	var kingRow int
-	var kingCol int
-	kingExists := false
-	for i := range 8 {
-		for j := range 8 {
-			piece := mg.board.getCell(i, j)
-			pieceType := pieceType(piece)
-			if sameColor(piece, color) && isKing(pieceType) {
-				kingExists = true
-				kingRow = i
-				kingCol = j
-			}
-
-		}
-	}
+	kingRow, kingCol := mg.board.kingPos(color)
 
 	//Double check
 	var checkMask uint64
-	if kingExists && bitboardCheckOne(attackedSquares, kingRow, kingCol) && checkers > 1 {
+	if bitboardCheckOne(attackedSquares, kingRow, kingCol) && checkers > 1 {
 		piece := Square{row: kingRow, col: kingCol, piece: mg.board.getCell(kingRow, kingCol)}
 		moves = mg.generateKingMoves(piece, color, false, attackedSquares, onlyCaptures, moves)
 		return moves
-	} else if kingExists && bitboardCheckOne(attackedSquares, kingRow, kingCol) {
+	} else if bitboardCheckOne(attackedSquares, kingRow, kingCol) {
 		checkMask = mg.checkRays(kingRow, kingCol)
 	} else {
 		checkMask = fullMask
@@ -776,25 +737,9 @@ func (mg *MoveGenerator) enpassantCheck(move Move, color Color) bool {
 	simulatedMoveGenerator := MoveGenerator{board: &simulatedBoard}
 	attacks, _ := simulatedMoveGenerator.generateAttacks(oppositeColor(color), true)
 
-	var kingRow int
-	var kingCol int
-	kingFound := false
-	for i := range 8 {
-		for j := range 8 {
-			piece := simulatedBoard.getCell(i, j)
-			if sameColor(piece, color) && isKing(pieceType(piece)) {
-				kingRow = i
-				kingCol = j
-				kingFound = true
-				break
-			}
-		}
-		if kingFound {
-			break
-		}
-	}
+	kingRow, kingCol := mg.board.kingPos(color)
 
-	inCheck := kingFound && bitboardCheckOne(attacks, kingRow, kingCol)
+	inCheck := bitboardCheckOne(attacks, kingRow, kingCol)
 
 	simulatedBoard.unmakeMove(&move)
 	return inCheck
