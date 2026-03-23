@@ -126,7 +126,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	}
 
 	if depth <= 0 {
-		return s.searchOnlyCapturesForce(alpha, beta), 1
+		return s.searchOnlyCapturesForce(alpha, beta)
 	}
 
 	if s.searchCancelled {
@@ -176,14 +176,14 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	return alpha, positionsEvaluated
 }
 
-func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) int {
+func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
 	board := s.moveGenerator.board
 	playerInCheck := board.playerInCheck()
 	standPat := basicEval(*board)
 
 	if !playerInCheck {
 		if standPat >= beta {
-			return beta
+			return beta, 1
 		}
 		if standPat > alpha {
 			alpha = standPat
@@ -195,25 +195,28 @@ func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) int {
 
 	if len(moves) == 0 {
 		if board.playerInCheck() && len(moveGenerator.generateMoves(false)) == 0 {
-			return -20000
+			return -20000, 1
 		} else {
-			return standPat
+			return standPat, 1
 		}
 	}
 	sort.Sort(MoveOrder(moves))
 
+	var currentMoveEval int
+	var currentNodes int
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval := -s.searchOnlyCapturesForce(-beta, -alpha)
+		currentMoveEval, currentNodes = s.searchOnlyCapturesForce(-beta, -alpha)
+		currentMoveEval = -currentMoveEval
 		board.unmakeMove(move)
 
 		if currentMoveEval >= beta {
-			return beta
+			return beta, currentNodes
 		}
 		alpha = max(alpha, currentMoveEval)
 	}
-	return alpha
+	return alpha, currentNodes
 }
 
 type MoveOrder []Move
