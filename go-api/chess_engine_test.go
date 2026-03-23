@@ -292,6 +292,20 @@ func TestBestMoveQueenCapturesRookWithCheck(t *testing.T) {
 	}
 }
 
+func TestBestMoveQueenFork(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("4rb2/pp6/1k2r3/4Q1p1/1n1P4/5NP1/PPn3PP/2R2K1R w - - 0 23")
+	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.setTimer(1000)
+	chessEngine.initSearchTranspositionTable()
+
+	got, _, _ := chessEngine.bestMove()
+	if got.endSquare == "f5" {
+		t.Fatalf("bestMove selected %s%s, can't be f5", got.startSquare, got.endSquare)
+	}
+}
+
 func TestMoveOrdering(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
