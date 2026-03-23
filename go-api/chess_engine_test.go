@@ -283,11 +283,12 @@ func TestBestMoveQueenCapturesRookWithCheck(t *testing.T) {
 	board.updateFromFEN("8/p1kr2p1/2p5/b7/8/PP1b3Q/1R3PPP/3r1BKR w - - 9 29")
 	mg := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.setTimer(500)
 	chessEngine.initSearchTranspositionTable()
 
 	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "h3" || got.endSquare != "g3" {
-		t.Fatalf("bestMove selected %s%s, want g2g3", got.startSquare, got.endSquare)
+		t.Fatalf("bestMove selected %s%s, want h3g3", got.startSquare, got.endSquare)
 	}
 }
 

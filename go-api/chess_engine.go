@@ -76,7 +76,11 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			}
 			board.unmakeMove(move)
 		}
+		if s.searchCancelled {
+			break
+		}
 
+		bestMove = bestMoveCurrentIteration
 		//Sort moves for one iteration deeper in the order of the previous iteration
 		moves = nil
 		sort.Sort(MoveEvaluationOrder(sortedMoves))
@@ -84,7 +88,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			moves = append(moves, *sortedMoves[i].move)
 		}
 	}
-	bestMove = bestMoveCurrentIteration
 
 	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
 	endSquare := toSquare(bestMove.endSquare.row, bestMove.endSquare.col)
@@ -125,7 +128,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 
 	if s.searchCancelled {
 		//Return a high number if search is cancelled so opponent will not take unevaluated moves
-		return 60000, 0
+		return 30000, 0
 	}
 
 	positionsEvaluated := 0
