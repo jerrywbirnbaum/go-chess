@@ -27,6 +27,24 @@ type Move struct {
 var emptyMask uint64 = 0
 var fullMask uint64 = math.MaxUint64
 
+var straightDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+var diagonalDirs = [][2]int{{1, 1}, {-1, -1}, {-1, 1}, {1, -1}}
+var allDirs = [][2]int{{1, 1}, {-1, -1}, {-1, 1}, {1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+
+var knightOffsets = [8][2]int{{1, 2}, {2, 1}, {-1, -2}, {-2, -1}, {2, -1}, {-2, 1}, {-1, 2}, {1, -2}}
+var kingOffsets = [8][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {-1, 0}, {0, 1}, {0, -1}}
+
+var knightAttacks [64]uint64
+var kingAttacks [64]uint64
+
+func init() {
+	for sq := range 64 {
+		r, c := sq/8, sq%8
+		knightAttacks[sq] = leaperAttackBits(r, c, knightOffsets[:])
+		kingAttacks[sq] = leaperAttackBits(r, c, kingOffsets[:])
+	}
+}
+
 type MoveString struct {
 	startSquare string
 	endSquare   string
@@ -62,51 +80,87 @@ func (mg *MoveGenerator) updateBoard(board *Board) {
 }
 
 func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64, int) {
-	moves := []Move{}
 	attacks := emptyMask
+	checkers := 0
 
-	oppositeColor := oppositeColor(color)
-
-	//Remove king
-	kingRow, kingCol := mg.board.kingPos(oppositeColor)
+	opp := oppositeColor(color)
+	kingRow, kingCol := mg.board.kingPos(opp)
 	mg.board.setCell(kingRow, kingCol, newPiece('*'))
 
-	emptyMask := emptyMask
-	fullMask := fullMask
-
-	pieces := mg.board.piecesGenerator()
-	for _, p := range pieces {
+	for _, p := range mg.board.piecesGenerator() {
 		if getColor(p.piece) != color {
 			continue
 		}
-
-		pieceType := pieceType(p.piece)
-		if !slidingOnly && isPawn(pieceType) {
-			moves = mg.generatePawnAttacks(p, color, moves)
+		pt := pieceType(p.piece)
+		var pieceAttacks uint64
+		if !slidingOnly {
+			switch {
+			case isPawn(pt):
+				pieceAttacks = pawnAttackBits(p.row, p.col, color)
+			case isKnight(pt):
+				pieceAttacks = knightAttacks[p.row*8+p.col]
+			case isKing(pt):
+				pieceAttacks = kingAttacks[p.row*8+p.col]
+			}
 		}
-		if !slidingOnly && isKnight(pieceType) {
-			moves = mg.generateKnightMoves(p, color, true, fullMask, false, moves)
+		if isSlidingPiece(pt) {
+			pieceAttacks |= mg.slidingAttackBits(p.row, p.col, pt)
 		}
-
-		if isSlidingPiece(pieceType) {
-			moves = mg.generateSlidingMoves(p, color, pieceType, true, fullMask, false, moves)
-		}
-
-		if !slidingOnly && isKing(pieceType) {
-			moves = mg.generateKingMoves(p, color, true, emptyMask, false, moves)
-		}
-	}
-
-	mg.board.setCell(kingRow, kingCol, newPieceTypeColor(PieceType(King), oppositeColor))
-
-	checkers := 0
-	for _, move := range moves {
-		attacks = bitboardAddOne(attacks, move.endSquare.row, move.endSquare.col)
-		if move.endSquare.row == kingRow && move.endSquare.col == kingCol {
-			checkers += 1
+		attacks |= pieceAttacks
+		if bitboardCheckOne(pieceAttacks, kingRow, kingCol) {
+			checkers++
 		}
 	}
+
+	mg.board.setCell(kingRow, kingCol, newPieceTypeColor(PieceType(King), opp))
 	return attacks, checkers
+}
+
+func pawnAttackBits(row, col int, color Color) uint64 {
+	dir := 1
+	if color == Color(White) {
+		dir = -1
+	}
+	var bits uint64
+	if inBounds(row+dir, col-1) {
+		bits = bitboardAddOne(bits, row+dir, col-1)
+	}
+	if inBounds(row+dir, col+1) {
+		bits = bitboardAddOne(bits, row+dir, col+1)
+	}
+	return bits
+}
+
+func leaperAttackBits(row, col int, offsets [][2]int) uint64 {
+	var bits uint64
+	for _, off := range offsets {
+		if inBounds(row+off[0], col+off[1]) {
+			bits = bitboardAddOne(bits, row+off[0], col+off[1])
+		}
+	}
+	return bits
+}
+
+func (mg *MoveGenerator) slidingAttackBits(row, col int, pt PieceType) uint64 {
+	dirs := allDirs
+	if isRook(pt) {
+		dirs = straightDirs
+	} else if isBishop(pt) {
+		dirs = diagonalDirs
+	}
+	var bits uint64
+	for _, dir := range dirs {
+		r, c := row+dir[0], col+dir[1]
+		for inBounds(r, c) {
+			bits = bitboardAddOne(bits, r, c)
+			if !mg.board.cellEmpty(r, c) {
+				break
+			}
+			r += dir[0]
+			c += dir[1]
+		}
+	}
+	return bits
 }
 
 func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
@@ -114,18 +168,7 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
 	piece := mg.board.getCell(kingRow, kingCol)
 	color := getColor(piece)
 
-	slidingMoves := [][2]int{
-		{1, 1},
-		{-1, -1},
-		{-1, 1},
-		{1, -1},
-		{1, 0},
-		{-1, 0},
-		{0, 1},
-		{0, -1},
-	}
-
-	for slidingIdx, move := range slidingMoves {
+	for slidingIdx, move := range allDirs {
 		isDiagonal := slidingIdx < 4
 		row := kingRow + move[0]
 		col := kingCol + move[1]
@@ -192,21 +235,9 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) uint64 {
 		return checkMask
 	}
 
-	//checkKnights
-	knightMoves := [][2]int{
-		{1, 2},
-		{2, 1},
-		{-1, -2},
-		{-2, -1},
-		{2, -1},
-		{-2, 1},
-		{-1, 2},
-		{1, -2},
-	}
-
 	var row int
 	var col int
-	for _, move := range knightMoves {
+	for _, move := range knightOffsets {
 		row = kingRow + move[0]
 		col = kingCol + move[1]
 		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
@@ -224,19 +255,8 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) uint64 {
 }
 
 func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, checkMask uint64, isPinRay bool) uint64 {
-	// check sliding
-	slidingMoves := [][2]int{
-		{1, 1},
-		{-1, -1},
-		{-1, 1},
-		{1, -1},
-		{1, 0},
-		{-1, 0},
-		{0, 1},
-		{0, -1},
-	}
 
-	for slidingIdx, move := range slidingMoves {
+	for slidingIdx, move := range allDirs {
 		isDiagonal := slidingIdx < 4
 		row := kingRow + move[0]
 		col := kingCol + move[1]
@@ -392,42 +412,33 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask uint64) []Move {
 	return moves
 }
 func (mg *MoveGenerator) pinDirection(kingRow int, kingCol int, row int, col int) ([2]int, bool) {
-	slidingMoves := [][2]int{
-		{1, 1},
-		{-1, -1},
-		{-1, 1},
-		{1, -1},
-		{1, 0},
-		{-1, 0},
-		{0, 1},
-		{0, -1},
-	}
+
 	if kingRow == row {
 		if col > kingCol {
-			return slidingMoves[6], false
+			return allDirs[6], false
 		} else if col < kingCol {
-			return slidingMoves[7], false
+			return allDirs[7], false
 		}
 	} else if kingCol == col {
 		if row > kingRow {
-			return slidingMoves[4], false
+			return allDirs[4], false
 		} else if row < kingRow {
-			return slidingMoves[5], false
+			return allDirs[5], false
 		}
 	} else if kingRow > row {
 		if col > kingCol {
-			return slidingMoves[2], true
+			return allDirs[2], true
 		} else if col < kingCol {
-			return slidingMoves[1], true
+			return allDirs[1], true
 		}
 	} else if kingRow < row {
 		if col > kingCol {
-			return slidingMoves[0], true
+			return allDirs[0], true
 		} else if col < kingCol {
-			return slidingMoves[3], true
+			return allDirs[3], true
 		}
 	}
-	return slidingMoves[0], true
+	return allDirs[0], true
 
 }
 func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int, kingCol int, checkMask uint64, onlyCaptures bool) []Move {
@@ -499,26 +510,16 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 	return moves
 }
 func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, isAttacks bool, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
-
-	slidingMoves := [][2]int{
-		{1, 1},
-		{-1, -1},
-		{-1, 1},
-		{1, -1},
-		{1, 0},
-		{-1, 0},
-		{0, 1},
-		{0, -1},
-	}
+	moveDirs := allDirs
 
 	if isRook(pt) {
-		slidingMoves = slidingMoves[4:]
+		moveDirs = straightDirs
 	} else if isBishop(pt) {
-		slidingMoves = slidingMoves[:4]
+		moveDirs = diagonalDirs
 	}
 	currentRow := p.row
 	currentCol := p.col
-	for _, move := range slidingMoves {
+	for _, move := range moveDirs {
 		row := currentRow + move[0]
 		col := currentCol + move[1]
 		for i := range 7 {
@@ -564,23 +565,11 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 }
 
 func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask uint64, onlyCaptures bool, moves []Move) []Move {
-
-	kingMoves := [][2]int{
-		{1, 1},
-		{1, -1},
-		{-1, 1},
-		{-1, -1},
-		{1, 0},
-		{-1, 0},
-		{0, 1},
-		{0, -1},
-	}
-
 	currentRow := p.row
 	currentCol := p.col
 	var row int
 	var col int
-	for _, move := range kingMoves {
+	for _, move := range kingOffsets {
 		row = currentRow + move[0]
 		col = currentCol + move[1]
 		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
@@ -601,22 +590,11 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool,
 }
 func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bool, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
 
-	knightMoves := [][2]int{
-		{1, 2},
-		{2, 1},
-		{-1, -2},
-		{-2, -1},
-		{2, -1},
-		{-2, 1},
-		{-1, 2},
-		{1, -2},
-	}
-
 	currentRow := p.row
 	currentCol := p.col
 	var row int
 	var col int
-	for _, move := range knightMoves {
+	for _, move := range knightOffsets {
 		row = currentRow + move[0]
 		col = currentCol + move[1]
 		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
