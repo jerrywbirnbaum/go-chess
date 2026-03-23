@@ -7,6 +7,18 @@ import (
 	"testing"
 )
 
+func bitboardToArray(bb uint64) [8][8]int {
+	var arr [8][8]int
+	for i := range 8 {
+		for j := range 8 {
+			if (bb>>uint(i*8+j))&1 == 1 {
+				arr[i][j] = 1
+			}
+		}
+	}
+	return arr
+}
+
 func TestMoveGeneration(t *testing.T) {
 	fmt.Println()
 	board := initBoard()
@@ -70,8 +82,8 @@ func TestAttackedBoard(t *testing.T) {
 	board.updateFromFEN("rnbqkbnr/pppppppp/PPP3PP/8/8/8/8/RNBQKBNR w KQkq - 0 1")
 	expected := [8][8]int{
 		{0, 1, 1, 1, 1, 1, 1, 0},
-		{1, 1, 1, 4, 4, 1, 1, 1},
-		{2, 2, 3, 2, 2, 3, 2, 2},
+		{1, 1, 1, 1, 1, 1, 1, 1},
+		{1, 1, 1, 1, 1, 1, 1, 1},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, 0},
@@ -79,8 +91,8 @@ func TestAttackedBoard(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
 	moveGenerator := MoveGenerator{board: &board}
-	attacks := moveGenerator.generateAttacks(Color(Black), false)
-	if !reflect.DeepEqual(attacks, expected) {
+	attacks, _ := moveGenerator.generateAttacks(Color(Black), false)
+	if !reflect.DeepEqual(bitboardToArray(attacks), expected) {
 		t.Errorf("Failed generate attacks")
 	}
 
@@ -96,8 +108,8 @@ func TestAttackedBoard(t *testing.T) {
 		{1, 0, 0, 0, 0, 0, 0, 0},
 	}
 	moveGenerator.updateBoard(&board)
-	attacks = moveGenerator.generateAttacks(Color(Black), false)
-	if !reflect.DeepEqual(attacks, expected) {
+	attacks, _ = moveGenerator.generateAttacks(Color(Black), false)
+	if !reflect.DeepEqual(bitboardToArray(attacks), expected) {
 		t.Errorf("Failed generate attacks")
 	}
 
@@ -143,7 +155,7 @@ func TestCheckRaysPawn(t *testing.T) {
 	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
 
-	if !reflect.DeepEqual(result, expected) {
+	if !reflect.DeepEqual(bitboardToArray(result), expected) {
 		t.Errorf("Failed Check Rays")
 	}
 }
@@ -165,7 +177,7 @@ func TestCheckRaysKnight(t *testing.T) {
 	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
 
-	if !reflect.DeepEqual(result, expected) {
+	if !reflect.DeepEqual(bitboardToArray(result), expected) {
 		t.Errorf("Failed Check Rays")
 	}
 }
@@ -185,7 +197,7 @@ func TestCheckRaysRook(t *testing.T) {
 	}
 	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
-	if !reflect.DeepEqual(result, expected) {
+	if !reflect.DeepEqual(bitboardToArray(result), expected) {
 		t.Errorf("Failed Check Rays")
 	}
 }
@@ -205,7 +217,7 @@ func TestCheckRaysBishop(t *testing.T) {
 	}
 	moveGenerator := MoveGenerator{board: &board}
 	result := moveGenerator.checkRays(0, 0)
-	if !reflect.DeepEqual(result, expected) {
+	if !reflect.DeepEqual(bitboardToArray(result), expected) {
 		t.Errorf("Failed Check Rays")
 	}
 }
@@ -226,7 +238,7 @@ func TestPinnedPieces(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
 
-	if !reflect.DeepEqual(result, expected) {
+	if !reflect.DeepEqual(bitboardToArray(result), expected) {
 		t.Errorf("Failed Pinned Pieces")
 	}
 }
@@ -287,9 +299,9 @@ func TestGenerateAttacksPawnOutOfBoundsGuard(t *testing.T) {
 	board.updateFromFEN("k6K/P7/8/8/8/8/8/8 w - - 0 1")
 	moveGenerator := MoveGenerator{board: &board}
 
-	attacks := moveGenerator.generateAttacks(Color(White), false)
-	if attacks[0][0] != 0 {
-		t.Errorf("unexpected attack count on a8: got %d", attacks[0][0])
+	attacks, _ := moveGenerator.generateAttacks(Color(White), false)
+	if bitboardCheckOne(attacks, 0, 0) {
+		t.Errorf("unexpected attack count on a8: got %d", attacks)
 	}
 }
 

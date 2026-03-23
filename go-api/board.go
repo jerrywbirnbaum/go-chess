@@ -467,12 +467,12 @@ func (b *Board) currentColor() Color {
 func (b *Board) playerInCheck() bool {
 	color := b.currentColor()
 	moveGenerator := MoveGenerator{board: b}
-	attacks := moveGenerator.generateAttacks(oppositeColor(color), false)
+	attacks, _ := moveGenerator.generateAttacks(oppositeColor(color), false)
 	for i := range 8 {
 		for j := range 8 {
 			piece := b.getCell(i, j)
 			pieceType := pieceType(piece)
-			if attacks[i][j] > 0 && isKing(pieceType) && getColor(piece) == color {
+			if bitboardCheckOne(attacks, i, j) && isKing(pieceType) && getColor(piece) == color {
 				return true
 			}
 
