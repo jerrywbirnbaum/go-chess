@@ -93,13 +93,12 @@ func handleGo(engine *ChessEngine, board *Board, args []string) {
 	}
 
 	timeMs := 1000
-	if movetime > 0 {
-		timeMs = movetime
-	} else if board.isWhiteTurn && wtime > 0 {
+	if board.isWhiteTurn && wtime > 0 {
 		timeMs = wtime/20 + winc
 	} else if !board.isWhiteTurn && btime > 0 {
 		timeMs = btime/20 + binc
 	}
+	timeMs += movetime / 2
 
 	engine.setTimer(timeMs)
 	move, nodes, eval := engine.bestMove()
