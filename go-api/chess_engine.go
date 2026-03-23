@@ -61,29 +61,33 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			break
 		}
 		bestEval = -40000
+		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
 
 		for i := range moves {
 			move := &moves[i]
 			board.makeMove(move)
-
 			eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000)
 			totalEvaluated += positionsEvaluated
 			eval = -eval
+			board.unmakeMove(move)
+
+			if s.searchCancelled {
+				break
+			}
+
 			sortedMoves[i] = MoveEvaluation{evaluation: eval, move: move}
 			if eval > bestEval {
 				bestMoveCurrentIteration = *move
 				bestEval = eval
 			}
-			board.unmakeMove(move)
-		}
-		if s.searchCancelled {
-			if bestMove == (Move{}) {
-				bestMove = bestMoveCurrentIteration
-			}
-			break
 		}
 
 		bestMove = bestMoveCurrentIteration
+
+		if s.searchCancelled {
+			break
+		}
+
 		//Sort moves for one iteration deeper in the order of the previous iteration
 		moves = nil
 		sort.Sort(MoveEvaluationOrder(sortedMoves))
@@ -130,8 +134,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	}
 
 	if s.searchCancelled {
-		//Return a high number if search is cancelled so opponent will not take unevaluated moves
-		return 30000, 0
+		return 0, 0
 	}
 
 	positionsEvaluated := 0
