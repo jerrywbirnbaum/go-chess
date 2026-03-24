@@ -37,29 +37,43 @@ func (s *ChessEngine) setTimer(timer int) {
 	s.timer = timer
 }
 
-func (s *ChessEngine) bestMove() (MoveString, int, int) {
+func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	s.searchCancelled.Store(false)
 	board := s.moveGenerator.board
 	localMoveGenerator := MoveGenerator{board: board}
 	moves := localMoveGenerator.generateMoves(false)
 	sort.Sort(MoveOrder(moves))
-	bestEval := -40000
 	totalEvaluated := 0
 	sortedMoves := make([]MoveEvaluation, len(moves))
 
 	var bestMove Move
 	var bestMoveCurrentIteration Move
+	bestEvalCompleted := -40000
+	completedDepth := 0
 
 	done := make(chan struct{})
 	defer close(done)
 	go s.startSearchTimer(done)
+
+	timer := s.timer
+	if timer == 0 {
+		timer = 1000
+	}
+	softLimit := time.Duration(timer) * time.Millisecond * 6 / 10
+	searchStart := time.Now()
+
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
 			continue
 		}
 
-		bestEval = -40000
+		if time.Since(searchStart) > softLimit {
+			break
+		}
+
+		bestEvalCurrentIteration := -40000
 		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
+		movesEvaluatedInIteration := 0
 
 		for i := range moves {
 			move := &moves[i]
@@ -72,18 +86,26 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 				break
 			}
 
+			movesEvaluatedInIteration++
 			sortedMoves[i] = MoveEvaluation{evaluation: eval, move: move}
-			if eval > bestEval {
+			if eval > bestEvalCurrentIteration {
 				bestMoveCurrentIteration = *move
-				bestEval = eval
+				bestEvalCurrentIteration = eval
 			}
-
 		}
 
-		bestMove = bestMoveCurrentIteration
 		if s.searchCancelled.Load() {
+			if movesEvaluatedInIteration > 0 {
+				bestMove = bestMoveCurrentIteration
+				bestEvalCompleted = bestEvalCurrentIteration
+			}
 			break
 		}
+
+		// Commit results from completed iteration
+		bestMove = bestMoveCurrentIteration
+		bestEvalCompleted = bestEvalCurrentIteration
+		completedDepth = searchDepth
 
 		//Sort moves for one iteration deeper in the order of the previous iteration
 		moves = nil
@@ -104,9 +126,8 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 		} else if bestMove.promotionPieceType == PieceType(Knight) {
 			promotion = "n"
 		}
-
 	}
-	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.isPromotion}, totalEvaluated, bestEval
+	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.isPromotion}, totalEvaluated, bestEvalCompleted, completedDepth
 }
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {

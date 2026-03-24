@@ -260,7 +260,7 @@ func TestBestMoveForcedMove(t *testing.T) {
 		t.Fatalf("expected three legal moves, got %d", len(moves))
 	}
 
-	got, _, _ := chessEngine.bestMove()
+	got, _, _, _ := chessEngine.bestMove()
 	if got.startSquare != "h1" || got.endSquare != "g2" {
 		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
 	}
@@ -273,7 +273,7 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	got, _, _ := chessEngine.bestMove()
+	got, _, _, _ := chessEngine.bestMove()
 	if got.startSquare != "b3" || got.endSquare != "a4" {
 		t.Fatalf("bestMove selected %s%s, want b3a4", got.startSquare, got.endSquare)
 	}
@@ -287,7 +287,7 @@ func TestBestMoveQueenCapturesRookWithCheck(t *testing.T) {
 	chessEngine.setTimer(500)
 	chessEngine.initSearchTranspositionTable()
 
-	got, _, _ := chessEngine.bestMove()
+	got, _, _, _ := chessEngine.bestMove()
 	if got.startSquare != "h3" || got.endSquare != "g3" {
 		t.Fatalf("bestMove selected %s%s, want h3g3", got.startSquare, got.endSquare)
 	}
@@ -301,7 +301,7 @@ func TestBestMoveQueenFork(t *testing.T) {
 	chessEngine.setTimer(1000)
 	chessEngine.initSearchTranspositionTable()
 
-	got, _, _ := chessEngine.bestMove()
+	got, _, _, _ := chessEngine.bestMove()
 	if got.endSquare == "f5" {
 		t.Fatalf("bestMove selected %s%s, can't be f5", got.startSquare, got.endSquare)
 	}
@@ -315,7 +315,7 @@ func TestBestMoveIllegal(t *testing.T) {
 	chessEngine.setTimer(100)
 	chessEngine.initSearchTranspositionTable()
 
-	got, _, _ := chessEngine.bestMove()
+	got, _, _, _ := chessEngine.bestMove()
 	if got.endSquare == "a8" {
 		t.Fatalf("bestMove selected %s%s, can't be a8a8", got.startSquare, got.endSquare)
 	}

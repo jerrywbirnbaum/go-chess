@@ -41,7 +41,7 @@ func NewRouter(chessEngine *ChessEngine, board *Board) *gin.Engine {
 
 		board.updateFromFEN(receivedFen)
 
-		engine_move, positions_evaluated, engine_evauluation := chessEngine.bestMove()
+		engine_move, positions_evaluated, engine_evauluation, _ := chessEngine.bestMove()
 		c.JSON(http.StatusOK, gin.H{
 			"status":              "received",
 			"start_square":        engine_move.startSquare,

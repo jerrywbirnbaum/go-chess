@@ -98,12 +98,12 @@ func handleGo(engine *ChessEngine, board *Board, args []string) {
 	} else if !board.isWhiteTurn && btime > 0 {
 		timeMs = btime/20 + binc
 	}
-	timeMs += int(float64(movetime) * 0.9)
+	timeMs += int(float64(movetime) * 0.8)
 
 	engine.setTimer(timeMs)
-	move, nodes, eval := engine.bestMove()
+	move, nodes, eval, depth := engine.bestMove()
 
-	fmt.Printf("info nodes %d score cp %d\n", nodes, eval)
+	fmt.Printf("info depth %d nodes %d score cp %d\n", depth, nodes, eval)
 
 	moveStr := move.startSquare + move.endSquare
 	if move.isPromotion {
