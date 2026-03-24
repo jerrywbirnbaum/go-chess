@@ -351,6 +351,38 @@ func TestMultipleMoves(t *testing.T) {
 	}
 }
 
+func TestMoveSortFunctionSpecial(t *testing.T) {
+	e4 := Square{row: 4, col: 5, piece: Piece(WhitePawn)}
+	f5 := Square{row: 3, col: 5, piece: Piece(BlackKnight)}
+	d5 := Square{row: 3, col: 3, piece: Piece(BlackQueen)}
+	e5 := Square{row: 3, col: 4, piece: Piece(EmptyPiece)}
+	a4 := Square{row: 4, col: 0, piece: Piece(WhitePawn)}
+	b5 := Square{row: 3, col: 1, piece: Piece(BlackKnight)}
+	a1 := Square{row: 0, col: 0, piece: Piece(WhiteKnight)}
+	a2 := Square{row: 0, col: 1, piece: Piece(BlackPawn)}
+
+	moves := []Move{
+		{startSquare: a4, endSquare: b5},
+		{startSquare: e4, endSquare: e5},
+		{startSquare: a1, endSquare: a2},
+		{startSquare: e4, endSquare: d5},
+		{startSquare: e4, endSquare: f5},
+	}
+	sort.Sort(MoveOrder(moves))
+
+	expected := []Move{
+		{startSquare: e4, endSquare: d5},
+		{startSquare: a4, endSquare: b5},
+		{startSquare: e4, endSquare: f5},
+		{startSquare: a1, endSquare: a2},
+		{startSquare: e4, endSquare: e5},
+	}
+	if !reflect.DeepEqual(moves, expected) {
+		t.Errorf("Failed Move Ordering Test")
+		fmt.Println(moves)
+		fmt.Println(expected)
+	}
+}
 func TestMoveSortFunction(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/4p2k/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")

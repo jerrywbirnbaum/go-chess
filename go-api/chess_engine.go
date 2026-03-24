@@ -180,6 +180,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
 	board := s.moveGenerator.board
 	playerInCheck := board.playerInCheck()
+
 	standPat := basicEval(*board)
 
 	if !playerInCheck {
@@ -224,6 +225,7 @@ type MoveOrder []Move
 
 func (a MoveOrder) Len() int      { return len(a) }
 func (a MoveOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+
 func (a MoveOrder) Less(i, j int) bool {
 	startPieceType := pieceType(a[i].startSquare.piece)
 	endPieceType := pieceType(a[i].endSquare.piece)
@@ -239,7 +241,30 @@ func (a MoveOrder) Less(i, j int) bool {
 		jPieceDiff = 0
 	}
 
-	return iPieceDiff > jPieceDiff
+	if a[i].isPromotion != a[j].isPromotion {
+		return a[i].isPromotion
+	}
+
+	if iPieceDiff != jPieceDiff {
+		return iPieceDiff > jPieceDiff
+	}
+	if iPieceDiff > 0 && jPieceDiff == 0 {
+		return true
+	}
+	if jPieceDiff > 0 && iPieceDiff == 0 {
+		return false
+	}
+
+	if a[i].startSquare.row != a[j].startSquare.row {
+		return a[i].startSquare.row < a[j].startSquare.row
+	}
+	if a[i].startSquare.col != a[j].startSquare.col {
+		return a[i].startSquare.col < a[j].startSquare.col
+	}
+	if a[i].endSquare.row != a[j].endSquare.row {
+		return a[i].endSquare.row < a[j].endSquare.row
+	}
+	return a[i].endSquare.col < a[j].endSquare.col
 }
 
 type MoveEvaluationOrder []MoveEvaluation
