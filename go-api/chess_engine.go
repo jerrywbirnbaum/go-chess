@@ -58,10 +58,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			continue
 		}
 
-		// if s.searchCancelled.Load() {
-		// 	break
-		// }
-
 		bestEval = -40000
 		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
 
@@ -162,7 +158,9 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		currentMoveEval = -currentMoveEval
 		if currentMoveEval >= beta {
 
-			tt.push(zHash, depth, 1, beta)
+			if !s.searchCancelled.Load() {
+				tt.push(zHash, depth, 1, beta)
+			}
 			board.unmakeMove(move)
 			return beta, positionsEvaluated
 		}
@@ -175,7 +173,10 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	} else {
 		flag = 0
 	}
-	tt.push(zHash, depth, flag, alpha)
+
+	if !s.searchCancelled.Load() {
+		tt.push(zHash, depth, flag, alpha)
+	}
 
 	return alpha, positionsEvaluated
 }
