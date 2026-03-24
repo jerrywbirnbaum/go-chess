@@ -1,6 +1,7 @@
 package main
 
 import (
+	"sort"
 	"testing"
 )
 
@@ -319,12 +320,51 @@ func TestBestMoveIllegal(t *testing.T) {
 		t.Fatalf("bestMove selected %s%s, can't be a8a8", got.startSquare, got.endSquare)
 	}
 }
+func TestMoveEvaluationOrderSortsDescending(t *testing.T) {
+	evals := MoveEvaluationOrder{
+		{evaluation: 50, move: nil},
+		{evaluation: -100, move: nil},
+		{evaluation: 200, move: nil},
+		{evaluation: 0, move: nil},
+		{evaluation: 75, move: nil},
+	}
+	sort.Sort(evals)
+
+	for i := 1; i < len(evals); i++ {
+		if evals[i].evaluation > evals[i-1].evaluation {
+			t.Fatalf("not sorted descending at index %d: evals[%d]=%d > evals[%d]=%d",
+				i, i, evals[i].evaluation, i-1, evals[i-1].evaluation)
+		}
+	}
+
+	if evals[0].evaluation != 200 {
+		t.Fatalf("expected highest eval 200 first, got %d", evals[0].evaluation)
+	}
+	if evals[len(evals)-1].evaluation != -100 {
+		t.Fatalf("expected lowest eval -100 last, got %d", evals[len(evals)-1].evaluation)
+	}
+}
+
+func TestMoveEvaluationOrderEmpty(t *testing.T) {
+	evals := MoveEvaluationOrder{}
+	sort.Sort(evals) // should not panic
+}
+
+func TestMoveEvaluationOrderSingleElement(t *testing.T) {
+	evals := MoveEvaluationOrder{{evaluation: 42, move: nil}}
+	sort.Sort(evals)
+	if evals[0].evaluation != 42 {
+		t.Fatalf("expected 42, got %d", evals[0].evaluation)
+	}
+}
+
 func TestMoveOrdering(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
 	mg := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
+	chessEngine.setTimer(2000)
 
 	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "c4" || got.endSquare != "b2" {

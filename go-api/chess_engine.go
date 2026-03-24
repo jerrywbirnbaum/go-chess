@@ -58,9 +58,9 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			continue
 		}
 
-		if s.searchCancelled.Load() {
-			break
-		}
+		// if s.searchCancelled.Load() {
+		// 	break
+		// }
 
 		bestEval = -40000
 		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
@@ -83,8 +83,8 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			}
 
 		}
-		bestMove = bestMoveCurrentIteration
 
+		bestMove = bestMoveCurrentIteration
 		if s.searchCancelled.Load() {
 			break
 		}
