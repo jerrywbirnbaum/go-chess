@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"sort"
 	"testing"
 )
@@ -369,5 +370,70 @@ func TestMoveOrdering(t *testing.T) {
 	got, _, _ := chessEngine.bestMove()
 	if got.startSquare != "c4" || got.endSquare != "b2" {
 		t.Fatalf("bestMove selected %s%s, want c4b2", got.startSquare, got.endSquare)
+	}
+}
+
+func TestNxc6EvalCleanTT(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("r6r/ppp1kppp/2p1bn2/4N1B1/8/2P5/PPP2PPP/R4RK1 w - - 3 11")
+
+	mg := MoveGenerator{board: &board}
+	moves := mg.generateMoves(false)
+
+	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.initSearchTranspositionTable()
+
+	// Simulate depth-1 iteration: search ALL root moves at depth 1
+	for i := range moves {
+		move := &moves[i]
+		before_hash := board.zobristHash
+		board.makeMove(move)
+		// chessEngine.searchBruteForce(1, -20000, 20000)
+		board.unmakeMove(move)
+		after_hash := board.zobristHash
+		if before_hash != after_hash {
+			t.Fatal("hash")
+		}
+
+	}
+	fmt.Printf("TT entries after depth 1: %d\n", len(chessEngine.transpositionTable.table))
+
+	// Now search Nxc6 at depth 2 WITH the populated TT
+	var nxc6 *Move
+	for i := range moves {
+		s := toSquare(moves[i].startSquare.row, moves[i].startSquare.col)
+		e := toSquare(moves[i].endSquare.row, moves[i].endSquare.col)
+		if s == "e5" && e == "c6" {
+			nxc6 = &moves[i]
+			break
+		}
+	}
+	board.makeMove(nxc6)
+	eval, nodes := chessEngine.searchBruteForce(2, -20000, 20000)
+	fmt.Printf("Nxc6 eval at depth 2 (populated TT, black POV): %d\n", eval)
+	fmt.Printf("Nodes Evaluated: %d\n", nodes)
+	board.unmakeMove(nxc6)
+
+	// Now with clean TT
+	// chessEngine2 := ChessEngine{moveGenerator: mg}
+	chessEngine.moveGenerator = mg
+	chessEngine.initSearchTranspositionTable()
+	board.makeMove(nxc6)
+	fmt.Printf("TT entries after clear: %d\n", len(chessEngine.transpositionTable.table))
+	eval2, nodes2 := chessEngine.searchBruteForce(1, -20000, 20000)
+
+	fmt.Printf("Nxc6 eval at depth 1 (clean TT, black POV): %d\n", eval2)
+	fmt.Printf("Nodes Evaluated: %d\n", nodes2)
+	eval3, nodes3 := chessEngine.searchBruteForce(2, -20000, 20000)
+
+	fmt.Printf("Nxc6 eval at depth 2 (clean TT, black POV): %d\n", eval3)
+	fmt.Printf("Nodes Evaluated: %d\n", nodes3)
+	board.unmakeMove(nxc6)
+
+	if eval != eval3 {
+		t.Fatalf("TT pollution: populated TT gives %d, clean TT gives %d", eval, eval3)
+	}
+	if nodes2 != nodes3 {
+		t.Fatalf("Different nodes evaluated  %d  %d", nodes2, nodes3)
 	}
 }
