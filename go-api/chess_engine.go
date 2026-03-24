@@ -110,6 +110,10 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 }
 
 func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
+	if s.searchCancelled.Load() {
+		return 0, 0
+	}
+
 	originalAlpha := alpha
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
@@ -128,10 +132,6 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 
 	if depth <= 0 {
 		return s.searchOnlyCapturesForce(alpha, beta)
-	}
-
-	if s.searchCancelled.Load() {
-		return 0, 0
 	}
 
 	positionsEvaluated := 0
@@ -158,9 +158,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		currentMoveEval = -currentMoveEval
 		if currentMoveEval >= beta {
 
-			if !s.searchCancelled.Load() {
-				tt.push(zHash, depth, 1, beta)
-			}
+			tt.push(zHash, depth, 1, beta)
 			board.unmakeMove(move)
 			return beta, positionsEvaluated
 		}
@@ -174,9 +172,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		flag = 0
 	}
 
-	if !s.searchCancelled.Load() {
-		tt.push(zHash, depth, flag, alpha)
-	}
+	tt.push(zHash, depth, flag, alpha)
 
 	return alpha, positionsEvaluated
 }
