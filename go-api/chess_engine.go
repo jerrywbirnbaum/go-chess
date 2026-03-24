@@ -57,11 +57,12 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			continue
 		}
 
+		bestEval = -40000
+		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
+
 		if s.searchCancelled {
 			break
 		}
-		bestEval = -40000
-		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
 
 		for i := range moves {
 			move := &moves[i]
@@ -167,6 +168,10 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		}
 		alpha = max(alpha, currentMoveEval)
 		board.unmakeMove(move)
+
+		if s.searchCancelled {
+			return 0, 0
+		}
 	}
 
 	if alpha <= originalAlpha {
