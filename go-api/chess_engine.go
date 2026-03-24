@@ -2,6 +2,7 @@ package main
 
 import (
 	"sort"
+	"sync/atomic"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type MoveEvaluation struct {
 type ChessEngine struct {
 	moveGenerator      MoveGenerator
 	transpositionTable TranspositionTable
-	searchCancelled    bool
+	searchCancelled    atomic.Bool
 	timer              int
 }
 
@@ -27,7 +28,7 @@ func (s *ChessEngine) startSearchTimer(done <-chan struct{}) {
 	}
 	select {
 	case <-time.After(time.Duration(timer) * time.Millisecond):
-		s.searchCancelled = true
+		s.searchCancelled.Store(true)
 	case <-done:
 	}
 }
@@ -37,7 +38,7 @@ func (s *ChessEngine) setTimer(timer int) {
 }
 
 func (s *ChessEngine) bestMove() (MoveString, int, int) {
-	s.searchCancelled = false
+	s.searchCancelled.Store(false)
 	board := s.moveGenerator.board
 	localMoveGenerator := MoveGenerator{board: board}
 	moves := localMoveGenerator.generateMoves(false)
@@ -53,14 +54,14 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 	defer close(done)
 	go s.startSearchTimer(done)
 	for searchDepth := range 200 {
-		if searchDepth == 0 {
-			continue
-		}
+		// if searchDepth == 0 {
+		// 	continue
+		// }
 
 		bestEval = -40000
 		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
 
-		if s.searchCancelled {
+		if s.searchCancelled.Load() {
 			break
 		}
 
@@ -71,8 +72,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 			totalEvaluated += positionsEvaluated
 			eval = -eval
 			board.unmakeMove(move)
-
-			if s.searchCancelled {
+			if s.searchCancelled.Load() {
 				break
 			}
 
@@ -81,11 +81,11 @@ func (s *ChessEngine) bestMove() (MoveString, int, int) {
 				bestMoveCurrentIteration = *move
 				bestEval = eval
 			}
-		}
 
+		}
 		bestMove = bestMoveCurrentIteration
 
-		if s.searchCancelled {
+		if s.searchCancelled.Load() {
 			break
 		}
 
@@ -134,7 +134,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		return s.searchOnlyCapturesForce(alpha, beta)
 	}
 
-	if s.searchCancelled {
+	if s.searchCancelled.Load() {
 		return 0, 0
 	}
 
@@ -169,7 +169,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 		alpha = max(alpha, currentMoveEval)
 		board.unmakeMove(move)
 
-		if s.searchCancelled {
+		if s.searchCancelled.Load() {
 			return 0, 0
 		}
 	}
