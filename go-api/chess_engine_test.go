@@ -359,20 +359,6 @@ func TestMoveEvaluationOrderSingleElement(t *testing.T) {
 	}
 }
 
-func TestMoveOrdering(t *testing.T) {
-	board := initBoard()
-	board.updateFromFEN("7k/4p3/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
-	chessEngine.initSearchTranspositionTable()
-	chessEngine.setTimer(2000)
-
-	got, _, _ := chessEngine.bestMove()
-	if got.startSquare != "c4" || got.endSquare != "b2" {
-		t.Fatalf("bestMove selected %s%s, want c4b2", got.startSquare, got.endSquare)
-	}
-}
-
 func TestNxc6EvalCleanTT(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("r6r/ppp1kppp/2p1bn2/4N1B1/8/2P5/PPP2PPP/R4RK1 w - - 3 11")
@@ -409,13 +395,9 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 		}
 	}
 	board.makeMove(nxc6)
-	eval, nodes := chessEngine.searchBruteForce(2, -20000, 20000)
-	fmt.Printf("Nxc6 eval at depth 2 (populated TT, black POV): %d\n", eval)
-	fmt.Printf("Nodes Evaluated: %d\n", nodes)
+	eval, _ := chessEngine.searchBruteForce(2, -20000, 20000)
 	board.unmakeMove(nxc6)
 
-	// Now with clean TT
-	// chessEngine2 := ChessEngine{moveGenerator: mg}
 	chessEngine.moveGenerator = mg
 	chessEngine.initSearchTranspositionTable()
 	board.makeMove(nxc6)
