@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"sort"
 	"testing"
 )
@@ -382,7 +381,6 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 		}
 
 	}
-	fmt.Printf("TT entries after depth 1: %d\n", len(chessEngine.transpositionTable.table))
 
 	// Now search Nxc6 at depth 2 WITH the populated TT
 	var nxc6 *Move
@@ -399,7 +397,6 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 	board.unmakeMove(nxc6)
 
 	chessEngine.moveGenerator = mg
-	chessEngine.initSearchTranspositionTable()
 	board.makeMove(nxc6)
 	chessEngine.searchBruteForce(1, -20000, 20000)
 
