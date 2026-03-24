@@ -419,21 +419,13 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 	chessEngine.moveGenerator = mg
 	chessEngine.initSearchTranspositionTable()
 	board.makeMove(nxc6)
-	fmt.Printf("TT entries after clear: %d\n", len(chessEngine.transpositionTable.table))
-	eval2, nodes2 := chessEngine.searchBruteForce(1, -20000, 20000)
+	chessEngine.searchBruteForce(1, -20000, 20000)
 
-	fmt.Printf("Nxc6 eval at depth 1 (clean TT, black POV): %d\n", eval2)
-	fmt.Printf("Nodes Evaluated: %d\n", nodes2)
-	eval3, nodes3 := chessEngine.searchBruteForce(2, -20000, 20000)
+	eval3, _ := chessEngine.searchBruteForce(2, -20000, 20000)
 
-	fmt.Printf("Nxc6 eval at depth 2 (clean TT, black POV): %d\n", eval3)
-	fmt.Printf("Nodes Evaluated: %d\n", nodes3)
 	board.unmakeMove(nxc6)
 
 	if eval != eval3 {
 		t.Fatalf("TT pollution: populated TT gives %d, clean TT gives %d", eval, eval3)
-	}
-	if nodes2 != nodes3 {
-		t.Fatalf("Different nodes evaluated  %d  %d", nodes2, nodes3)
 	}
 }

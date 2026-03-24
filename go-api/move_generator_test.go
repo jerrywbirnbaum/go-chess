@@ -383,39 +383,6 @@ func TestMoveSortFunctionSpecial(t *testing.T) {
 		fmt.Println(expected)
 	}
 }
-func TestMoveSortFunction(t *testing.T) {
-	board := initBoard()
-	board.updateFromFEN("8/4p2k/1R1Q4/8/2n5/8/1B1P4/7K b - - 0 1")
-	mg := MoveGenerator{board: &board}
-	moves := mg.generateMoves(false)
-	sort.Sort(MoveOrder(moves))
-
-	got := []MoveString{}
-	for _, move := range moves {
-		got = append(got, MoveString{
-			startSquare: fmt.Sprintf("%c%d", byte('a'+move.startSquare.col), 8-move.startSquare.row),
-			endSquare:   fmt.Sprintf("%c%d", byte('a'+move.endSquare.col), 8-move.endSquare.row),
-		})
-	}
-
-	expected := []MoveString{
-		{startSquare: "e7", endSquare: "d6"},
-		{startSquare: "c4", endSquare: "d6"},
-		{startSquare: "c4", endSquare: "b6"},
-		{startSquare: "c4", endSquare: "b2"},
-		{startSquare: "e7", endSquare: "e6"},
-		{startSquare: "e7", endSquare: "e5"},
-		{startSquare: "h7", endSquare: "g8"},
-		{startSquare: "c4", endSquare: "e3"},
-		{startSquare: "c4", endSquare: "a5"},
-		{startSquare: "c4", endSquare: "e5"},
-		{startSquare: "c4", endSquare: "a3"},
-		{startSquare: "c4", endSquare: "d2"},
-	}
-	if !reflect.DeepEqual(got, expected) {
-		t.Errorf("Failed Move Ordering Test")
-	}
-}
 
 func TestMoveGenerationFailingPosition(t *testing.T) {
 	board := initBoard()

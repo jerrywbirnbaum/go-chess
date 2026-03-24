@@ -179,17 +179,14 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 
 func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
 	board := s.moveGenerator.board
-	playerInCheck := board.playerInCheck()
 
 	standPat := basicEval(*board)
 
-	if !playerInCheck {
-		if standPat >= beta {
-			return beta, 1
-		}
-		if standPat > alpha {
-			alpha = standPat
-		}
+	if standPat >= beta {
+		return beta, 1
+	}
+	if standPat > alpha {
+		alpha = standPat
 	}
 
 	moveGenerator := MoveGenerator{board: board}
@@ -227,32 +224,26 @@ func (a MoveOrder) Len() int      { return len(a) }
 func (a MoveOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func (a MoveOrder) Less(i, j int) bool {
-	startPieceType := pieceType(a[i].startSquare.piece)
-	endPieceType := pieceType(a[i].endSquare.piece)
-	iPieceDiff := getPieceValue(endPieceType) - getPieceValue(startPieceType)
-	if endPieceType == 0 {
-		iPieceDiff = 0
-	}
-
-	startPieceType = pieceType(a[j].startSquare.piece)
-	endPieceType = pieceType(a[j].endSquare.piece)
-	jPieceDiff := getPieceValue(endPieceType) - getPieceValue(startPieceType)
-	if endPieceType == 0 {
-		jPieceDiff = 0
-	}
 
 	if a[i].isPromotion != a[j].isPromotion {
 		return a[i].isPromotion
 	}
 
-	if iPieceDiff != jPieceDiff {
-		return iPieceDiff > jPieceDiff
+	iIsCapture := a[i].endSquare.piece != 0
+	jIsCapture := a[j].endSquare.piece != 0
+
+	if iIsCapture != jIsCapture {
+		return iIsCapture
 	}
-	if iPieceDiff > 0 && jPieceDiff == 0 {
-		return true
-	}
-	if jPieceDiff > 0 && iPieceDiff == 0 {
-		return false
+	iStartVal := getPieceValue(pieceType(a[i].startSquare.piece))
+	iEndVal := getPieceValue(pieceType(a[i].endSquare.piece))
+	jStartVal := getPieceValue(pieceType(a[j].startSquare.piece))
+	jEndVal := getPieceValue(pieceType(a[j].endSquare.piece))
+
+	iDiff := iEndVal - iStartVal
+	jDiff := jEndVal - jStartVal
+	if iDiff != jDiff {
+		return iDiff > jDiff
 	}
 
 	if a[i].startSquare.row != a[j].startSquare.row {
