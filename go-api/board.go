@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand/v2"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -36,8 +37,28 @@ type Board struct {
 	whiteKingCol          int
 	blackKingRow          int
 	blackKingCol          int
+	fullMoveClock         int
+	halfMoveClock         int
+	bitboards             [12]uint64
 }
 
+func (b *Board) getBitboard(piece Piece) uint64 {
+	return b.bitboards[piece-1]
+}
+
+func (b *Board) setBitboardPiece(piece Piece, row int, col int) {
+	if piece == EmptyPiece {
+		return
+	}
+	b.bitboards[piece-1] = bitboardAddOne(b.bitboards[piece-1], row, col)
+}
+
+func (b *Board) removeBitboardPiece(piece Piece, row int, col int) {
+	if piece == EmptyPiece {
+		return
+	}
+	b.bitboards[piece-1] = bitboardRemoveOne(b.bitboards[piece-1], row, col)
+}
 func (b *Board) getCell(row int, col int) Piece {
 	return b.board[row*8+col]
 }
@@ -80,8 +101,10 @@ func (b *Board) updateFromFEN(fen_string string) {
 	b.castleAvailable = parseCastleRights(castle)
 	en_passant := fen_list[3]
 	b.enpassant = en_passant
-	// halfmove_clock := fen_list[4]
-	// fullmove_number := fen_list[5]
+	fullMoveClock, _ := strconv.Atoi(fen_list[4])
+	b.fullMoveClock = fullMoveClock
+	halfMoveClock, _ := strconv.Atoi(fen_list[4])
+	b.halfMoveClock = halfMoveClock
 
 	b.updateBoardFEN(board_fen_string)
 	b.rebuildPieceList()
@@ -129,6 +152,7 @@ func (b *Board) rebuildPieceList() {
 			if isEmpty(p) {
 				continue
 			}
+			b.setBitboardPiece(p, i, j)
 			b.pieces[b.pieceCount] = Square{row: i, col: j, piece: p}
 			b.pieceCount += 1
 			if isKing(pieceType(p)) {
@@ -161,7 +185,8 @@ func (b *Board) updateKingPos(king Piece, row, col int) {
 	}
 }
 
-func (b *Board) removePieceFromList(row int, col int) {
+func (b *Board) removePieceFromList(piece Piece, row int, col int) {
+	b.removeBitboardPiece(piece, row, col)
 	for i := 0; i < b.pieceCount; i++ {
 		p := b.pieces[i]
 		if p.row == row && p.col == col {
@@ -175,8 +200,9 @@ func (b *Board) removePieceFromList(row int, col int) {
 }
 
 func (b *Board) setPieceInList(row int, col int, piece Piece) {
+	b.setBitboardPiece(piece, row, col)
 	if isEmpty(piece) {
-		b.removePieceFromList(row, col)
+		b.removePieceFromList(piece, row, col)
 		return
 	}
 
@@ -368,7 +394,7 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
 		b.setCell(endRow, endCol, promotedPiece)
 		b.setCell(startRow, startCol, newPiece('*'))
-		b.removePieceFromList(startRow, startCol)
+		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.setPieceInList(endRow, endCol, promotedPiece)
 	} else if move.isEnpassant {
 		//enpassant
@@ -378,8 +404,8 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(endRow, endCol, move.startSquare.piece)
 		b.setCell(startRow, endCol, newPiece('*'))
 		b.setCell(startRow, startCol, newPiece('*'))
-		b.removePieceFromList(startRow, startCol)
-		b.removePieceFromList(startRow, endCol)
+		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
+		b.removePieceFromList(move.endSquare.piece, startRow, endCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
 	} else if move.isCastleKingSide {
 		//Castling
@@ -392,8 +418,8 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(startRow, 5, b.getCell(startRow, 7))
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(startRow, 7, newPiece('*'))
-		b.removePieceFromList(startRow, startCol)
-		b.removePieceFromList(startRow, 7)
+		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
+		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 7)
 		b.setPieceInList(startRow, 6, move.startSquare.piece)
 		b.setPieceInList(startRow, 5, b.getCell(startRow, 5))
 		b.updateKingPos(move.startSquare.piece, startRow, 6)
@@ -407,8 +433,8 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(startRow, 3, b.getCell(startRow, 0))
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(startRow, 0, newPiece('*'))
-		b.removePieceFromList(startRow, startCol)
-		b.removePieceFromList(startRow, 0)
+		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
+		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 0)
 		b.setPieceInList(startRow, 2, move.startSquare.piece)
 		b.setPieceInList(startRow, 3, b.getCell(startRow, 3))
 		b.updateKingPos(move.startSquare.piece, startRow, 2)
@@ -419,7 +445,7 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(endRow, endCol, move.startSquare.piece)
-		b.removePieceFromList(startRow, startCol)
+		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
 		if isKing(pieceType) {
 			b.updateKingPos(move.startSquare.piece, endRow, endCol)

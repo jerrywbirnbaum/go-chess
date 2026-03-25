@@ -138,6 +138,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	originalAlpha := alpha
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
+	inCheck := board.playerInCheck()
 
 	zHash := board.zobristHash
 	isValid, ttDepth, flag, evaluation := tt.lookup(zHash)
@@ -157,10 +158,23 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 
 	positionsEvaluated := 0
 
+	//null move pruning
+	if !inCheck {
+		nullMove := Move{isNull: true}
+		board.makeMove(&nullMove)
+		nullMoveReduction := 1
+		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, -beta, -alpha)
+		nullMoveEval = -nullMoveEval
+		board.unmakeMove(&nullMove)
+		positionsEvaluated += nullNodes
+		if nullMoveEval >= beta {
+			return nullMoveEval, nullNodes
+		}
+	}
 	moveGenerator := MoveGenerator{board: board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) == 0 {
-		if board.playerInCheck() {
+		if inCheck {
 			return -20000 - depth, 1
 		} else {
 			return 0, 1

@@ -11,7 +11,7 @@ func bitboardToArray(bb uint64) [8][8]int {
 	var arr [8][8]int
 	for i := range 8 {
 		for j := range 8 {
-			if (bb>>uint(i*8+j))&1 == 1 {
+			if bitboardCheckOne(bb, i, j) {
 				arr[i][j] = 1
 			}
 		}
@@ -178,7 +178,8 @@ func TestCheckRaysKnight(t *testing.T) {
 	result := moveGenerator.checkRays(0, 0)
 
 	if !reflect.DeepEqual(bitboardToArray(result), expected) {
-		t.Errorf("Failed Check Rays")
+		fmt.Println(result)
+		t.Errorf("Failed Check Rays Knight")
 	}
 }
 
