@@ -49,7 +49,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	var bestMove Move
 	var bestMoveCurrentIteration Move
 	bestEvalCompleted := -40000
-	completedDepth := 0
+	completedDepth := 1
 
 	done := make(chan struct{})
 	defer close(done)
@@ -78,7 +78,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		for i := range moves {
 			move := &moves[i]
 			board.makeMove(move)
-			eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000)
+			eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000, true)
 			totalEvaluated += positionsEvaluated
 			eval = -eval
 			board.unmakeMove(move)
@@ -130,7 +130,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.isPromotion}, totalEvaluated, bestEvalCompleted, completedDepth
 }
 
-func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int) {
+func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull bool) (int, int) {
 	if s.searchCancelled.Load() {
 		return 0, 0
 	}
@@ -159,16 +159,16 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	positionsEvaluated := 0
 
 	//null move pruning
-	if !inCheck && !board.isPawnEndgame() {
+	if depth >= 3 && !inCheck && !board.isPawnEndgame() {
 		nullMove := Move{isNull: true}
 		board.makeMove(&nullMove)
 		nullMoveReduction := 2
-		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, -beta, -(-beta - 1))
+		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, -beta, -beta+1, false)
 		nullMoveEval = -nullMoveEval
 		board.unmakeMove(&nullMove)
 		positionsEvaluated += nullNodes
 		if nullMoveEval >= beta {
-			return nullMoveEval, nullNodes
+			return beta, nullNodes
 		}
 	}
 	moveGenerator := MoveGenerator{board: board}
@@ -188,7 +188,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, -beta, -alpha)
+		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, -beta, -alpha, true)
 		positionsEvaluated += currentPositionsEvaluated
 		currentMoveEval = -currentMoveEval
 		if currentMoveEval >= beta {

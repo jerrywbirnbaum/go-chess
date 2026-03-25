@@ -13,7 +13,7 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	got, _ := chessEngine.searchBruteForce(0, -20000, 20000)
+	got, _ := chessEngine.searchBruteForce(0, -20000, 20000, true)
 	want := basicEval(board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
@@ -28,7 +28,7 @@ func TestSearchBruteForceStalemate(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	got, _ := chessEngine.searchBruteForce(1, -20000, 20000, true)
 	want := 0
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
@@ -45,7 +45,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	got, _ := chessEngine.searchBruteForce(0, -20000, 20000)
+	got, _ := chessEngine.searchBruteForce(0, -20000, 20000, true)
 
 	moveGenerator := MoveGenerator{board: &board}
 	firstCaptures := moveGenerator.generateMoves(true)
@@ -91,7 +91,7 @@ func TestSearchBruteForceCheckmateReturnsNegativeInfinity(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	got, _ := chessEngine.searchBruteForce(1, -20000, 20000, true)
 	if got != -20001 {
 		t.Fatalf("checkmate position should evaluate to -20001 (mate at depth 1), got %v", got)
 	}
@@ -105,7 +105,7 @@ func TestSearchBruteForceStalemateReturnsZero(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	got, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	got, _ := chessEngine.searchBruteForce(1, -20000, 20000, true)
 	if got != 0 {
 		t.Fatalf("stalemate position should evaluate to 0, got %v", got)
 	}
@@ -123,7 +123,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	_, _ = chessEngine.searchBruteForce(2, -20000, 20000)
+	_, _ = chessEngine.searchBruteForce(2, -20000, 20000, true)
 
 	if board.printBoard() != before {
 		t.Fatalf("search should not mutate board placement")
@@ -151,7 +151,7 @@ func TestSearchBruteForceTranspositionExactHitReturnsCachedEval(t *testing.T) {
 
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 0, 321)
-	gotEval, gotPositions := chessEngine.searchBruteForce(0, -20000, 20000)
+	gotEval, gotPositions := chessEngine.searchBruteForce(0, -20000, 20000, true)
 
 	if gotEval != 321 {
 		t.Fatalf("expected exact TT hit to return cached eval 321, got %d", gotEval)
@@ -173,7 +173,7 @@ func TestSearchBruteForceTranspositionLowerBoundHitReturnsCachedEval(t *testing.
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 1, 50)
 
-	gotEval, gotPositions := chessEngine.searchBruteForce(2, -20000, 40)
+	gotEval, gotPositions := chessEngine.searchBruteForce(2, -20000, 40, true)
 	if gotEval != 50 {
 		t.Fatalf("expected lower-bound TT hit to return cached eval 50, got %d", gotEval)
 	}
@@ -193,7 +193,7 @@ func TestSearchBruteForceTranspositionUpperBoundHitReturnsCachedEval(t *testing.
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 2, -50)
-	gotEval, gotPositions := chessEngine.searchBruteForce(2, -40, 20000)
+	gotEval, gotPositions := chessEngine.searchBruteForce(2, -40, 20000, true)
 	if gotEval != -50 {
 		t.Fatalf("expected upper-bound TT hit to return cached eval -50, got %d", gotEval)
 	}
@@ -213,7 +213,7 @@ func TestSearchBruteForceTranspositionIgnoresShallowEntry(t *testing.T) {
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 0, 0, 123)
-	gotEval, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	gotEval, _ := chessEngine.searchBruteForce(1, -20000, 20000, true)
 	if gotEval != -20001 {
 		t.Fatalf("expected shallow TT entry to be ignored; got %d", gotEval)
 	}
@@ -230,7 +230,7 @@ func TestSearchBruteForceTranspositionIgnoresUnmetLowerBound(t *testing.T) {
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 1, 30)
-	gotEval, _ := chessEngine.searchBruteForce(2, -20000, 40)
+	gotEval, _ := chessEngine.searchBruteForce(2, -20000, 40, true)
 	if gotEval != -20002 {
 		t.Fatalf("expected unmet lower-bound TT entry to be ignored; got %d", gotEval)
 	}
@@ -243,7 +243,7 @@ func TestSearchAvoidCheckmate(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
-	gotEval, _ := chessEngine.searchBruteForce(1, -20000, 20000)
+	gotEval, _ := chessEngine.searchBruteForce(1, -20000, 20000, true)
 	if gotEval != 20000 {
 		t.Fatalf("Failed TestSearchAvoidCheckmate: got %d", gotEval)
 	}
@@ -393,14 +393,14 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 		}
 	}
 	board.makeMove(nxc6)
-	eval, _ := chessEngine.searchBruteForce(2, -20000, 20000)
+	eval, _ := chessEngine.searchBruteForce(2, -20000, 20000, true)
 	board.unmakeMove(nxc6)
 
 	chessEngine.moveGenerator = mg
 	board.makeMove(nxc6)
-	chessEngine.searchBruteForce(1, -20000, 20000)
+	chessEngine.searchBruteForce(1, -20000, 20000, true)
 
-	eval3, _ := chessEngine.searchBruteForce(2, -20000, 20000)
+	eval3, _ := chessEngine.searchBruteForce(2, -20000, 20000, true)
 
 	board.unmakeMove(nxc6)
 
