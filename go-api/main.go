@@ -16,6 +16,7 @@ func main() {
 	chessEngine := ChessEngine{moveGenerator: moveGenerator}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.setTimer(1000)
+	initTables()
 
 	if len(os.Args) > 1 && os.Args[1] == "uci" {
 		runUCI(&chessEngine, &board)

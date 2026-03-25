@@ -215,7 +215,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
 	board := s.moveGenerator.board
 
-	standPat := basicEval(*board)
+	standPat := pestoEval(*board)
 
 	if standPat >= beta {
 		return beta, 1

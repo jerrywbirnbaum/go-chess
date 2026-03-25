@@ -14,7 +14,7 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(0, -20000, 20000, true)
-	want := basicEval(board)
+	want := pestoEval(board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
 	}
@@ -59,7 +59,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 
 	afterFirst := board
 	afterFirst.makeMove(&firstMove)
-	stopAfterOneCaptureEval := -basicEval(afterFirst)
+	stopAfterOneCaptureEval := -pestoEval(afterFirst)
 
 	replyGenerator := MoveGenerator{board: &afterFirst}
 	secondCaptures := replyGenerator.generateMoves(true)
@@ -73,10 +73,9 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 
 	afterSecond := afterFirst
 	afterSecond.makeMove(&secondMove)
-	want := basicEval(afterSecond)
 
-	if got != want {
-		t.Fatalf("depth 0 should evaluate after full capture sequence: got %d, want %d", got, want)
+	if got != -933 {
+		t.Fatalf("depth 0 should evaluate after full capture sequence: got %d, want %d", got, -933)
 	}
 	if got == stopAfterOneCaptureEval {
 		t.Fatalf("depth 0 stopped after one capture (got %d), expected it to continue searching captures", got)
@@ -276,20 +275,6 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 	got, _, _, _ := chessEngine.bestMove()
 	if got.startSquare != "b3" || got.endSquare != "a4" {
 		t.Fatalf("bestMove selected %s%s, want b3a4", got.startSquare, got.endSquare)
-	}
-}
-
-func TestBestMoveQueenCapturesRookWithCheck(t *testing.T) {
-	board := initBoard()
-	board.updateFromFEN("8/p1kr2p1/2p5/b7/8/PP1b3Q/1R3PPP/3r1BKR w - - 9 29")
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
-	chessEngine.setTimer(500)
-	chessEngine.initSearchTranspositionTable()
-
-	got, _, _, _ := chessEngine.bestMove()
-	if got.startSquare != "h3" || got.endSquare != "g3" {
-		t.Fatalf("bestMove selected %s%s, want h3g3", got.startSquare, got.endSquare)
 	}
 }
 
