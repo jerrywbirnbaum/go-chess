@@ -162,8 +162,8 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	if !inCheck && !board.isPawnEndgame() {
 		nullMove := Move{isNull: true}
 		board.makeMove(&nullMove)
-		nullMoveReduction := 1
-		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, -beta, -alpha)
+		nullMoveReduction := 2
+		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, -beta, -(-beta - 1))
 		nullMoveEval = -nullMoveEval
 		board.unmakeMove(&nullMove)
 		positionsEvaluated += nullNodes
