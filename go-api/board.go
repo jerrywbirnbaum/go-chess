@@ -42,6 +42,16 @@ type Board struct {
 	bitboards             [12]uint64
 }
 
+func (b *Board) isPawnEndgame() bool {
+	pieces := [8]Piece{WhiteKnight, WhiteBishop, WhiteRook, WhiteQueen, BlackKnight, BlackBishop, BlackRook, BlackQueen}
+	for i := range pieces {
+		if b.getBitboard(pieces[i]) != 0 {
+			return false
+		}
+	}
+
+	return true
+}
 func (b *Board) getBitboard(piece Piece) uint64 {
 	return b.bitboards[piece-1]
 }

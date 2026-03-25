@@ -159,7 +159,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int) (int, int
 	positionsEvaluated := 0
 
 	//null move pruning
-	if !inCheck {
+	if !inCheck && !board.isPawnEndgame() {
 		nullMove := Move{isNull: true}
 		board.makeMove(&nullMove)
 		nullMoveReduction := 1
