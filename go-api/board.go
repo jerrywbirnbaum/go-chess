@@ -395,9 +395,12 @@ func (b *Board) makeMoveUpdateSide(move *Move) {
 func (b *Board) makeMove(move *Move) {
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
+	startPiece := move.startSquare.piece
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
-	pieceType := pieceType(move.startSquare.piece)
+	endPiece := move.endSquare.piece
+
+	pieceType := pieceType(startPiece)
 
 	move.previousCastleRights = b.castleAvailable
 	move.previousEnpassant = b.enpassant
@@ -409,7 +412,7 @@ func (b *Board) makeMove(move *Move) {
 	move.isEnpassant = false
 	move.enpassantCapture = newPiece('*')
 
-	if isPawn(pieceType) && move.previousEnpassant != "-" && isEmpty(move.endSquare.piece) {
+	if isPawn(pieceType) && move.previousEnpassant != "-" && isEmpty(endPiece) {
 		enpassantRow, enpassantCol := fromSquare(move.previousEnpassant)
 		if endRow == enpassantRow && endCol == enpassantCol {
 			move.isEnpassant = true
@@ -428,93 +431,93 @@ func (b *Board) makeMove(move *Move) {
 	if move.isPromotion {
 		var promotedPiece Piece
 		promotedPiece = newPieceTypeColor(move.promotionPieceType, b.currentColor())
-		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
-		b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
+		b.xorPieceSquare(startPiece, startRow, startCol)
+		b.xorPieceSquare(endPiece, endRow, endCol)
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
 		b.setCell(endRow, endCol, promotedPiece)
 		b.setCell(startRow, startCol, newPiece('*'))
 
 		b.setBitboardPiece(promotedPiece, endRow, endCol)
-		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
-		b.removeBitboardPiece(move.endSquare.piece, endRow, endCol)
+		b.removeBitboardPiece(startPiece, startRow, startCol)
+		b.removeBitboardPiece(endPiece, endRow, endCol)
 
-		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
+		b.removePieceFromList(startPiece, startRow, startCol)
 		b.setPieceInList(endRow, endCol, promotedPiece)
 	} else if move.isEnpassant {
 		//enpassant
-		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(move.enpassantCapture, startRow, endCol)
-		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
-		b.setCell(endRow, endCol, move.startSquare.piece)
+		b.xorPieceSquare(startPiece, endRow, endCol)
+		b.setCell(endRow, endCol, startPiece)
 		b.setCell(startRow, endCol, newPiece('*'))
 		b.setCell(startRow, startCol, newPiece('*'))
 
-		b.setBitboardPiece(move.startSquare.piece, endRow, endCol)
-		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
-		b.removeBitboardPiece(move.endSquare.piece, startRow, endCol)
+		b.setBitboardPiece(startPiece, endRow, endCol)
+		b.removeBitboardPiece(startPiece, startRow, startCol)
+		b.removeBitboardPiece(endPiece, startRow, endCol)
 
-		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
-		b.removePieceFromList(move.endSquare.piece, startRow, endCol)
-		b.setPieceInList(endRow, endCol, move.startSquare.piece)
+		b.removePieceFromList(startPiece, startRow, startCol)
+		b.removePieceFromList(endPiece, startRow, endCol)
+		b.setPieceInList(endRow, endCol, startPiece)
 	} else if move.isCastleKingSide {
 		//Castling
 		rookPiece := b.getCell(startRow, 7)
-		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(rookPiece, startRow, 7)
-		b.xorPieceSquare(move.startSquare.piece, startRow, 6)
+		b.xorPieceSquare(startPiece, startRow, 6)
 		b.xorPieceSquare(rookPiece, startRow, 5)
-		b.setCell(startRow, 6, move.startSquare.piece)
+		b.setCell(startRow, 6, startPiece)
 		b.setCell(startRow, 5, b.getCell(startRow, 7))
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(startRow, 7, newPiece('*'))
 
-		b.setBitboardPiece(move.startSquare.piece, startRow, 6)
+		b.setBitboardPiece(startPiece, startRow, 6)
 		b.setBitboardPiece(rookPiece, startRow, 6)
-		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(startPiece, startRow, startCol)
 		b.removeBitboardPiece(rookPiece, startRow, 7)
 
-		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
+		b.removePieceFromList(startPiece, startRow, startCol)
 		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 7)
-		b.setPieceInList(startRow, 6, move.startSquare.piece)
+		b.setPieceInList(startRow, 6, startPiece)
 		b.setPieceInList(startRow, 5, b.getCell(startRow, 5))
-		b.updateKingPos(move.startSquare.piece, startRow, 6)
+		b.updateKingPos(startPiece, startRow, 6)
 	} else if move.isCastleQueenSide {
 		rookPiece := b.getCell(startRow, 0)
-		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
+		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(rookPiece, startRow, 0)
-		b.xorPieceSquare(move.startSquare.piece, startRow, 2)
+		b.xorPieceSquare(startPiece, startRow, 2)
 		b.xorPieceSquare(rookPiece, startRow, 3)
-		b.setCell(startRow, 2, move.startSquare.piece)
+		b.setCell(startRow, 2, startPiece)
 		b.setCell(startRow, 3, b.getCell(startRow, 0))
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(startRow, 0, newPiece('*'))
 
-		b.setBitboardPiece(move.startSquare.piece, startRow, 2)
+		b.setBitboardPiece(startPiece, startRow, 2)
 		b.setBitboardPiece(rookPiece, startRow, 3)
-		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(startPiece, startRow, startCol)
 		b.removeBitboardPiece(rookPiece, startRow, 0)
 
-		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
+		b.removePieceFromList(startPiece, startRow, startCol)
 		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 0)
-		b.setPieceInList(startRow, 2, move.startSquare.piece)
+		b.setPieceInList(startRow, 2, startPiece)
 		b.setPieceInList(startRow, 3, b.getCell(startRow, 3))
-		b.updateKingPos(move.startSquare.piece, startRow, 2)
+		b.updateKingPos(startPiece, startRow, 2)
 	} else {
 		//Normal Move
-		b.xorPieceSquare(move.startSquare.piece, startRow, startCol)
-		b.xorPieceSquare(move.endSquare.piece, endRow, endCol)
-		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
+		b.xorPieceSquare(startPiece, startRow, startCol)
+		b.xorPieceSquare(endPiece, endRow, endCol)
+		b.xorPieceSquare(startPiece, endRow, endCol)
 		b.setCell(startRow, startCol, newPiece('*'))
-		b.setCell(endRow, endCol, move.startSquare.piece)
+		b.setCell(endRow, endCol, startPiece)
 
-		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
-		b.removeBitboardPiece(move.endSquare.piece, endRow, endCol)
-		b.setBitboardPiece(move.startSquare.piece, endRow, endCol)
+		b.removeBitboardPiece(startPiece, startRow, startCol)
+		b.removeBitboardPiece(endPiece, endRow, endCol)
+		b.setBitboardPiece(startPiece, endRow, endCol)
 
-		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
-		b.setPieceInList(endRow, endCol, move.startSquare.piece)
+		b.removePieceFromList(startPiece, startRow, startCol)
+		b.setPieceInList(endRow, endCol, startPiece)
 		if isKing(pieceType) {
-			b.updateKingPos(move.startSquare.piece, endRow, endCol)
+			b.updateKingPos(startPiece, endRow, endCol)
 		}
 	}
 
@@ -535,8 +538,10 @@ func (b *Board) unmakeMove(move *Move) {
 
 	startRow := move.startSquare.row
 	startCol := move.startSquare.col
+	startPiece := move.startSquare.piece
 	endRow := move.endSquare.row
 	endCol := move.endSquare.col
+	endPiece := move.endSquare.piece
 
 	//Null move
 	if move.isNull {
@@ -545,49 +550,49 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 	//Enpassant
 	if move.isPromotion {
-		b.setCell(startRow, startCol, move.startSquare.piece)
-		b.setCell(endRow, endCol, move.endSquare.piece)
-		b.setPieceInList(endRow, endCol, move.endSquare.piece)
-		b.setPieceInList(startRow, startCol, move.startSquare.piece)
+		b.setCell(startRow, startCol, startPiece)
+		b.setCell(endRow, endCol, endPiece)
+		b.setPieceInList(endRow, endCol, endPiece)
+		b.setPieceInList(startRow, startCol, startPiece)
 	} else if move.isEnpassant {
-		b.setCell(startRow, startCol, move.startSquare.piece)
+		b.setCell(startRow, startCol, startPiece)
 		b.setCell(endRow, endCol, newPiece('*'))
 		b.setCell(startRow, endCol, move.enpassantCapture)
-		b.setPieceInList(startRow, startCol, move.startSquare.piece)
+		b.setPieceInList(startRow, startCol, startPiece)
 		b.setPieceInList(endRow, endCol, newPiece('*'))
 		b.setPieceInList(startRow, endCol, move.enpassantCapture)
 	} else if move.isCastleKingSide {
-		b.setCell(startRow, 4, move.startSquare.piece)
+		b.setCell(startRow, 4, startPiece)
 		b.setCell(startRow, 7, b.getCell(startRow, 5))
 		b.setCell(startRow, 5, newPiece('*'))
 		b.setCell(startRow, 6, newPiece('*'))
 		b.setPieceInList(startRow, 5, newPiece('*'))
 		b.setPieceInList(startRow, 6, newPiece('*'))
-		b.setPieceInList(startRow, 4, move.startSquare.piece)
+		b.setPieceInList(startRow, 4, startPiece)
 		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
-		b.updateKingPos(move.startSquare.piece, startRow, 4)
+		b.updateKingPos(startPiece, startRow, 4)
 	} else if move.isCastleQueenSide {
-		b.setCell(startRow, 4, move.startSquare.piece)
+		b.setCell(startRow, 4, startPiece)
 		b.setCell(startRow, 0, b.getCell(startRow, 3))
 		b.setCell(startRow, 2, newPiece('*'))
 		b.setCell(startRow, 3, newPiece('*'))
 		b.setPieceInList(startRow, 2, newPiece('*'))
 		b.setPieceInList(startRow, 3, newPiece('*'))
-		b.setPieceInList(startRow, 4, move.startSquare.piece)
+		b.setPieceInList(startRow, 4, startPiece)
 		b.setPieceInList(startRow, 0, b.getCell(startRow, 0))
-		b.updateKingPos(move.startSquare.piece, startRow, 4)
+		b.updateKingPos(startPiece, startRow, 4)
 	} else {
-		b.setCell(startRow, startCol, move.startSquare.piece)
-		b.setCell(endRow, endCol, move.endSquare.piece)
+		b.setCell(startRow, startCol, startPiece)
+		b.setCell(endRow, endCol, endPiece)
 
-		b.setBitboardPiece(move.endSquare.piece, endRow, endCol)
-		b.setBitboardPiece(move.startSquare.piece, startRow, startCol)
-		b.removeBitboardPiece(move.startSquare.piece, endRow, endCol)
+		b.setBitboardPiece(endPiece, endRow, endCol)
+		b.setBitboardPiece(startPiece, startRow, startCol)
+		b.removeBitboardPiece(startPiece, endRow, endCol)
 
-		b.setPieceInList(endRow, endCol, move.endSquare.piece)
-		b.setPieceInList(startRow, startCol, move.startSquare.piece)
-		if isKing(pieceType(move.startSquare.piece)) {
-			b.updateKingPos(move.startSquare.piece, startRow, startCol)
+		b.setPieceInList(endRow, endCol, endPiece)
+		b.setPieceInList(startRow, startCol, startPiece)
+		if isKing(pieceType(startPiece)) {
+			b.updateKingPos(startPiece, startRow, startCol)
 		}
 	}
 
