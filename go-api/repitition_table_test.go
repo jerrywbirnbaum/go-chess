@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestRepititionTableInitCreatesMap(t *testing.T) {
 	rt := initRepititionTable()
@@ -74,5 +76,23 @@ func TestRepititionTableIndependentKeys(t *testing.T) {
 	}
 	if rt.table[2] != 1 {
 		t.Fatalf("expected key 2 count 1, got %d", rt.table[2])
+	}
+}
+
+func TestForcesThreeFoldRepitition(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("k6K/8/ppQ5/8/8/1r6/r1P5/rr6 w - - 0 1")
+	mg := MoveGenerator{board: &board}
+	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine.setTimer(10)
+	chessEngine.initSearchTranspositionTable()
+
+	got, _, eval, _ := chessEngine.bestMove()
+
+	if eval != 0 {
+		t.Fatal("Did not evaluate three fold repition as draw")
+	}
+	if got.endSquare == "c8" {
+		t.Fatalf("bestMove selected %s%s, should be c6c8", got.startSquare, got.endSquare)
 	}
 }

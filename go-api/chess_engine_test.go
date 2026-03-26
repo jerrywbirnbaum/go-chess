@@ -353,12 +353,10 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
 
-	// Simulate depth-1 iteration: search ALL root moves at depth 1
 	for i := range moves {
 		move := &moves[i]
 		before_hash := board.zobristHash
 		board.makeMove(move)
-		// chessEngine.searchBruteForce(1, -20000, 20000)
 		board.unmakeMove(move)
 		after_hash := board.zobristHash
 		if before_hash != after_hash {
@@ -367,7 +365,6 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 
 	}
 
-	// Now search Nxc6 at depth 2 WITH the populated TT
 	var nxc6 *Move
 	for i := range moves {
 		s := toSquare(moves[i].startSquare.row, moves[i].startSquare.col)

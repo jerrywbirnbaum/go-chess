@@ -200,6 +200,10 @@ func getPieceValue(p PieceType) int {
 }
 
 func pestoEval(b Board) int {
+	if b.isThreeFoldRepitition {
+		return 0
+	}
+
 	blackMGEval := 0
 	whiteMGEval := 0
 	blackEGEval := 0
