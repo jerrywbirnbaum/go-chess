@@ -1,5 +1,7 @@
 package main
 
+import "math"
+
 var mg_pawn_table = [64]int{
 	0, 0, 0, 0, 0, 0, 0, 0,
 	98, 134, 61, 95, 68, 126, 34, -11,
@@ -236,5 +238,53 @@ func pestoEval(b Board) int {
 		mgScore = blackMGEval - whiteMGEval
 		egScore = blackEGEval - whiteEGEval
 	}
-	return (mgScore*midGamePhase + egScore*(24-midGamePhase)) / 24
+	score := (mgScore*midGamePhase + egScore*(24-midGamePhase)) / 24
+	if b.isNoPawnEndGame() {
+		score += mopUpEval(b, whiteMGEval+whiteEGEval, blackMGEval+blackEGEval)
+	}
+	return score
+}
+
+var arrCenterManhattanDistance = [64]int{
+	6, 5, 4, 3, 3, 4, 5, 6,
+	5, 4, 3, 2, 2, 3, 4, 5,
+	4, 3, 2, 1, 1, 2, 3, 4,
+	3, 2, 1, 0, 0, 1, 2, 3,
+	3, 2, 1, 0, 0, 1, 2, 3,
+	4, 3, 2, 1, 1, 2, 3, 4,
+	5, 4, 3, 2, 2, 3, 4, 5,
+	6, 5, 4, 3, 3, 4, 5, 6,
+}
+
+func mopUpEval(b Board, whiteEval int, blackEval int) int {
+	isWhiteTurn := b.isWhiteTurn
+	isWinning := false
+	if (isWhiteTurn && whiteEval > blackEval) || (!isWhiteTurn && blackEval > whiteEval) {
+		isWinning = true
+	}
+
+	var losingKingRow int
+	var losingKingCol int
+	var winningKingRow int
+	var winningKingCol int
+	if whiteEval > blackEval {
+		losingKingRow = b.blackKingRow
+		losingKingCol = b.blackKingCol
+		winningKingRow = b.whiteKingRow
+		winningKingCol = b.whiteKingCol
+	} else {
+		winningKingRow = b.blackKingRow
+		winningKingCol = b.blackKingCol
+		losingKingRow = b.whiteKingRow
+		losingKingCol = b.whiteKingCol
+	}
+
+	centerManhattanDistance := arrCenterManhattanDistance[losingKingRow*8+losingKingCol]
+	manhattanDistanceKings := math.Abs(float64(winningKingRow-losingKingRow)) + math.Abs(float64(winningKingCol-losingKingCol))
+	bonusEval := 4.7*float64(centerManhattanDistance) + 1.6*(14-manhattanDistanceKings)
+	if !isWinning {
+		bonusEval = -bonusEval
+	}
+
+	return int(bonusEval)
 }
