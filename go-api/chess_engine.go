@@ -78,7 +78,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		for i := range moves {
 			move := &moves[i]
 			board.makeMove(move)
-			eval, positionsEvaluated := s.searchBruteForce(searchDepth, -20000, 20000, true)
+			eval, positionsEvaluated := s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
 			totalEvaluated += positionsEvaluated
 			eval = -eval
 			board.unmakeMove(move)
@@ -130,7 +130,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.isPromotion}, totalEvaluated, bestEvalCompleted, completedDepth
 }
 
-func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull bool) (int, int) {
+func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, allowNull bool) (int, int) {
 	if s.searchCancelled.Load() {
 		return 0, 0
 	}
@@ -143,6 +143,11 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 	zHash := board.zobristHash
 	isValid, ttDepth, flag, evaluation := tt.lookup(zHash)
 	if isValid && ttDepth >= depth {
+		if evaluation >= 19900 {
+			evaluation -= ply
+		} else if evaluation <= -19900 {
+			evaluation += ply
+		}
 		if flag == 0 {
 			return evaluation, 1
 		} else if flag == 1 && evaluation >= beta {
@@ -153,7 +158,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 	}
 
 	if depth <= 0 {
-		return s.searchOnlyCapturesForce(alpha, beta)
+		return s.searchOnlyCapturesForce(ply, alpha, beta)
 	}
 
 	positionsEvaluated := 0
@@ -163,7 +168,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 		nullMove := Move{isNull: true}
 		board.makeMove(&nullMove)
 		nullMoveReduction := 2
-		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, -beta, -beta+1, false)
+		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, ply+1, -beta, -beta+1, false)
 		nullMoveEval = -nullMoveEval
 		board.unmakeMove(&nullMove)
 		positionsEvaluated += nullNodes
@@ -175,7 +180,7 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) == 0 {
 		if inCheck {
-			return -20000 - depth, 1
+			return -(20000 - ply), 1
 		} else {
 			return 0, 1
 		}
@@ -188,12 +193,17 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, -beta, -alpha, true)
+		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, ply+1, -beta, -alpha, true)
 		positionsEvaluated += currentPositionsEvaluated
 		currentMoveEval = -currentMoveEval
 		if currentMoveEval >= beta {
-
-			tt.push(zHash, depth, 1, beta)
+			storeBeta := beta
+			if storeBeta >= 19900 {
+				storeBeta += ply
+			} else if storeBeta <= -19900 {
+				storeBeta -= ply
+			}
+			tt.push(zHash, depth, 1, storeBeta)
 			board.unmakeMove(move)
 			return beta, positionsEvaluated
 		}
@@ -207,12 +217,18 @@ func (s *ChessEngine) searchBruteForce(depth int, alpha int, beta int, allowNull
 		flag = 0
 	}
 
-	tt.push(zHash, depth, flag, alpha)
+	storeAlpha := alpha
+	if storeAlpha >= 19900 {
+		storeAlpha += ply
+	} else if storeAlpha <= -19900 {
+		storeAlpha -= ply
+	}
+	tt.push(zHash, depth, flag, storeAlpha)
 
 	return alpha, positionsEvaluated
 }
 
-func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
+func (s *ChessEngine) searchOnlyCapturesForce(ply int, alpha int, beta int) (int, int) {
 	board := s.moveGenerator.board
 
 	standPat := pestoEval(*board)
@@ -229,7 +245,7 @@ func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
 
 	if len(moves) == 0 {
 		if board.playerInCheck() && len(moveGenerator.generateMoves(false)) == 0 {
-			return -20000, 1
+			return -(20000 - ply), 1
 		} else {
 			return standPat, 1
 		}
@@ -241,7 +257,7 @@ func (s *ChessEngine) searchOnlyCapturesForce(alpha int, beta int) (int, int) {
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval, currentNodes = s.searchOnlyCapturesForce(-beta, -alpha)
+		currentMoveEval, currentNodes = s.searchOnlyCapturesForce(ply+1, -beta, -alpha)
 		currentMoveEval = -currentMoveEval
 		board.unmakeMove(move)
 
