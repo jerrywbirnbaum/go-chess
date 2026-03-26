@@ -7,18 +7,6 @@ import (
 	"testing"
 )
 
-func bitboardToArray(bb uint64) [8][8]int {
-	var arr [8][8]int
-	for i := range 8 {
-		for j := range 8 {
-			if bitboardCheckOne(bb, i, j) {
-				arr[i][j] = 1
-			}
-		}
-	}
-	return arr
-}
-
 func TestMoveGeneration(t *testing.T) {
 	fmt.Println()
 	board := initBoard()
@@ -70,7 +58,6 @@ func TestMoveGenerationDoubleCheck(t *testing.T) {
 
 	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
-	// fmt.Println(moves)
 	if len(moves) != 3 {
 		t.Errorf("Failed TestMoveGen DoubleCheck")
 	}

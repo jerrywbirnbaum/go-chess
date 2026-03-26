@@ -71,3 +71,25 @@ func TestBitBoardsOpening(t *testing.T) {
 		t.Fatalf("Failed Set White Pawn Bitboard after move, got: %d, expected: %d", whitePawnBitBoard, expected)
 	}
 }
+
+func TestBitScanForward(t *testing.T) {
+	bitboard, _ := strconv.ParseUint("1000000000000001", 16, 64)
+	got := bitScanForward(bitboard)
+	if got != 0 {
+		t.Fatalf("Failed bitscan forward expected 0 got: %d", got)
+	}
+
+	bitboard, _ = strconv.ParseUint("0000000000000080", 16, 64)
+	got = bitScanForward(bitboard)
+	if got != 7 {
+		t.Fatalf("Failed bitscan forward expected 7 got: %d", got)
+	}
+	bitboard, _ = strconv.ParseUint("7F000000000000080", 16, 64)
+	for bitboard != 0 {
+		got = bitScanForward(bitboard)
+		bitboard &= 0 << got
+	}
+	if bitboard != 0 {
+		t.Fatal("Failed to update bitboard ")
+	}
+}

@@ -40,6 +40,7 @@ type Board struct {
 	fullMoveClock         int
 	halfMoveClock         int
 	bitboards             [12]uint64
+	colorBitboards        [2]uint64
 }
 
 func (b *Board) isNoPawnEndGame() bool {
@@ -68,11 +69,17 @@ func (b *Board) getBitboard(piece Piece) uint64 {
 	return b.bitboards[piece-1]
 }
 
+func (b *Board) getColorBitboard(color Color) uint64 {
+	return b.colorBitboards[color]
+}
 func (b *Board) setBitboardPiece(piece Piece, row int, col int) {
 	if piece == EmptyPiece {
 		return
 	}
 	b.bitboards[piece-1] = bitboardAddOne(b.bitboards[piece-1], row, col)
+	color := getColor(piece)
+	b.colorBitboards[color] = bitboardAddOne(b.colorBitboards[color], row, col)
+
 }
 
 func (b *Board) removeBitboardPiece(piece Piece, row int, col int) {
@@ -80,7 +87,10 @@ func (b *Board) removeBitboardPiece(piece Piece, row int, col int) {
 		return
 	}
 	b.bitboards[piece-1] = bitboardRemoveOne(b.bitboards[piece-1], row, col)
+	color := getColor(piece)
+	b.colorBitboards[color] = bitboardRemoveOne(b.colorBitboards[color], row, col)
 }
+
 func (b *Board) getCell(row int, col int) Piece {
 	return b.board[row*8+col]
 }
@@ -166,8 +176,17 @@ func (b *Board) piecesGenerator() []Square {
 	return b.pieces[:b.pieceCount]
 }
 
+func (b *Board) clearBitboards() {
+	for i := range 12 {
+		b.bitboards[i] = 0
+	}
+	for i := range 2 {
+		b.colorBitboards[i] = 0
+	}
+}
 func (b *Board) rebuildPieceList() {
 	b.pieceCount = 0
+	b.clearBitboards()
 	for i := range 8 {
 		for j := range 8 {
 			p := b.getCell(i, j)
@@ -208,7 +227,6 @@ func (b *Board) updateKingPos(king Piece, row, col int) {
 }
 
 func (b *Board) removePieceFromList(piece Piece, row int, col int) {
-	b.removeBitboardPiece(piece, row, col)
 	for i := 0; i < b.pieceCount; i++ {
 		p := b.pieces[i]
 		if p.row == row && p.col == col {
@@ -222,7 +240,6 @@ func (b *Board) removePieceFromList(piece Piece, row int, col int) {
 }
 
 func (b *Board) setPieceInList(row int, col int, piece Piece) {
-	b.setBitboardPiece(piece, row, col)
 	if isEmpty(piece) {
 		b.removePieceFromList(piece, row, col)
 		return
@@ -416,6 +433,11 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
 		b.setCell(endRow, endCol, promotedPiece)
 		b.setCell(startRow, startCol, newPiece('*'))
+
+		b.setBitboardPiece(promotedPiece, endRow, endCol)
+		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(move.endSquare.piece, endRow, endCol)
+
 		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.setPieceInList(endRow, endCol, promotedPiece)
 	} else if move.isEnpassant {
@@ -426,6 +448,11 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(endRow, endCol, move.startSquare.piece)
 		b.setCell(startRow, endCol, newPiece('*'))
 		b.setCell(startRow, startCol, newPiece('*'))
+
+		b.setBitboardPiece(move.startSquare.piece, endRow, endCol)
+		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(move.endSquare.piece, startRow, endCol)
+
 		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.removePieceFromList(move.endSquare.piece, startRow, endCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
@@ -440,6 +467,12 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(startRow, 5, b.getCell(startRow, 7))
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(startRow, 7, newPiece('*'))
+
+		b.setBitboardPiece(move.startSquare.piece, startRow, 6)
+		b.setBitboardPiece(rookPiece, startRow, 6)
+		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(rookPiece, startRow, 7)
+
 		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 7)
 		b.setPieceInList(startRow, 6, move.startSquare.piece)
@@ -455,6 +488,12 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(startRow, 3, b.getCell(startRow, 0))
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(startRow, 0, newPiece('*'))
+
+		b.setBitboardPiece(move.startSquare.piece, startRow, 2)
+		b.setBitboardPiece(rookPiece, startRow, 3)
+		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(rookPiece, startRow, 0)
+
 		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 0)
 		b.setPieceInList(startRow, 2, move.startSquare.piece)
@@ -467,6 +506,11 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(move.startSquare.piece, endRow, endCol)
 		b.setCell(startRow, startCol, newPiece('*'))
 		b.setCell(endRow, endCol, move.startSquare.piece)
+
+		b.removeBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(move.endSquare.piece, endRow, endCol)
+		b.setBitboardPiece(move.startSquare.piece, endRow, endCol)
+
 		b.removePieceFromList(move.startSquare.piece, startRow, startCol)
 		b.setPieceInList(endRow, endCol, move.startSquare.piece)
 		if isKing(pieceType) {
@@ -535,6 +579,11 @@ func (b *Board) unmakeMove(move *Move) {
 	} else {
 		b.setCell(startRow, startCol, move.startSquare.piece)
 		b.setCell(endRow, endCol, move.endSquare.piece)
+
+		b.setBitboardPiece(move.endSquare.piece, endRow, endCol)
+		b.setBitboardPiece(move.startSquare.piece, startRow, startCol)
+		b.removeBitboardPiece(move.startSquare.piece, endRow, endCol)
+
 		b.setPieceInList(endRow, endCol, move.endSquare.piece)
 		b.setPieceInList(startRow, startCol, move.startSquare.piece)
 		if isKing(pieceType(move.startSquare.piece)) {

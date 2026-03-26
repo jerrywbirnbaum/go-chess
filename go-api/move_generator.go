@@ -574,22 +574,22 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bo
 
 	currentRow := p.row
 	currentCol := p.col
-	var row int
-	var col int
-	for _, move := range knightOffsets {
-		row = currentRow + move[0]
-		col = currentCol + move[1]
-		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
-			if isAttacks || mg.board.canCapture(row, col, color) || mg.board.cellEmpty(row, col) {
-				if bitboardCheckOne(checkMask, row, col) {
-					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
-					endSquare := Square{row: row, col: col, piece: mg.board.getCell(row, col)}
-					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
-						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-					}
-				}
-			}
-		}
+
+	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+	pieceAttacks := knightAttacks[currentRow*8+currentCol]
+	if !isAttacks {
+		pieceAttacks &= ^mg.board.getColorBitboard(color)
+		pieceAttacks &= checkMask
+	}
+	if onlyCaptures {
+		pieceAttacks &= mg.board.getColorBitboard(oppositeColor(color))
+	}
+	for pieceAttacks != 0 {
+		attackIdx := bitScanForward(pieceAttacks)
+		pieceAttacks ^= 1 << attackIdx
+		endRow, endCol := rowColFromSquare(63 - attackIdx)
+		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
 
 	return moves
