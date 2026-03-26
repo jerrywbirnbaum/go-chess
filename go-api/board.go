@@ -31,7 +31,7 @@ type Board struct {
 	moveCount             int
 	zobrishTable          [781]int64
 	zobristHash           int64
-	repitionTable         *RepititionTable
+	repititionTable       *RepititionTable
 	isThreeFoldRepitition bool
 	whiteKingRow          int
 	whiteKingCol          int
@@ -119,7 +119,7 @@ func (b *Board) updateFromFEN(fen_string string) {
 	b.updateBoardFEN(board_fen_string)
 	b.rebuildPieceList()
 	b.zobristHash = b.calculateZobrishHash()
-	b.repitionTable = initRepititionTable()
+	b.repititionTable = initRepititionTable()
 }
 func (b *Board) updateTurnFEN(turn_fen_string string) {
 	if strings.ContainsRune(turn_fen_string, 'w') {
@@ -266,7 +266,7 @@ func initBoard() Board {
 	}
 	board.zobrishTable = board.zobrishHashTable()
 	board.updateFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
-	board.repitionTable = initRepititionTable()
+	board.repititionTable = initRepititionTable()
 	board.isThreeFoldRepitition = false
 	return board
 }
@@ -463,7 +463,7 @@ func (b *Board) makeMove(move *Move) {
 	}
 
 	b.makeMoveUpdateSide(move)
-	b.isThreeFoldRepitition = b.repitionTable.increment(b.zobristHash)
+	b.isThreeFoldRepitition = b.repititionTable.increment(b.zobristHash)
 
 }
 
@@ -531,7 +531,7 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 
 	b.unmakeMoveUpdateSide(move)
-	b.isThreeFoldRepitition = b.repitionTable.decrement(move.previousZobristHash)
+	b.isThreeFoldRepitition = b.repititionTable.decrement(move.previousZobristHash)
 }
 
 func (b *Board) currentColor() Color {

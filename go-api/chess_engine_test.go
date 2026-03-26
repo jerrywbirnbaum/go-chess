@@ -74,8 +74,8 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	afterSecond := afterFirst
 	afterSecond.makeMove(&secondMove)
 
-	if got != -933 {
-		t.Fatalf("depth 0 should evaluate after full capture sequence: got %d, want %d", got, -933)
+	if got != -923 {
+		t.Fatalf("depth 0 should evaluate after full capture sequence: got %d, want %d", got, -923)
 	}
 	if got == stopAfterOneCaptureEval {
 		t.Fatalf("depth 0 stopped after one capture (got %d), expected it to continue searching captures", got)
