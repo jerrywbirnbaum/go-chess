@@ -164,31 +164,36 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
 		foundFriendly := false
 		var candidate Square
 
-		for row >= 0 && row <= 7 && col >= 0 && col <= 7 {
-			current := mg.board.getCell(row, col)
-			if isEmpty(current) {
+		for inBounds(row, col) {
+			if !bitboardCheckOne(mg.board.allPieceBitboard(), row, col) {
 				row += move[0]
 				col += move[1]
 				continue
 			}
 
-			if sameColor(current, color) {
+			if bitboardCheckOne(mg.board.getColorBitboard(color), row, col) {
 				if foundFriendly {
 					break
 				}
 				foundFriendly = true
-				candidate = Square{row: row, col: col, piece: current}
+				candidate = Square{row: row, col: col}
 				row += move[0]
 				col += move[1]
 				continue
 			}
 
-			enemyType := pieceType(current)
+			enemyQueen := newPieceTypeColor(Queen, oppositeColor(color))
+			queenBitboard := mg.board.getBitboard(enemyQueen)
+			enemyBishop := newPieceTypeColor(Bishop, oppositeColor(color))
+			bishopBitboard := mg.board.getBitboard(enemyBishop)
+			enemyRook := newPieceTypeColor(Rook, oppositeColor(color))
+			rookBitboard := mg.board.getBitboard(enemyRook)
+
 			validSlider := false
-			if isDiagonal && (isBishop(enemyType) || isQueen(enemyType)) {
+			if isDiagonal && (bitboardCheckOne(queenBitboard, row, col) || bitboardCheckOne(bishopBitboard, row, col)) {
 				validSlider = true
 			}
-			if !isDiagonal && (isRook(enemyType) || isQueen(enemyType)) {
+			if !isDiagonal && (bitboardCheckOne(queenBitboard, row, col) || bitboardCheckOne(rookBitboard, row, col)) {
 				validSlider = true
 			}
 			if foundFriendly && validSlider {
