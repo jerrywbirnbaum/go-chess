@@ -25,8 +25,8 @@ type Move struct {
 	previousZobristHash  int64
 }
 
-var emptyMask uint64 = 0
-var fullMask uint64 = math.MaxUint64
+var emptyBitboard uint64 = 0
+var fullBitboard uint64 = math.MaxUint64
 
 var straightDirs = [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}}
 var diagonalDirs = [][2]int{{1, 1}, {-1, -1}, {-1, 1}, {1, -1}}
@@ -69,7 +69,7 @@ func (mg *MoveGenerator) updateBoard(board *Board) {
 }
 
 func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64, int) {
-	attacks := emptyMask
+	attacks := emptyBitboard
 	checkers := 0
 
 	opp := oppositeColor(color)
@@ -106,7 +106,7 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 }
 
 func pawnAttackBits(row int, col int, color Color) uint64 {
-	pawnBitboard := bitboardAddOne(emptyMask, row, col)
+	pawnBitboard := bitboardAddOne(emptyBitboard, row, col)
 	attacksBitboard := uint64(0)
 	if color == White {
 		attacksBitboard |= (pawnBitboard << 7) & ^colA
@@ -151,9 +151,16 @@ func (mg *MoveGenerator) slidingAttackBits(row, col int, pt PieceType) uint64 {
 }
 
 func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
-	pinnedPieces := emptyMask
+	pinnedPieces := emptyBitboard
 	piece := mg.board.getCell(kingRow, kingCol)
 	color := getColor(piece)
+
+	enemyQueen := newPieceTypeColor(Queen, oppositeColor(color))
+	queenBitboard := mg.board.getBitboard(enemyQueen)
+	enemyBishop := newPieceTypeColor(Bishop, oppositeColor(color))
+	bishopBitboard := mg.board.getBitboard(enemyBishop)
+	enemyRook := newPieceTypeColor(Rook, oppositeColor(color))
+	rookBitboard := mg.board.getBitboard(enemyRook)
 
 	for slidingIdx, move := range allDirs {
 		isDiagonal := slidingIdx < 4
@@ -180,13 +187,6 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
 				continue
 			}
 
-			enemyQueen := newPieceTypeColor(Queen, oppositeColor(color))
-			queenBitboard := mg.board.getBitboard(enemyQueen)
-			enemyBishop := newPieceTypeColor(Bishop, oppositeColor(color))
-			bishopBitboard := mg.board.getBitboard(enemyBishop)
-			enemyRook := newPieceTypeColor(Rook, oppositeColor(color))
-			rookBitboard := mg.board.getBitboard(enemyRook)
-
 			validSlider := false
 			if isDiagonal && (bitboardCheckOne(queenBitboard, row, col) || bitboardCheckOne(bishopBitboard, row, col)) {
 				validSlider = true
@@ -204,7 +204,7 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
 	return pinnedPieces
 }
 func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) uint64 {
-	checkMask := emptyMask
+	checkBitboard := emptyBitboard
 
 	color := mg.board.currentColor()
 	oppositeColor := oppositeColor(color)
@@ -212,19 +212,19 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) uint64 {
 	// check pawns
 	pawnBitboard := pawnAttackBits(kingRow, kingCol, color)
 	pawnBitboard &= mg.board.getBitboard(newPieceTypeColor(Pawn, oppositeColor))
-	checkMask |= pawnBitboard
+	checkBitboard |= pawnBitboard
 
 	knightBitboard := knightAttacks[kingRow*8+kingCol]
 	knightBitboard &= mg.board.getBitboard(newPieceTypeColor(Knight, oppositeColor))
-	checkMask |= knightBitboard
+	checkBitboard |= knightBitboard
 
 	// check sliding
-	checkMask = mg.slidingRays(kingRow, kingCol, color, checkMask, false)
+	checkBitboard = mg.slidingRays(kingRow, kingCol, color, checkBitboard, false)
 
-	return checkMask
+	return checkBitboard
 }
 
-func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, checkMask uint64, isPinRay bool) uint64 {
+func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, checkBitboard uint64, isPinRay bool) uint64 {
 
 	for slidingIdx, move := range allDirs {
 		isDiagonal := slidingIdx < 4
@@ -254,19 +254,19 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 					break
 				}
 
-				checkMask = bitboardAddOne(checkMask, row, col)
+				checkBitboard = bitboardAddOne(checkBitboard, row, col)
 				for j := range 7 {
 					_ = j
 					row -= move[0]
 					col -= move[1]
 					if row == kingRow && col == kingCol {
 						if !isPinRay {
-							return checkMask
+							return checkBitboard
 						} else {
 							break
 						}
 					}
-					checkMask = bitboardAddOne(checkMask, row, col)
+					checkBitboard = bitboardAddOne(checkBitboard, row, col)
 				}
 			}
 
@@ -274,7 +274,7 @@ func (mg *MoveGenerator) slidingRays(kingRow int, kingCol int, color Color, chec
 			col += move[1]
 		}
 	}
-	return checkMask
+	return checkBitboard
 }
 func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	moves := make([]Move, 0, 150)
@@ -286,15 +286,15 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	kingRow, kingCol := mg.board.kingPos(color)
 
 	//Double check
-	var checkMask uint64
+	var checkBitboard uint64
 	if bitboardCheckOne(attackedSquares, kingRow, kingCol) && checkers > 1 {
 		piece := Square{row: kingRow, col: kingCol, piece: mg.board.getCell(kingRow, kingCol)}
 		moves = mg.generateKingMoves(piece, color, attackedSquares, onlyCaptures, moves)
 		return moves
 	} else if bitboardCheckOne(attackedSquares, kingRow, kingCol) {
-		checkMask = mg.checkRays(kingRow, kingCol)
+		checkBitboard = mg.checkRays(kingRow, kingCol)
 	} else {
-		checkMask = fullMask
+		checkBitboard = fullBitboard
 	}
 
 	pieces := mg.board.piecesGenerator()
@@ -304,21 +304,21 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 			continue
 		}
 		if bitboardCheckOne(pinnedPieces, p.row, p.col) {
-			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkMask, onlyCaptures)...)
+			moves = append(moves, mg.generatePinnedMoves(p, color, kingRow, kingCol, checkBitboard, onlyCaptures)...)
 			continue
 		}
 
 		pieceType := pieceType(p.piece)
 		if isPawn(pieceType) {
-			moves = mg.generatePawnMoves(p, color, checkMask, onlyCaptures, moves)
+			moves = mg.generatePawnMoves(p, color, checkBitboard, onlyCaptures, moves)
 		}
 
 		if isKnight(pieceType) {
-			moves = mg.generateKnightMoves(p, color, checkMask, onlyCaptures, moves)
+			moves = mg.generateKnightMoves(p, color, checkBitboard, onlyCaptures, moves)
 		}
 
 		if isSlidingPiece(pieceType) {
-			moves = mg.generateSlidingMoves(p, color, checkMask, onlyCaptures, moves)
+			moves = mg.generateSlidingMoves(p, color, checkBitboard, onlyCaptures, moves)
 		}
 
 		if isKing(pieceType) {
@@ -333,12 +333,12 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	return moves
 }
 
-func (mg *MoveGenerator) generateCastles(color Color, checkMask uint64) []Move {
+func (mg *MoveGenerator) generateCastles(color Color, checkBitboard uint64) []Move {
 	moves := []Move{}
 	availability := mg.board.castleAvailable
 
 	if color == White && availability&CastleWK != 0 {
-		if !bitboardCheckOne(checkMask, 7, 4) && !bitboardCheckOne(checkMask, 7, 5) && !bitboardCheckOne(checkMask, 7, 6) {
+		if !bitboardCheckOne(checkBitboard, 7, 4) && !bitboardCheckOne(checkBitboard, 7, 5) && !bitboardCheckOne(checkBitboard, 7, 6) {
 			if mg.board.cellEmpty(7, 5) && mg.board.cellEmpty(7, 6) && mg.board.getCell(7, 7) == newPiece('R') && mg.board.getCell(7, 4) == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
 				endSquare := Square{row: 7, col: 6, piece: EmptyPiece}
@@ -349,7 +349,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask uint64) []Move {
 
 	if color == White && availability&CastleWQ != 0 {
 
-		if !bitboardCheckOne(checkMask, 7, 4) && !bitboardCheckOne(checkMask, 7, 3) && !bitboardCheckOne(checkMask, 7, 2) {
+		if !bitboardCheckOne(checkBitboard, 7, 4) && !bitboardCheckOne(checkBitboard, 7, 3) && !bitboardCheckOne(checkBitboard, 7, 2) {
 			if mg.board.cellEmpty(7, 1) && mg.board.cellEmpty(7, 2) && mg.board.cellEmpty(7, 3) && mg.board.getCell(7, 0) == newPiece('R') && mg.board.getCell(7, 4) == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
 				endSquare := Square{row: 7, col: 2, piece: EmptyPiece}
@@ -360,7 +360,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask uint64) []Move {
 
 	if color == Black && availability&CastleBK != 0 {
 
-		if !bitboardCheckOne(checkMask, 0, 4) && !bitboardCheckOne(checkMask, 0, 5) && !bitboardCheckOne(checkMask, 0, 6) {
+		if !bitboardCheckOne(checkBitboard, 0, 4) && !bitboardCheckOne(checkBitboard, 0, 5) && !bitboardCheckOne(checkBitboard, 0, 6) {
 			if mg.board.cellEmpty(0, 5) && mg.board.cellEmpty(0, 6) && mg.board.getCell(0, 7) == newPiece('r') && mg.board.getCell(0, 4) == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
 				endSquare := Square{row: 0, col: 6, piece: EmptyPiece}
@@ -370,7 +370,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask uint64) []Move {
 	}
 
 	if color == Black && availability&CastleBQ != 0 {
-		if !bitboardCheckOne(checkMask, 0, 4) && !bitboardCheckOne(checkMask, 0, 3) && !bitboardCheckOne(checkMask, 0, 2) {
+		if !bitboardCheckOne(checkBitboard, 0, 4) && !bitboardCheckOne(checkBitboard, 0, 3) && !bitboardCheckOne(checkBitboard, 0, 2) {
 			if mg.board.cellEmpty(0, 1) && mg.board.cellEmpty(0, 2) && mg.board.cellEmpty(0, 3) && mg.board.getCell(0, 0) == newPiece('r') && mg.board.getCell(0, 4) == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
 				endSquare := Square{row: 0, col: 2, piece: EmptyPiece}
@@ -411,7 +411,7 @@ func (mg *MoveGenerator) pinDirection(kingRow int, kingCol int, row int, col int
 	return allDirs[0], true
 
 }
-func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int, kingCol int, checkMask uint64, onlyCaptures bool) []Move {
+func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int, kingCol int, checkBitboard uint64, onlyCaptures bool) []Move {
 	moves := []Move{}
 	row := p.row
 	col := p.col
@@ -431,7 +431,7 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 
 	currentRow := row
 	currentCol := col
-	pinnedMask := emptyMask
+	pinnedBitboard := emptyBitboard
 
 	for i := range 7 {
 		_ = i
@@ -441,10 +441,10 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 			break
 		}
 		if mg.board.canCapture(currentRow, currentCol, color) {
-			pinnedMask = bitboardAddOne(pinnedMask, currentRow, currentCol)
+			pinnedBitboard = bitboardAddOne(pinnedBitboard, currentRow, currentCol)
 			break
 		}
-		pinnedMask = bitboardAddOne(pinnedMask, currentRow, currentCol)
+		pinnedBitboard = bitboardAddOne(pinnedBitboard, currentRow, currentCol)
 	}
 
 	currentRow = row
@@ -463,23 +463,23 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 		if isKing(pieceType) {
 			break
 		}
-		pinnedMask = bitboardAddOne(pinnedMask, currentRow, currentCol)
+		pinnedBitboard = bitboardAddOne(pinnedBitboard, currentRow, currentCol)
 
 	}
 
-	pinnedMask &= checkMask
+	pinnedBitboard &= checkBitboard
 
 	if isPawn(currentPieceType) {
-		moves = mg.generatePawnMoves(p, color, pinnedMask, onlyCaptures, moves)
+		moves = mg.generatePawnMoves(p, color, pinnedBitboard, onlyCaptures, moves)
 	}
 
 	if isSlidingPiece(currentPieceType) {
-		moves = mg.generateSlidingMoves(p, color, pinnedMask, onlyCaptures, moves)
+		moves = mg.generateSlidingMoves(p, color, pinnedBitboard, onlyCaptures, moves)
 	}
 
 	return moves
 }
-func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkBitboard uint64, onlyCaptures bool, moves []Move) []Move {
 	sameColorBitboard := mg.board.getColorBitboard(color)
 	oppositeColorBitboard := mg.board.getColorBitboard(oppositeColor(color))
 
@@ -489,7 +489,7 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkMask u
 
 	attacksBitboard := mg.slidingAttackBits(currentRow, currentCol, pieceType(p.piece))
 	attacksBitboard &= ^sameColorBitboard
-	attacksBitboard &= checkMask
+	attacksBitboard &= checkBitboard
 
 	if onlyCaptures {
 		attacksBitboard &= oppositeColorBitboard
@@ -505,13 +505,13 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkMask u
 	return moves
 }
 
-func (mg *MoveGenerator) generateKingMoves(p Square, color Color, attackMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateKingMoves(p Square, color Color, attackBitboard uint64, onlyCaptures bool, moves []Move) []Move {
 	currentRow := p.row
 	currentCol := p.col
 
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 	pieceAttacks := kingAttacks[currentRow*8+currentCol]
-	pieceAttacks &= ^attackMask
+	pieceAttacks &= ^attackBitboard
 	pieceAttacks &= ^mg.board.getColorBitboard(color)
 
 	if onlyCaptures {
@@ -528,7 +528,7 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color, attackMask uin
 	return moves
 
 }
-func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkBitboard uint64, onlyCaptures bool, moves []Move) []Move {
 
 	currentRow := p.row
 	currentCol := p.col
@@ -536,7 +536,7 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkMask ui
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 	pieceAttacks := knightAttacks[currentRow*8+currentCol]
 	pieceAttacks &= ^mg.board.getColorBitboard(color)
-	pieceAttacks &= checkMask
+	pieceAttacks &= checkBitboard
 	if onlyCaptures {
 		pieceAttacks &= mg.board.getColorBitboard(oppositeColor(color))
 	}
@@ -551,10 +551,10 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkMask ui
 	return moves
 }
 
-func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkBitboard uint64, onlyCaptures bool, moves []Move) []Move {
 	currentRow := p.row
 	currentCol := p.col
-	pawnBitboard := bitboardAddOne(emptyMask, currentRow, currentCol)
+	pawnBitboard := bitboardAddOne(emptyBitboard, currentRow, currentCol)
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
 	enpassantRow := 4
@@ -572,7 +572,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 			singlePushBitboard >>= 8
 			singlePushBitboard &= ^(allPieceBitboard)
 		}
-		singlePushBitboard &= checkMask
+		singlePushBitboard &= checkBitboard
 		if singlePushBitboard != 0 {
 			attackIdx := bitScanForward(singlePushBitboard)
 			endRow, endCol := rowColFromSquare(63 - attackIdx)
@@ -611,7 +611,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 			doublePushBitboard &= ^(allPieceBitboard >> 8)
 			doublePushBitboard &= ^(allPieceBitboard)
 		}
-		doublePushBitboard &= checkMask
+		doublePushBitboard &= checkBitboard
 		if doublePushBitboard != 0 {
 			attackIdx := bitScanForward(doublePushBitboard)
 			endRow, endCol := rowColFromSquare(63 - attackIdx)
@@ -621,21 +621,21 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 	}
 
 	//Capture Moves
-	captureBitBoard := emptyMask
+	captureBitboard := emptyBitboard
 	if color == White {
-		captureBitBoard |= (pawnBitboard << 7) & ^colA
-		captureBitBoard |= (pawnBitboard << 9) & ^colH
+		captureBitboard |= (pawnBitboard << 7) & ^colA
+		captureBitboard |= (pawnBitboard << 9) & ^colH
 	} else {
-		captureBitBoard |= (pawnBitboard >> 7) & ^colH
-		captureBitBoard |= (pawnBitboard >> 9) & ^colA
+		captureBitboard |= (pawnBitboard >> 7) & ^colH
+		captureBitboard |= (pawnBitboard >> 9) & ^colA
 	}
 
-	captureBitBoard &= checkMask
-	captureBitBoard &= mg.board.getColorBitboard(oppositeColor(color))
+	captureBitboard &= checkBitboard
+	captureBitboard &= mg.board.getColorBitboard(oppositeColor(color))
 
-	for captureBitBoard != 0 {
-		attackIdx := bitScanForward(captureBitBoard)
-		captureBitBoard ^= 1 << attackIdx
+	for captureBitboard != 0 {
+		attackIdx := bitScanForward(captureBitboard)
+		captureBitboard ^= 1 << attackIdx
 		endRow, endCol := rowColFromSquare(63 - attackIdx)
 		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
 		if endRow == 0 || endRow == 7 {
