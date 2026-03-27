@@ -40,15 +40,14 @@ var kingAttacks [64]uint64
 var bishopMasks [64]uint64
 var rookMasks [64]uint64
 
-var row1, _ = strconv.ParseUint("00000000000000FF", 16, 64)
 var row4, _ = strconv.ParseUint("00000000FF000000", 16, 64)
 var row5, _ = strconv.ParseUint("000000FF00000000", 16, 64)
-var row8, _ = strconv.ParseUint("FF00000000000000", 16, 64)
 
 var colA, _ = strconv.ParseUint("8080808080808080", 16, 64)
 var colH, _ = strconv.ParseUint("0101010101010101", 16, 64)
 
 var bishopMagicLookup [64][512]uint64
+var rookMagicLookup [64][4096]uint64
 
 func init() {
 	for sq := range 64 {
@@ -59,6 +58,7 @@ func init() {
 		rookMasks[sq] = sliderMaskBits(r, c, straightDirs[:])
 	}
 	bishopMagicLookup = createBishopLookupTable()
+	rookMagicLookup = createRookLookupTable()
 }
 
 type MoveString struct {
@@ -511,16 +511,26 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkBitboa
 	currentCol := p.col
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
+	sq := squareFromRowCol(currentRow, currentCol)
+	allPieces := mg.board.allPieceBitboard()
 	var attacksBitboard uint64
-	if pieceType(p.piece) == Bishop {
-		sq := squareFromRowCol(currentRow, currentCol)
-		blockers := bishopMasks[sq] & mg.board.allPieceBitboard()
+	pt := pieceType(p.piece)
+	if pt == Bishop {
+		blockers := bishopMasks[sq] & allPieces
 		magicIndex := (reverseColBits(blockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
 		attacksBitboard = bishopMagicLookup[sq][magicIndex]
-		attacksBitboard &= ^sameColorBitboard
-	} else {
-		attacksBitboard = mg.slidingAttackBits(currentRow, currentCol, pieceType(p.piece))
+	} else if pt == Rook {
+		blockers := rookMasks[sq] & allPieces
+		magicIndex := (reverseColBits(blockers) * getRookMagicNumber(currentRow, currentCol)) >> getRookShift(currentRow, currentCol)
+		attacksBitboard = rookMagicLookup[sq][magicIndex]
+	} else if pt == Queen {
+		bishopBlockers := bishopMasks[sq] & allPieces
+		bishopIndex := (reverseColBits(bishopBlockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
+		rookBlockers := rookMasks[sq] & allPieces
+		rookIndex := (reverseColBits(rookBlockers) * getRookMagicNumber(currentRow, currentCol)) >> getRookShift(currentRow, currentCol)
+		attacksBitboard = bishopMagicLookup[sq][bishopIndex] | rookMagicLookup[sq][rookIndex]
 	}
+
 	attacksBitboard &= ^sameColorBitboard
 	attacksBitboard &= checkBitboard
 
