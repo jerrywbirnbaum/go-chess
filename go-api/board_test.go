@@ -7,8 +7,8 @@ import (
 
 func TestSameColor(t *testing.T) {
 	fmt.Println()
-	piece := newPiece('p')
-	color := Color(Black)
+	piece := BlackPawn
+	color := Black
 
 	result := sameColor(piece, color)
 	if !result {
@@ -19,9 +19,9 @@ func TestSameColor(t *testing.T) {
 
 func TestMakeMove(t *testing.T) {
 	board := initBoard()
-	piece := newPiece('P')
+	piece := WhitePawn
 	startSquare := Square{row: 6, col: 0, piece: piece}
-	endSquare := Square{row: 5, col: 0, piece: newPiece('*')}
+	endSquare := Square{row: 5, col: 0, piece: EmptyPiece}
 	move := Move{startSquare: startSquare, endSquare: endSquare}
 	board.makeMove(&move)
 

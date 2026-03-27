@@ -161,7 +161,7 @@ func (b *Board) updateBoardFEN(board_fen_string string) {
 				digit := int(c - '0')
 				for k := range digit {
 					_ = k
-					b.setCell(i, j, newPiece('*'))
+					b.setCell(i, j, EmptyPiece)
 					j += 1
 				}
 			} else {
@@ -282,14 +282,14 @@ func (b *Board) attackedBoard(color Color) [8][8]int {
 func initBoard() Board {
 	board := Board{
 		board: [64]Piece{
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
-			newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'), newPiece('*'),
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
+			EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece, EmptyPiece,
 		},
 		isWhiteTurn: true,
 	}
@@ -410,7 +410,7 @@ func (b *Board) makeMove(move *Move) {
 	move.isCastleQueenSide = isKing(pieceType) && (endCol-startCol) == -2
 	move.isPromotion = isPawn(pieceType) && (endRow == 0 || endRow == 7)
 	move.isEnpassant = false
-	move.enpassantCapture = newPiece('*')
+	move.enpassantCapture = EmptyPiece
 
 	if isPawn(pieceType) && move.previousEnpassant != "-" && isEmpty(endPiece) {
 		enpassantRow, enpassantCol := fromSquare(move.previousEnpassant)
@@ -435,7 +435,7 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(endPiece, endRow, endCol)
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
 		b.setCell(endRow, endCol, promotedPiece)
-		b.setCell(startRow, startCol, newPiece('*'))
+		b.setCell(startRow, startCol, EmptyPiece)
 
 		b.setBitboardPiece(promotedPiece, endRow, endCol)
 		b.removeBitboardPiece(startPiece, startRow, startCol)
@@ -454,8 +454,8 @@ func (b *Board) makeMove(move *Move) {
 		b.removeBitboardPiece(b.getCell(startRow, endCol), startRow, endCol)
 
 		b.setCell(endRow, endCol, startPiece)
-		b.setCell(startRow, endCol, newPiece('*'))
-		b.setCell(startRow, startCol, newPiece('*'))
+		b.setCell(startRow, endCol, EmptyPiece)
+		b.setCell(startRow, startCol, EmptyPiece)
 
 		b.removePieceFromList(startPiece, startRow, startCol)
 		b.removePieceFromList(endPiece, startRow, endCol)
@@ -469,8 +469,8 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(rookPiece, startRow, 5)
 		b.setCell(startRow, 6, startPiece)
 		b.setCell(startRow, 5, b.getCell(startRow, 7))
-		b.setCell(startRow, startCol, newPiece('*'))
-		b.setCell(startRow, 7, newPiece('*'))
+		b.setCell(startRow, startCol, EmptyPiece)
+		b.setCell(startRow, 7, EmptyPiece)
 
 		b.setBitboardPiece(startPiece, startRow, 6)
 		b.setBitboardPiece(rookPiece, startRow, 5)
@@ -490,8 +490,8 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(rookPiece, startRow, 3)
 		b.setCell(startRow, 2, startPiece)
 		b.setCell(startRow, 3, b.getCell(startRow, 0))
-		b.setCell(startRow, startCol, newPiece('*'))
-		b.setCell(startRow, 0, newPiece('*'))
+		b.setCell(startRow, startCol, EmptyPiece)
+		b.setCell(startRow, 0, EmptyPiece)
 
 		b.setBitboardPiece(startPiece, startRow, 2)
 		b.setBitboardPiece(rookPiece, startRow, 3)
@@ -508,7 +508,7 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(endPiece, endRow, endCol)
 		b.xorPieceSquare(startPiece, endRow, endCol)
-		b.setCell(startRow, startCol, newPiece('*'))
+		b.setCell(startRow, startCol, EmptyPiece)
 		b.setCell(endRow, endCol, startPiece)
 
 		b.removeBitboardPiece(startPiece, startRow, startCol)
@@ -563,10 +563,10 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, startCol, startPiece)
 	} else if move.isEnpassant {
 		b.setCell(startRow, startCol, startPiece)
-		b.setCell(endRow, endCol, newPiece('*'))
+		b.setCell(endRow, endCol, EmptyPiece)
 		b.setCell(startRow, endCol, move.enpassantCapture)
 		b.setPieceInList(startRow, startCol, startPiece)
-		b.setPieceInList(endRow, endCol, newPiece('*'))
+		b.setPieceInList(endRow, endCol, EmptyPiece)
 		b.setPieceInList(startRow, endCol, move.enpassantCapture)
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
@@ -583,10 +583,10 @@ func (b *Board) unmakeMove(move *Move) {
 
 		b.setCell(startRow, 4, startPiece)
 		b.setCell(startRow, 7, b.getCell(startRow, 5))
-		b.setCell(startRow, 5, newPiece('*'))
-		b.setCell(startRow, 6, newPiece('*'))
-		b.setPieceInList(startRow, 5, newPiece('*'))
-		b.setPieceInList(startRow, 6, newPiece('*'))
+		b.setCell(startRow, 5, EmptyPiece)
+		b.setCell(startRow, 6, EmptyPiece)
+		b.setPieceInList(startRow, 5, EmptyPiece)
+		b.setPieceInList(startRow, 6, EmptyPiece)
 		b.setPieceInList(startRow, 4, startPiece)
 		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
 		b.updateKingPos(startPiece, startRow, 4)
@@ -600,10 +600,10 @@ func (b *Board) unmakeMove(move *Move) {
 
 		b.setCell(startRow, 4, startPiece)
 		b.setCell(startRow, 0, b.getCell(startRow, 3))
-		b.setCell(startRow, 2, newPiece('*'))
-		b.setCell(startRow, 3, newPiece('*'))
-		b.setPieceInList(startRow, 2, newPiece('*'))
-		b.setPieceInList(startRow, 3, newPiece('*'))
+		b.setCell(startRow, 2, EmptyPiece)
+		b.setCell(startRow, 3, EmptyPiece)
+		b.setPieceInList(startRow, 2, EmptyPiece)
+		b.setPieceInList(startRow, 3, EmptyPiece)
 		b.setPieceInList(startRow, 4, startPiece)
 		b.setPieceInList(startRow, 0, b.getCell(startRow, 0))
 		b.updateKingPos(startPiece, startRow, 4)
@@ -628,9 +628,9 @@ func (b *Board) unmakeMove(move *Move) {
 
 func (b *Board) currentColor() Color {
 	if b.isWhiteTurn {
-		return Color(White)
+		return White
 	}
-	return Color(Black)
+	return Black
 }
 func (b *Board) playerInCheck() bool {
 	color := b.currentColor()

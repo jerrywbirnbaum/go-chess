@@ -67,7 +67,7 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 
 	opp := oppositeColor(color)
 	kingRow, kingCol := mg.board.kingPos(opp)
-	mg.board.setCell(kingRow, kingCol, newPiece('*'))
+	mg.board.setCell(kingRow, kingCol, EmptyPiece)
 
 	for _, p := range mg.board.piecesGenerator() {
 		if getColor(p.piece) != color {
@@ -100,7 +100,7 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 
 func pawnAttackBits(row, col int, color Color) uint64 {
 	dir := 1
-	if color == Color(White) {
+	if color == White {
 		dir = -1
 	}
 	var bits uint64
@@ -201,7 +201,7 @@ func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) uint64 {
 	oppositeColor := oppositeColor(color)
 	// check pawns
 	directions := []int{1, -1}
-	if oppositeColor == Color(White) {
+	if oppositeColor == White {
 		directions = directions[:1]
 	} else {
 		directions = directions[1:]
@@ -349,43 +349,43 @@ func (mg *MoveGenerator) generateCastles(color Color, checkMask uint64) []Move {
 	moves := []Move{}
 	availability := mg.board.castleAvailable
 
-	if color == Color(White) && availability&CastleWK != 0 {
+	if color == White && availability&CastleWK != 0 {
 		if !bitboardCheckOne(checkMask, 7, 4) && !bitboardCheckOne(checkMask, 7, 5) && !bitboardCheckOne(checkMask, 7, 6) {
 			if mg.board.cellEmpty(7, 5) && mg.board.cellEmpty(7, 6) && mg.board.getCell(7, 7) == newPiece('R') && mg.board.getCell(7, 4) == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
-				endSquare := Square{row: 7, col: 6, piece: newPiece('*')}
+				endSquare := Square{row: 7, col: 6, piece: EmptyPiece}
 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 			}
 		}
 	}
 
-	if color == Color(White) && availability&CastleWQ != 0 {
+	if color == White && availability&CastleWQ != 0 {
 
 		if !bitboardCheckOne(checkMask, 7, 4) && !bitboardCheckOne(checkMask, 7, 3) && !bitboardCheckOne(checkMask, 7, 2) {
 			if mg.board.cellEmpty(7, 1) && mg.board.cellEmpty(7, 2) && mg.board.cellEmpty(7, 3) && mg.board.getCell(7, 0) == newPiece('R') && mg.board.getCell(7, 4) == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
-				endSquare := Square{row: 7, col: 2, piece: newPiece('*')}
+				endSquare := Square{row: 7, col: 2, piece: EmptyPiece}
 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 			}
 		}
 	}
 
-	if color == Color(Black) && availability&CastleBK != 0 {
+	if color == Black && availability&CastleBK != 0 {
 
 		if !bitboardCheckOne(checkMask, 0, 4) && !bitboardCheckOne(checkMask, 0, 5) && !bitboardCheckOne(checkMask, 0, 6) {
 			if mg.board.cellEmpty(0, 5) && mg.board.cellEmpty(0, 6) && mg.board.getCell(0, 7) == newPiece('r') && mg.board.getCell(0, 4) == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
-				endSquare := Square{row: 0, col: 6, piece: newPiece('*')}
+				endSquare := Square{row: 0, col: 6, piece: EmptyPiece}
 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 			}
 		}
 	}
 
-	if color == Color(Black) && availability&CastleBQ != 0 {
+	if color == Black && availability&CastleBQ != 0 {
 		if !bitboardCheckOne(checkMask, 0, 4) && !bitboardCheckOne(checkMask, 0, 3) && !bitboardCheckOne(checkMask, 0, 2) {
 			if mg.board.cellEmpty(0, 1) && mg.board.cellEmpty(0, 2) && mg.board.cellEmpty(0, 3) && mg.board.getCell(0, 0) == newPiece('r') && mg.board.getCell(0, 4) == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
-				endSquare := Square{row: 0, col: 2, piece: newPiece('*')}
+				endSquare := Square{row: 0, col: 2, piece: EmptyPiece}
 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 			}
 		}
@@ -593,7 +593,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 
 	startRow := 1
 	enpassantRow := 4
-	if color == Color(White) {
+	if color == White {
 		directions = directions[2:]
 		startRow = 6
 		enpassantRow = 3
@@ -700,7 +700,7 @@ func (mg *MoveGenerator) generatePawnAttacks(p Square, color Color, moves []Move
 
 	directions := []int{1, 2, -1, -2}
 
-	if color == Color(White) {
+	if color == White {
 		directions = directions[2:]
 	} else {
 		directions = directions[:2]

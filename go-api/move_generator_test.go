@@ -79,7 +79,7 @@ func TestAttackedBoard(t *testing.T) {
 		{0, 0, 0, 0, 0, 0, 0, 0},
 	}
 	moveGenerator := MoveGenerator{board: &board}
-	attacks, _ := moveGenerator.generateAttacks(Color(Black), false)
+	attacks, _ := moveGenerator.generateAttacks(Black, false)
 	if !reflect.DeepEqual(bitboardToArray(attacks), expected) {
 		t.Errorf("Failed generate attacks")
 	}
@@ -96,7 +96,7 @@ func TestAttackedBoard(t *testing.T) {
 		{1, 0, 0, 0, 0, 0, 1, 0},
 	}
 	moveGenerator.updateBoard(&board)
-	attacks, _ = moveGenerator.generateAttacks(Color(Black), false)
+	attacks, _ = moveGenerator.generateAttacks(Black, false)
 	if !reflect.DeepEqual(bitboardToArray(attacks), expected) {
 		t.Errorf("Failed generate attacks")
 	}
@@ -288,7 +288,7 @@ func TestGenerateAttacksPawnOutOfBoundsGuard(t *testing.T) {
 	board.updateFromFEN("k6K/P7/8/8/8/8/8/8 w - - 0 1")
 	moveGenerator := MoveGenerator{board: &board}
 
-	attacks, _ := moveGenerator.generateAttacks(Color(White), false)
+	attacks, _ := moveGenerator.generateAttacks(White, false)
 	if bitboardCheckOne(attacks, 0, 0) {
 		t.Errorf("unexpected attack count on a8: got %d", attacks)
 	}
