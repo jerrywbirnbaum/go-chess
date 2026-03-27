@@ -72,6 +72,11 @@ func (b *Board) getBitboard(piece Piece) uint64 {
 func (b *Board) getColorBitboard(color Color) uint64 {
 	return b.colorBitboards[color]
 }
+
+func (b *Board) allPieceBitboard() uint64 {
+	return b.colorBitboards[0] | b.colorBitboards[1]
+}
+
 func (b *Board) setBitboardPiece(piece Piece, row int, col int) {
 	if piece == EmptyPiece {
 		return

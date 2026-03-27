@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -588,22 +589,20 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkMask ui
 }
 
 func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
-
 	directions := []int{1, 2, -1, -2}
+	currentRow := p.row
+	currentCol := p.col
+	pawnBitboard := bitboardAddOne(emptyMask, currentRow, currentCol)
+	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
-	startRow := 1
 	enpassantRow := 4
 	if color == White {
 		directions = directions[2:]
-		startRow = 6
 		enpassantRow = 3
 	} else {
 		directions = directions[:2]
 	}
 
-	// Forward Moves
-	currentRow := p.row
-	currentCol := p.col
 	if !onlyCaptures {
 		if mg.board.cellEmpty(p.row+directions[0], p.col) {
 			if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol) {
@@ -621,14 +620,37 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 		}
 	}
 
-	if !onlyCaptures {
-		if p.row == startRow && mg.board.cellEmpty(p.row+directions[1], p.col) && mg.board.cellEmpty(p.row+directions[0], p.col) {
+	//Double Pawn Push
+	var doublePushRow uint64
 
-			if bitboardCheckOne(checkMask, currentRow+directions[1], currentCol) {
-				startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-				endSquare := Square{row: p.row + directions[1], col: p.col, piece: mg.board.getCell(p.row+directions[1], p.col)}
-				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-			}
+	row4, _ := strconv.ParseUint("00000000FF000000", 16, 64)
+	row5, _ := strconv.ParseUint("000000FF00000000", 16, 64)
+	if color == White {
+		doublePushRow = row4
+	} else {
+		doublePushRow = row5
+	}
+
+	allPieceBitboard := mg.board.allPieceBitboard()
+	if !onlyCaptures {
+		doublePushBitboard := pawnBitboard
+		if color == White {
+			doublePushBitboard <<= 16
+			doublePushBitboard &= doublePushRow
+			doublePushBitboard &= ^(allPieceBitboard << 8)
+			doublePushBitboard &= ^(allPieceBitboard)
+		} else {
+			doublePushBitboard >>= 16
+			doublePushBitboard &= doublePushRow
+			doublePushBitboard &= ^(allPieceBitboard >> 8)
+			doublePushBitboard &= ^(allPieceBitboard)
+		}
+		doublePushBitboard &= checkMask
+		if doublePushBitboard != 0 {
+			attackIdx := bitScanForward(doublePushBitboard)
+			endRow, endCol := rowColFromSquare(63 - attackIdx)
+			endSquare := Square{row: endRow, col: endCol, piece: EmptyPiece}
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 		}
 	}
 
@@ -696,31 +718,7 @@ func (mg *MoveGenerator) enpassantCheck(move Move, color Color) bool {
 	simulatedBoard.unmakeMove(&move)
 	return inCheck
 }
-func (mg *MoveGenerator) generatePawnAttacks(p Square, color Color, moves []Move) []Move {
 
-	directions := []int{1, 2, -1, -2}
-
-	if color == White {
-		directions = directions[2:]
-	} else {
-		directions = directions[:2]
-	}
-
-	targetRow := p.row + directions[0]
-	if inBounds(targetRow, p.col-1) {
-		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-		endSquare := Square{row: targetRow, col: p.col - 1, piece: mg.board.getCell(targetRow, p.col-1)}
-		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-	}
-	if inBounds(targetRow, p.col+1) {
-		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-		endSquare := Square{row: targetRow, col: p.col + 1, piece: mg.board.getCell(targetRow, p.col+1)}
-		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-	}
-
-	return moves
-
-}
 func toSquare(row int, col int) string {
 	return fmt.Sprintf("%c%d", 'a'+col, 8-row)
 }
