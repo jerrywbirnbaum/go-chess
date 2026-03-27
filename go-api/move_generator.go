@@ -609,19 +609,29 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 		directions = directions[:2]
 	}
 
+	allPieceBitboard := mg.board.allPieceBitboard()
 	if !onlyCaptures {
-		if mg.board.cellEmpty(p.row+directions[0], p.col) {
-			if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol) {
-				startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-				endSquare := Square{row: p.row + directions[0], col: p.col, piece: mg.board.getCell(p.row+directions[0], p.col)}
-				if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
-				} else {
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-				}
+		singlePushBitboard := pawnBitboard
+		if color == White {
+			singlePushBitboard <<= 8
+			singlePushBitboard &= ^(allPieceBitboard)
+		} else {
+			singlePushBitboard >>= 8
+			singlePushBitboard &= ^(allPieceBitboard)
+		}
+		singlePushBitboard &= checkMask
+		if singlePushBitboard != 0 {
+			attackIdx := bitScanForward(singlePushBitboard)
+			endRow, endCol := rowColFromSquare(63 - attackIdx)
+			endSquare := Square{row: endRow, col: endCol, piece: EmptyPiece}
+
+			if endRow == 0 || endRow == 7 {
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Queen})
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook})
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop})
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight})
+			} else {
+				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 			}
 		}
 	}
@@ -635,7 +645,6 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 		doublePushRow = row5
 	}
 
-	allPieceBitboard := mg.board.allPieceBitboard()
 	if !onlyCaptures {
 		doublePushBitboard := pawnBitboard
 		if color == White {
@@ -686,39 +695,6 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 		}
 
 	}
-
-	// if p.col > 0 && mg.board.canCapture(p.row+directions[0], currentCol-1, color) {
-	// 	if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol-1) {
-	// 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-	// 		endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: mg.board.getCell(p.row+directions[0], p.col-1)}
-	// 		if !mg.board.cellEmpty(p.row+directions[0], p.col-1) {
-	// 			if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
-	// 			} else {
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-	// 			}
-	// 		}
-	// 	}
-	// }
-	// if p.col < 7 && mg.board.canCapture(p.row+directions[0], p.col+1, color) {
-	// 	if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol+1) {
-	// 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-	// 		endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: mg.board.getCell(p.row+directions[0], p.col+1)}
-	// 		if !mg.board.cellEmpty(p.row+directions[0], p.col+1) {
-	// 			if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
-	// 			} else {
-	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-	// 			}
-	// 		}
-	// 	}
-	// }
 
 	//ENPASSANT
 	if mg.board.enpassant != "-" {
