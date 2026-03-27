@@ -301,7 +301,7 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	var checkMask uint64
 	if bitboardCheckOne(attackedSquares, kingRow, kingCol) && checkers > 1 {
 		piece := Square{row: kingRow, col: kingCol, piece: mg.board.getCell(kingRow, kingCol)}
-		moves = mg.generateKingMoves(piece, color, false, attackedSquares, onlyCaptures, moves)
+		moves = mg.generateKingMoves(piece, color, attackedSquares, onlyCaptures, moves)
 		return moves
 	} else if bitboardCheckOne(attackedSquares, kingRow, kingCol) {
 		checkMask = mg.checkRays(kingRow, kingCol)
@@ -326,15 +326,15 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 		}
 
 		if isKnight(pieceType) {
-			moves = mg.generateKnightMoves(p, color, false, checkMask, onlyCaptures, moves)
+			moves = mg.generateKnightMoves(p, color, checkMask, onlyCaptures, moves)
 		}
 
 		if isSlidingPiece(pieceType) {
-			moves = mg.generateSlidingMoves(p, color, pieceType, false, checkMask, onlyCaptures, moves)
+			moves = mg.generateSlidingMoves(p, color, pieceType, checkMask, onlyCaptures, moves)
 		}
 
 		if isKing(pieceType) {
-			moves = mg.generateKingMoves(p, color, false, attackedSquares, onlyCaptures, moves)
+			moves = mg.generateKingMoves(p, color, attackedSquares, onlyCaptures, moves)
 		}
 	}
 
@@ -486,12 +486,12 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 	}
 
 	if isSlidingPiece(currentPieceType) {
-		moves = mg.generateSlidingMoves(p, color, currentPieceType, false, pinnedMask, onlyCaptures, moves)
+		moves = mg.generateSlidingMoves(p, color, currentPieceType, pinnedMask, onlyCaptures, moves)
 	}
 
 	return moves
 }
-func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, isAttacks bool, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
 	moveDirs := allDirs
 
 	if isRook(pt) {
@@ -529,11 +529,6 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 
 				break
 			} else {
-				if isAttacks {
-					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
-					endSquare := Square{row: row, col: col, piece: mg.board.getCell(row, col)}
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-				}
 				break
 			}
 
@@ -546,12 +541,9 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 	return moves
 }
 
-func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttacks bool, attackMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateKingMoves(p Square, color Color, attackMask uint64, onlyCaptures bool, moves []Move) []Move {
 	currentRow := p.row
 	currentCol := p.col
-
-	// TODO: Remove is Attacks
-	_ = isAttacks
 
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 	pieceAttacks := kingAttacks[currentRow*8+currentCol]
@@ -572,17 +564,15 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttacks bool
 	return moves
 
 }
-func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, isAttacks bool, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
 
 	currentRow := p.row
 	currentCol := p.col
 
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 	pieceAttacks := knightAttacks[currentRow*8+currentCol]
-	if !isAttacks {
-		pieceAttacks &= ^mg.board.getColorBitboard(color)
-		pieceAttacks &= checkMask
-	}
+	pieceAttacks &= ^mg.board.getColorBitboard(color)
+	pieceAttacks &= checkMask
 	if onlyCaptures {
 		pieceAttacks &= mg.board.getColorBitboard(oppositeColor(color))
 	}
