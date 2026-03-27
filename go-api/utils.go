@@ -28,6 +28,10 @@ func rowColFromSquare(sq int) (int, int) {
 	return sq / 8, sq % 8
 }
 
+func squareFromRowCol(row int, col int) int {
+	return row*8 + col
+}
+
 func bitScanForward(n uint64) int {
 	if n == 0 {
 		return -1

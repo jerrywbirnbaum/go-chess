@@ -37,19 +37,28 @@ var kingOffsets = [8][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {-1, 0},
 
 var knightAttacks [64]uint64
 var kingAttacks [64]uint64
+var bishopMasks [64]uint64
+var rookMasks [64]uint64
 
+var row1, _ = strconv.ParseUint("00000000000000FF", 16, 64)
 var row4, _ = strconv.ParseUint("00000000FF000000", 16, 64)
 var row5, _ = strconv.ParseUint("000000FF00000000", 16, 64)
+var row8, _ = strconv.ParseUint("FF00000000000000", 16, 64)
 
 var colA, _ = strconv.ParseUint("8080808080808080", 16, 64)
 var colH, _ = strconv.ParseUint("0101010101010101", 16, 64)
+
+var bishopMagicLookup [64][512]uint64
 
 func init() {
 	for sq := range 64 {
 		r, c := sq/8, sq%8
 		knightAttacks[sq] = leaperAttackBits(r, c, knightOffsets[:])
 		kingAttacks[sq] = leaperAttackBits(r, c, kingOffsets[:])
+		bishopMasks[sq] = sliderMaskBits(r, c, diagonalDirs[:])
+		rookMasks[sq] = sliderMaskBits(r, c, straightDirs[:])
 	}
+	bishopMagicLookup = createBishopLookupTable()
 }
 
 type MoveString struct {
@@ -116,6 +125,21 @@ func pawnAttackBits(row int, col int, color Color) uint64 {
 		attacksBitboard |= (pawnBitboard >> 9) & ^colA
 	}
 	return attacksBitboard
+}
+
+func sliderMaskBits(row int, col int, dirs [][2]int) uint64 {
+	var bits uint64
+	for _, dir := range dirs {
+		currentRow := row + dir[0]
+		currentCol := col + dir[1]
+		for inBounds(currentRow+dir[0], currentCol+dir[1]) {
+			bits = bitboardAddOne(bits, currentRow, currentCol)
+			currentRow += dir[0]
+			currentCol += dir[1]
+
+		}
+	}
+	return bits
 }
 
 func leaperAttackBits(row, col int, offsets [][2]int) uint64 {
@@ -487,7 +511,16 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkBitboa
 	currentCol := p.col
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
-	attacksBitboard := mg.slidingAttackBits(currentRow, currentCol, pieceType(p.piece))
+	var attacksBitboard uint64
+	if pieceType(p.piece) == Bishop {
+		sq := squareFromRowCol(currentRow, currentCol)
+		blockers := bishopMasks[sq] & mg.board.allPieceBitboard()
+		magicIndex := (reverseColBits(blockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
+		attacksBitboard = bishopMagicLookup[sq][magicIndex]
+		attacksBitboard &= ^sameColorBitboard
+	} else {
+		attacksBitboard = mg.slidingAttackBits(currentRow, currentCol, pieceType(p.piece))
+	}
 	attacksBitboard &= ^sameColorBitboard
 	attacksBitboard &= checkBitboard
 
