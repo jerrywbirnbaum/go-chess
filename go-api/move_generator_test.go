@@ -144,6 +144,8 @@ func TestCheckRaysPawn(t *testing.T) {
 	result := moveGenerator.checkRays(0, 0)
 
 	if !reflect.DeepEqual(bitboardToArray(result), expected) {
+		fmt.Println(bitboardToArray(result))
+		fmt.Println(expected)
 		t.Errorf("Failed Check Rays")
 	}
 }

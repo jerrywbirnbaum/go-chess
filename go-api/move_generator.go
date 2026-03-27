@@ -105,19 +105,17 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 	return attacks, checkers
 }
 
-func pawnAttackBits(row, col int, color Color) uint64 {
-	dir := 1
+func pawnAttackBits(row int, col int, color Color) uint64 {
+	pawnBitboard := bitboardAddOne(emptyMask, row, col)
+	attacksBitboard := uint64(0)
 	if color == White {
-		dir = -1
+		attacksBitboard |= (pawnBitboard << 7) & ^colA
+		attacksBitboard |= (pawnBitboard << 9) & ^colH
+	} else {
+		attacksBitboard |= (pawnBitboard >> 7) & ^colH
+		attacksBitboard |= (pawnBitboard >> 9) & ^colA
 	}
-	var bits uint64
-	if inBounds(row+dir, col-1) {
-		bits = bitboardAddOne(bits, row+dir, col-1)
-	}
-	if inBounds(row+dir, col+1) {
-		bits = bitboardAddOne(bits, row+dir, col+1)
-	}
-	return bits
+	return attacksBitboard
 }
 
 func leaperAttackBits(row, col int, offsets [][2]int) uint64 {
@@ -208,39 +206,17 @@ func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
 func (mg *MoveGenerator) checkRays(kingRow int, kingCol int) uint64 {
 	checkMask := emptyMask
 
-	piece := mg.board.getCell(kingRow, kingCol)
-	color := getColor(piece)
+	color := mg.board.currentColor()
 	oppositeColor := oppositeColor(color)
+
 	// check pawns
-	directions := []int{1, -1}
-	if oppositeColor == White {
-		directions = directions[:1]
-	} else {
-		directions = directions[1:]
-	}
+	pawnBitboard := pawnAttackBits(kingRow, kingCol, color)
+	pawnBitboard &= mg.board.getBitboard(newPieceTypeColor(Pawn, oppositeColor))
+	checkMask |= pawnBitboard
 
-	pawnAttackRow := kingRow + directions[0]
-	if inBounds(pawnAttackRow, kingCol-1) && mg.board.canCapture(pawnAttackRow, kingCol-1, color) && isPawn(pieceType(mg.board.getCell(pawnAttackRow, kingCol-1))) {
-		checkMask = bitboardAddOne(checkMask, pawnAttackRow, kingCol-1)
-		return checkMask
-	}
-	if inBounds(pawnAttackRow, kingCol+1) && mg.board.canCapture(pawnAttackRow, kingCol+1, color) && isPawn(pieceType(mg.board.getCell(pawnAttackRow, kingCol+1))) {
-		checkMask = bitboardAddOne(checkMask, pawnAttackRow, kingCol+1)
-		return checkMask
-	}
-
-	var row int
-	var col int
-	for _, move := range knightOffsets {
-		row = kingRow + move[0]
-		col = kingCol + move[1]
-		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
-			if mg.board.canCapture(row, col, color) && isKnight(pieceType(mg.board.getCell(row, col))) {
-				checkMask = bitboardAddOne(checkMask, row, col)
-				return checkMask
-			}
-		}
-	}
+	knightBitboard := knightAttacks[kingRow*8+kingCol]
+	knightBitboard &= mg.board.getBitboard(newPieceTypeColor(Knight, oppositeColor))
+	checkMask |= knightBitboard
 
 	// check sliding
 	checkMask = mg.slidingRays(kingRow, kingCol, color, checkMask, false)
@@ -600,7 +576,6 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkMask ui
 }
 
 func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
-	directions := []int{1, 2, -1, -2}
 	currentRow := p.row
 	currentCol := p.col
 	pawnBitboard := bitboardAddOne(emptyMask, currentRow, currentCol)
@@ -608,10 +583,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 
 	enpassantRow := 4
 	if color == White {
-		directions = directions[2:]
 		enpassantRow = 3
-	} else {
-		directions = directions[:2]
 	}
 
 	allPieceBitboard := mg.board.allPieceBitboard()
