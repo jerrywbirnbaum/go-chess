@@ -318,7 +318,7 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 		}
 
 		if isSlidingPiece(pieceType) {
-			moves = mg.generateSlidingMoves(p, color, pieceType, checkMask, onlyCaptures, moves)
+			moves = mg.generateSlidingMoves(p, color, checkMask, onlyCaptures, moves)
 		}
 
 		if isKing(pieceType) {
@@ -474,13 +474,12 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 	}
 
 	if isSlidingPiece(currentPieceType) {
-		moves = mg.generateSlidingMoves(p, color, currentPieceType, pinnedMask, onlyCaptures, moves)
+		moves = mg.generateSlidingMoves(p, color, pinnedMask, onlyCaptures, moves)
 	}
 
 	return moves
 }
-func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
-	moveDirs := allDirs
+func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
 	sameColorBitboard := mg.board.getColorBitboard(color)
 	oppositeColorBitboard := mg.board.getColorBitboard(oppositeColor(color))
 
@@ -488,37 +487,10 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 	currentCol := p.col
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
-	if isRook(pt) {
-		moveDirs = straightDirs
-	} else if isBishop(pt) {
-		moveDirs = diagonalDirs
-	}
-	attacksBitboard := uint64(0)
-	for _, move := range moveDirs {
-		row := currentRow + move[0]
-		col := currentCol + move[1]
-		for i := range 7 {
-			_ = i
-			if !inBounds(row, col) {
-				break
-			}
-			slidingBitboard := bitboardAddOne(emptyMask, row, col)
-			if slidingBitboard&sameColorBitboard != 0 {
-				break
-			}
+	attacksBitboard := mg.slidingAttackBits(currentRow, currentCol, pieceType(p.piece))
+	attacksBitboard &= ^sameColorBitboard
+	attacksBitboard &= checkMask
 
-			attacksBitboard |= (slidingBitboard & checkMask)
-
-			if slidingBitboard&oppositeColorBitboard != 0 {
-				break
-			}
-
-			row += move[0]
-			col += move[1]
-
-		}
-
-	}
 	if onlyCaptures {
 		attacksBitboard &= oppositeColorBitboard
 	}
