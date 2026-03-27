@@ -164,7 +164,7 @@ func TestPerft_StartPositionRegression(t *testing.T) {
 		{depth: 2, nodes: 400},
 		{depth: 3, nodes: 8902},
 		{depth: 4, nodes: 197281},
-		// {depth: 5, nodes: 4865609},
+		{depth: 5, nodes: 4865609},
 	} {
 		got := moveGenerationRecursive(tc.depth, board)
 		if got != tc.nodes {

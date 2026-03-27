@@ -481,42 +481,35 @@ func (mg *MoveGenerator) generatePinnedMoves(p Square, color Color, kingRow int,
 }
 func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceType, checkMask uint64, onlyCaptures bool, moves []Move) []Move {
 	moveDirs := allDirs
+	sameColorBitboard := mg.board.getColorBitboard(color)
+	oppositeColorBitboard := mg.board.getColorBitboard(oppositeColor(color))
+
+	currentRow := p.row
+	currentCol := p.col
+	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
 	if isRook(pt) {
 		moveDirs = straightDirs
 	} else if isBishop(pt) {
 		moveDirs = diagonalDirs
 	}
-	currentRow := p.row
-	currentCol := p.col
+	attacksBitboard := uint64(0)
 	for _, move := range moveDirs {
 		row := currentRow + move[0]
 		col := currentCol + move[1]
 		for i := range 7 {
 			_ = i
-			if row < 0 || row > 7 || col < 0 || col > 7 {
+			if !inBounds(row, col) {
+				break
+			}
+			slidingBitboard := bitboardAddOne(emptyMask, row, col)
+			if slidingBitboard&sameColorBitboard != 0 {
 				break
 			}
 
-			if mg.board.cellEmpty(row, col) {
-				if bitboardCheckOne(checkMask, row, col) {
-					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
-					endSquare := Square{row: row, col: col, piece: mg.board.getCell(row, col)}
-					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
-						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-					}
-				}
-			} else if mg.board.canCapture(row, col, color) {
-				if bitboardCheckOne(checkMask, row, col) {
-					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
-					endSquare := Square{row: row, col: col, piece: mg.board.getCell(row, col)}
-					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
-						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-					}
-				}
+			attacksBitboard |= (slidingBitboard & checkMask)
 
-				break
-			} else {
+			if slidingBitboard&oppositeColorBitboard != 0 {
 				break
 			}
 
@@ -525,6 +518,17 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 
 		}
 
+	}
+	if onlyCaptures {
+		attacksBitboard &= oppositeColorBitboard
+	}
+
+	for attacksBitboard != 0 {
+		attackIdx := bitScanForward(attacksBitboard)
+		attacksBitboard ^= 1 << attackIdx
+		endRow, endCol := rowColFromSquare(63 - attackIdx)
+		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 	}
 	return moves
 }
