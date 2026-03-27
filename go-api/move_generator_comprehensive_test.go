@@ -163,6 +163,27 @@ func TestPerft_StartPositionRegression(t *testing.T) {
 		{depth: 1, nodes: 20},
 		{depth: 2, nodes: 400},
 		{depth: 3, nodes: 8902},
+		{depth: 4, nodes: 197281},
+		// {depth: 5, nodes: 4865609},
+	} {
+		got := moveGenerationRecursive(tc.depth, board)
+		if got != tc.nodes {
+			t.Fatalf("start position perft depth %d: expected %d, got %d", tc.depth, tc.nodes, got)
+		}
+	}
+}
+
+func TestPerft_KiwiPeteRegression(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ")
+	for _, tc := range []struct {
+		depth int
+		nodes int
+	}{
+		{depth: 1, nodes: 48},
+		{depth: 2, nodes: 2039},
+		{depth: 3, nodes: 97862},
+		{depth: 4, nodes: 4085603},
 	} {
 		got := moveGenerationRecursive(tc.depth, board)
 		if got != tc.nodes {

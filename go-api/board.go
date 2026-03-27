@@ -430,7 +430,7 @@ func (b *Board) makeMove(move *Move) {
 	//Pawn Promotion
 	if move.isPromotion {
 		var promotedPiece Piece
-		promotedPiece = newPieceTypeColor(move.promotionPieceType, b.currentColor())
+		promotedPiece = newPieceTypeColor(move.promotionPieceType, getColor(startPiece))
 		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(endPiece, endRow, endCol)
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
@@ -448,13 +448,14 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(move.enpassantCapture, startRow, endCol)
 		b.xorPieceSquare(startPiece, endRow, endCol)
-		b.setCell(endRow, endCol, startPiece)
-		b.setCell(startRow, endCol, newPiece('*'))
-		b.setCell(startRow, startCol, newPiece('*'))
 
 		b.setBitboardPiece(startPiece, endRow, endCol)
 		b.removeBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(endPiece, startRow, endCol)
+		b.removeBitboardPiece(b.getCell(startRow, endCol), startRow, endCol)
+
+		b.setCell(endRow, endCol, startPiece)
+		b.setCell(startRow, endCol, newPiece('*'))
+		b.setCell(startRow, startCol, newPiece('*'))
 
 		b.removePieceFromList(startPiece, startRow, startCol)
 		b.removePieceFromList(endPiece, startRow, endCol)
@@ -550,6 +551,12 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 	//Enpassant
 	if move.isPromotion {
+		promotionPiece := newPieceTypeColor(move.promotionPieceType, getColor(startPiece))
+
+		b.setBitboardPiece(startPiece, startRow, startCol)
+		b.setBitboardPiece(endPiece, endRow, endCol)
+		b.removeBitboardPiece(promotionPiece, endRow, endCol)
+
 		b.setCell(startRow, startCol, startPiece)
 		b.setCell(endRow, endCol, endPiece)
 		b.setPieceInList(endRow, endCol, endPiece)
@@ -561,7 +568,19 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, startCol, startPiece)
 		b.setPieceInList(endRow, endCol, newPiece('*'))
 		b.setPieceInList(startRow, endCol, move.enpassantCapture)
+
+		b.setBitboardPiece(startPiece, startRow, startCol)
+		b.setBitboardPiece(move.enpassantCapture, startRow, endCol)
+		b.removeBitboardPiece(startPiece, endRow, endCol)
+
 	} else if move.isCastleKingSide {
+		rookPiece := newPieceTypeColor(Rook, oppositeColor(getColor(startPiece)))
+
+		b.setBitboardPiece(startPiece, startRow, startCol)
+		b.setBitboardPiece(rookPiece, startRow, 7)
+		b.removeBitboardPiece(startPiece, startRow, 6)
+		b.removeBitboardPiece(rookPiece, startRow, 5)
+
 		b.setCell(startRow, 4, startPiece)
 		b.setCell(startRow, 7, b.getCell(startRow, 5))
 		b.setCell(startRow, 5, newPiece('*'))
@@ -572,6 +591,13 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
 		b.updateKingPos(startPiece, startRow, 4)
 	} else if move.isCastleQueenSide {
+		rookPiece := newPieceTypeColor(Rook, oppositeColor(getColor(startPiece)))
+
+		b.setBitboardPiece(startPiece, startRow, startCol)
+		b.setBitboardPiece(rookPiece, startRow, 0)
+		b.removeBitboardPiece(startPiece, startRow, 3)
+		b.removeBitboardPiece(rookPiece, startRow, 2)
+
 		b.setCell(startRow, 4, startPiece)
 		b.setCell(startRow, 0, b.getCell(startRow, 3))
 		b.setCell(startRow, 2, newPiece('*'))

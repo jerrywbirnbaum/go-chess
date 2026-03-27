@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"sort"
 	"testing"
+	// "strconv"
 )
 
 func TestMoveGeneration(t *testing.T) {
@@ -321,12 +322,18 @@ func moveGenerationRecursive(depth int, board Board) int {
 	numPositions := 0
 	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
+	var moveList []string
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		numPositions += moveGenerationRecursive(depth-1, board)
+
+		iter := moveGenerationRecursive(depth-1, board)
+
+		numPositions += iter
+
 		board.unmakeMove(move)
 	}
+	sort.Strings(moveList)
 	return numPositions
 }
 
@@ -379,6 +386,16 @@ func TestMoveGenerationFailingPosition(t *testing.T) {
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 2 {
 		t.Errorf("Failed TestMoveGenerationFailingPosition")
+	}
+}
+
+func TestEnpassantFailing(t *testing.T) {
+	board := initBoard()
+	board.updateFromFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/4P3/p1N2Q1p/1PPBBPPP/R3K2R w KQkq - 0 1")
+	moveGenerator := MoveGenerator{board: &board}
+	moves := moveGenerator.generateMoves(false)
+	if len(moves) != 51 {
+		t.Errorf("Failed TestEnpassant Failing")
 	}
 }
 
