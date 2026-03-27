@@ -1,9 +1,11 @@
 package main
 
 import (
-	// "fmt"
+	"fmt"
 	"testing"
 )
+
+var printDebug = false
 
 func TestKiwiPeteDivide(t *testing.T) {
 	board := initBoard()
@@ -14,10 +16,15 @@ func TestKiwiPeteDivide(t *testing.T) {
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		count := moveGenerationRecursive(2, board)
+		count := moveGenerationRecursive(3, board)
 		board.unmakeMove(move)
-		// fmt.Printf("%s: %d\n", moveToUCI(*move), count)
+
+		if printDebug {
+			fmt.Printf("%s: %d\n", moveToUCI(*move), count)
+		}
 		total += count
 	}
-	// fmt.Printf("Total: %d\n", total)
+	if printDebug {
+		fmt.Printf("Total: %d\n", total)
+	}
 }

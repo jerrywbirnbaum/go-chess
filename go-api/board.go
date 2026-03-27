@@ -472,6 +472,7 @@ func (b *Board) makeMove(move *Move) {
 		b.xorPieceSquare(rookPiece, startRow, 7)
 		b.xorPieceSquare(startPiece, startRow, 6)
 		b.xorPieceSquare(rookPiece, startRow, 5)
+
 		b.setCell(startRow, 6, startPiece)
 		b.setCell(startRow, 5, b.getCell(startRow, 7))
 		b.setCell(startRow, startCol, EmptyPiece)
@@ -579,7 +580,7 @@ func (b *Board) unmakeMove(move *Move) {
 		b.removeBitboardPiece(startPiece, endRow, endCol)
 
 	} else if move.isCastleKingSide {
-		rookPiece := newPieceTypeColor(Rook, oppositeColor(getColor(startPiece)))
+		rookPiece := newPieceTypeColor(Rook, getColor(startPiece))
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
 		b.setBitboardPiece(rookPiece, startRow, 7)
@@ -590,13 +591,15 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setCell(startRow, 7, b.getCell(startRow, 5))
 		b.setCell(startRow, 5, EmptyPiece)
 		b.setCell(startRow, 6, EmptyPiece)
+
 		b.setPieceInList(startRow, 5, EmptyPiece)
 		b.setPieceInList(startRow, 6, EmptyPiece)
 		b.setPieceInList(startRow, 4, startPiece)
 		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
+
 		b.updateKingPos(startPiece, startRow, 4)
 	} else if move.isCastleQueenSide {
-		rookPiece := newPieceTypeColor(Rook, oppositeColor(getColor(startPiece)))
+		rookPiece := newPieceTypeColor(Rook, getColor(startPiece))
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
 		b.setBitboardPiece(rookPiece, startRow, 0)

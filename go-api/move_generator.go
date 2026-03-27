@@ -38,6 +38,12 @@ var kingOffsets = [8][2]int{{1, 1}, {1, -1}, {-1, 1}, {-1, -1}, {1, 0}, {-1, 0},
 var knightAttacks [64]uint64
 var kingAttacks [64]uint64
 
+var row4, _ = strconv.ParseUint("00000000FF000000", 16, 64)
+var row5, _ = strconv.ParseUint("000000FF00000000", 16, 64)
+
+var colA, _ = strconv.ParseUint("8080808080808080", 16, 64)
+var colH, _ = strconv.ParseUint("0101010101010101", 16, 64)
+
 func init() {
 	for sq := range 64 {
 		r, c := sq/8, sq%8
@@ -623,8 +629,6 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 	//Double Pawn Push
 	var doublePushRow uint64
 
-	row4, _ := strconv.ParseUint("00000000FF000000", 16, 64)
-	row5, _ := strconv.ParseUint("000000FF00000000", 16, 64)
 	if color == White {
 		doublePushRow = row4
 	} else {
@@ -655,38 +659,66 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkMask uint
 	}
 
 	//Capture Moves
-	if p.col > 0 && mg.board.canCapture(p.row+directions[0], currentCol-1, color) {
-		if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol-1) {
-			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-			endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: mg.board.getCell(p.row+directions[0], p.col-1)}
-			if !mg.board.cellEmpty(p.row+directions[0], p.col-1) {
-				if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
-				} else {
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-				}
-			}
-		}
+	captureBitBoard := emptyMask
+	if color == White {
+		captureBitBoard |= (pawnBitboard << 7) & ^colA
+		captureBitBoard |= (pawnBitboard << 9) & ^colH
+	} else {
+		captureBitBoard |= (pawnBitboard >> 7) & ^colH
+		captureBitBoard |= (pawnBitboard >> 9) & ^colA
 	}
-	if p.col < 7 && mg.board.canCapture(p.row+directions[0], p.col+1, color) {
-		if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol+1) {
-			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
-			endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: mg.board.getCell(p.row+directions[0], p.col+1)}
-			if !mg.board.cellEmpty(p.row+directions[0], p.col+1) {
-				if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
-				} else {
-					moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-				}
-			}
+
+	captureBitBoard &= checkMask
+	captureBitBoard &= mg.board.getColorBitboard(oppositeColor(color))
+
+	for captureBitBoard != 0 {
+		attackIdx := bitScanForward(captureBitBoard)
+		captureBitBoard ^= 1 << attackIdx
+		endRow, endCol := rowColFromSquare(63 - attackIdx)
+		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
+		if endRow == 0 || endRow == 7 {
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Queen})
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook})
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop})
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight})
+		} else {
+			moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
 		}
+
 	}
+
+	// if p.col > 0 && mg.board.canCapture(p.row+directions[0], currentCol-1, color) {
+	// 	if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol-1) {
+	// 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+	// 		endSquare := Square{row: p.row + directions[0], col: p.col - 1, piece: mg.board.getCell(p.row+directions[0], p.col-1)}
+	// 		if !mg.board.cellEmpty(p.row+directions[0], p.col-1) {
+	// 			if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
+	// 			} else {
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	// 			}
+	// 		}
+	// 	}
+	// }
+	// if p.col < 7 && mg.board.canCapture(p.row+directions[0], p.col+1, color) {
+	// 	if bitboardCheckOne(checkMask, currentRow+directions[0], currentCol+1) {
+	// 		startSquare := Square{row: p.row, col: p.col, piece: p.piece}
+	// 		endSquare := Square{row: p.row + directions[0], col: p.col + 1, piece: mg.board.getCell(p.row+directions[0], p.col+1)}
+	// 		if !mg.board.cellEmpty(p.row+directions[0], p.col+1) {
+	// 			if p.row+directions[0] == 0 || p.row+directions[0] == 7 {
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Queen)})
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Rook)})
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Bishop)})
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: PieceType(Knight)})
+	// 			} else {
+	// 				moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	// 			}
+	// 		}
+	// 	}
+	// }
 
 	//ENPASSANT
 	if mg.board.enpassant != "-" {
