@@ -546,27 +546,29 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, pt PieceTyp
 	return moves
 }
 
-func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttack bool, attackMask uint64, onlyCaptures bool, moves []Move) []Move {
+func (mg *MoveGenerator) generateKingMoves(p Square, color Color, isAttacks bool, attackMask uint64, onlyCaptures bool, moves []Move) []Move {
 	currentRow := p.row
 	currentCol := p.col
-	var row int
-	var col int
-	for _, move := range kingOffsets {
-		row = currentRow + move[0]
-		col = currentCol + move[1]
-		if row >= 0 && row <= 7 && col >= 0 && col <= 7 {
-			if isAttack || mg.board.canCapture(row, col, color) || mg.board.cellEmpty(row, col) {
-				if !bitboardCheckOne(attackMask, row, col) {
-					startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
-					endSquare := Square{row: row, col: col, piece: mg.board.getCell(row, col)}
 
-					if !onlyCaptures || !mg.board.cellEmpty(row, col) {
-						moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
-					}
-				}
-			}
-		}
+	// TODO: Remove is Attacks
+	_ = isAttacks
+
+	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
+	pieceAttacks := kingAttacks[currentRow*8+currentCol]
+	pieceAttacks &= ^attackMask
+	pieceAttacks &= ^mg.board.getColorBitboard(color)
+
+	if onlyCaptures {
+		pieceAttacks &= mg.board.getColorBitboard(oppositeColor(color))
 	}
+	for pieceAttacks != 0 {
+		attackIdx := bitScanForward(pieceAttacks)
+		pieceAttacks ^= 1 << attackIdx
+		endRow, endCol := rowColFromSquare(63 - attackIdx)
+		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
+		moves = append(moves, Move{startSquare: startSquare, endSquare: endSquare})
+	}
+
 	return moves
 
 }

@@ -473,7 +473,7 @@ func (b *Board) makeMove(move *Move) {
 		b.setCell(startRow, 7, newPiece('*'))
 
 		b.setBitboardPiece(startPiece, startRow, 6)
-		b.setBitboardPiece(rookPiece, startRow, 6)
+		b.setBitboardPiece(rookPiece, startRow, 5)
 		b.removeBitboardPiece(startPiece, startRow, startCol)
 		b.removeBitboardPiece(rookPiece, startRow, 7)
 

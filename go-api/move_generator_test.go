@@ -29,27 +29,27 @@ func TestMoveGeneration(t *testing.T) {
 	}
 }
 
-func TestKnightMoveGeneration(t *testing.T) {
+func TestPieceMoveGeneration(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("n6k/8/1p6/8/3n4/8/8/7K b KQkq d3 0 1")
 	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 13 {
-		t.Errorf("Failed TestMoveGen Knight")
+		t.Errorf("Failed TestMoveGen Knight got: %d expected: %d", len(moves), 13)
 	}
 
 	board.updateFromFEN("r3R3/b7/8/8/8/8/8/k6K b KQkq d3 0 1")
 	moveGenerator.updateBoard(&board)
 	moves = moveGenerator.generateMoves(false)
 	if len(moves) != 14 {
-		t.Errorf("Failed TestMoveGen Sliding")
+		t.Errorf("Failed TestMoveGen Sliding got: %d expected: %d", len(moves), 14)
 	}
 
 	board.updateFromFEN("8/8/8/8/3k4/8/8/8 b KQkq d3 0 1")
 	moveGenerator.updateBoard(&board)
 	moves = moveGenerator.generateMoves(false)
 	if len(moves) != 8 {
-		t.Errorf("Failed TestMoveGen King")
+		t.Errorf("Failed TestMoveGen King got: %d expected: %d", len(moves), 8)
 	}
 }
 
