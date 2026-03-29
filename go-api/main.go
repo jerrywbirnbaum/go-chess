@@ -1,6 +1,10 @@
 package main
 
-import "os"
+import (
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+)
 
 type ChessRequest struct {
 	FenString string `json:"fen" binding:"required"`
@@ -11,6 +15,7 @@ type TimerRequest struct {
 }
 
 func main() {
+	go http.ListenAndServe(":8080", nil)
 	board := initBoard()
 	moveGenerator := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: moveGenerator}
