@@ -3,27 +3,8 @@ package main
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	"strconv"
-	"time"
 )
-
-type Move struct {
-	startSquare          Square
-	endSquare            Square
-	previousEnpassant    string
-	previousCastleRights uint8
-	nextEnpassant        string
-	nextCastleRights     uint8
-	isEnpassant          bool
-	isCastleKingSide     bool
-	isCastleQueenSide    bool
-	isPromotion          bool
-	promotionPieceType   PieceType
-	isNull               bool
-	enpassantCapture     Piece
-	previousZobristHash  int64
-}
 
 var emptyBitboard uint64 = 0
 var fullBitboard uint64 = math.MaxUint64
@@ -71,7 +52,7 @@ type MoveString struct {
 type MoveGenerator struct {
 	board           *Board
 	repititionTable *RepititionTable
-	moves           [256]Move
+	moves           [64]Move
 	numMoves        int
 }
 
@@ -367,7 +348,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkBitboard uint64) {
 			if mg.board.cellEmpty(7, 5) && mg.board.cellEmpty(7, 6) && mg.board.getCell(7, 7) == newPiece('R') && mg.board.getCell(7, 4) == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
 				endSquare := Square{row: 7, col: 6, piece: EmptyPiece}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+				mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 				mg.numMoves += 1
 			}
 		}
@@ -379,7 +360,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkBitboard uint64) {
 			if mg.board.cellEmpty(7, 1) && mg.board.cellEmpty(7, 2) && mg.board.cellEmpty(7, 3) && mg.board.getCell(7, 0) == newPiece('R') && mg.board.getCell(7, 4) == newPiece('K') {
 				startSquare := Square{row: 7, col: 4, piece: newPiece('K')}
 				endSquare := Square{row: 7, col: 2, piece: EmptyPiece}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+				mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 				mg.numMoves += 1
 			}
 		}
@@ -391,7 +372,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkBitboard uint64) {
 			if mg.board.cellEmpty(0, 5) && mg.board.cellEmpty(0, 6) && mg.board.getCell(0, 7) == newPiece('r') && mg.board.getCell(0, 4) == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
 				endSquare := Square{row: 0, col: 6, piece: EmptyPiece}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+				mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 				mg.numMoves += 1
 
 			}
@@ -403,7 +384,7 @@ func (mg *MoveGenerator) generateCastles(color Color, checkBitboard uint64) {
 			if mg.board.cellEmpty(0, 1) && mg.board.cellEmpty(0, 2) && mg.board.cellEmpty(0, 3) && mg.board.getCell(0, 0) == newPiece('r') && mg.board.getCell(0, 4) == newPiece('k') {
 				startSquare := Square{row: 0, col: 4, piece: newPiece('k')}
 				endSquare := Square{row: 0, col: 2, piece: EmptyPiece}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+				mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 				mg.numMoves += 1
 			}
 		}
@@ -546,7 +527,7 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkBitboa
 		endRow, endCol := rowColFromSquare(63 - attackIdx)
 		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
 
-		mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+		mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 		mg.numMoves += 1
 	}
 }
@@ -568,7 +549,7 @@ func (mg *MoveGenerator) generateKingMoves(p Square, color Color, attackBitboard
 		pieceAttacks ^= 1 << attackIdx
 		endRow, endCol := rowColFromSquare(63 - attackIdx)
 		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
-		mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+		mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 		mg.numMoves += 1
 	}
 
@@ -590,7 +571,7 @@ func (mg *MoveGenerator) generateKnightMoves(p Square, color Color, checkBitboar
 		pieceAttacks ^= 1 << attackIdx
 		endRow, endCol := rowColFromSquare(63 - attackIdx)
 		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
-		mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+		mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 		mg.numMoves += 1
 	}
 
@@ -624,13 +605,13 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkBitboard 
 			endSquare := Square{row: endRow, col: endCol, piece: EmptyPiece}
 
 			if endRow == 0 || endRow == 7 {
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Queen}
-				mg.moves[mg.numMoves+1] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook}
-				mg.moves[mg.numMoves+2] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop}
-				mg.moves[mg.numMoves+3] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight}
+				mg.moves[mg.numMoves] = newMove(startSquare, endSquare, true, Queen)
+				mg.moves[mg.numMoves+1] = newMove(startSquare, endSquare, true, Rook)
+				mg.moves[mg.numMoves+2] = newMove(startSquare, endSquare, true, Bishop)
+				mg.moves[mg.numMoves+3] = newMove(startSquare, endSquare, true, Knight)
 				mg.numMoves += 4
 			} else {
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+				mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 				mg.numMoves += 1
 			}
 		}
@@ -664,7 +645,7 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkBitboard 
 			endRow, endCol := rowColFromSquare(63 - attackIdx)
 			endSquare := Square{row: endRow, col: endCol, piece: EmptyPiece}
 
-			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+			mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 			mg.numMoves += 1
 		}
 	}
@@ -688,26 +669,32 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkBitboard 
 		endRow, endCol := rowColFromSquare(63 - attackIdx)
 		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
 		if endRow == 0 || endRow == 7 {
-			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Queen}
-			mg.moves[mg.numMoves+1] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook}
-			mg.moves[mg.numMoves+2] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop}
-			mg.moves[mg.numMoves+3] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight}
+			mg.moves[mg.numMoves] = newMove(startSquare, endSquare, true, Queen)
+			mg.moves[mg.numMoves+1] = newMove(startSquare, endSquare, true, Rook)
+			mg.moves[mg.numMoves+2] = newMove(startSquare, endSquare, true, Bishop)
+			mg.moves[mg.numMoves+3] = newMove(startSquare, endSquare, true, Knight)
 			mg.numMoves += 4
 		} else {
 
-			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
+			mg.moves[mg.numMoves] = newMove(startSquare, endSquare, false, EmptyPieceType)
 			mg.numMoves += 1
 		}
 
 	}
 
 	//ENPASSANT
-	if mg.board.enpassant != "-" {
-		ep_row, ep_col := fromSquare(mg.board.enpassant)
+	if mg.board.enpassant != 8 {
+		ep_col := int(mg.board.enpassant)
+		var ep_row int
+		if color == White {
+			ep_row = enpassantRow - 1
+		} else {
+			ep_row = enpassantRow + 1
+		}
 		if p.row == enpassantRow && (ep_col-p.col == 1 || ep_col-p.col == -1) {
 			startSquare := Square{row: p.row, col: p.col, piece: p.piece}
 			endSquare := Square{row: ep_row, col: ep_col, piece: mg.board.getCell(ep_row, ep_col)}
-			enpassantMove := Move{startSquare: startSquare, endSquare: endSquare}
+			enpassantMove := newMove(startSquare, endSquare, false, EmptyPieceType)
 			if !mg.enpassantCheck(enpassantMove, color) && (mg.board.cellEmpty(ep_row, ep_col)) {
 				mg.moves[mg.numMoves] = enpassantMove
 				mg.numMoves += 1
@@ -738,17 +725,4 @@ func fromSquare(square string) (int, int) {
 	row := 8 - int(square[1]-'0')
 	col := int(square[0] - 'a')
 	return row, col
-}
-
-func (mg *MoveGenerator) randomMove() MoveString {
-	moves := mg.generateMoves(false)
-
-	seed := rand.NewSource(time.Now().Unix())
-	r := rand.New(seed)
-
-	random_index := r.Intn(len(moves))
-	random_move := moves[random_index]
-	startSquare := toSquare(random_move.startSquare.row, random_move.startSquare.col)
-	endSquare := toSquare(random_move.endSquare.row, random_move.endSquare.col)
-	return MoveString{startSquare: startSquare, endSquare: endSquare}
 }

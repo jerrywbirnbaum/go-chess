@@ -22,7 +22,7 @@ func TestMakeMove(t *testing.T) {
 	piece := WhitePawn
 	startSquare := Square{row: 6, col: 0, piece: piece}
 	endSquare := Square{row: 5, col: 0, piece: EmptyPiece}
-	move := Move{startSquare: startSquare, endSquare: endSquare}
+	move := newMove(startSquare, endSquare, false, 0)
 	board.makeMove(&move)
 
 	expected := `'r''n''b''q''k''b''n''r'
@@ -150,7 +150,7 @@ func TestCalculateZobrishHashPiecesOnly(t *testing.T) {
 	board := Board{
 		isWhiteTurn:     true,
 		castleAvailable: 0,
-		enpassant:       "-",
+		enpassant:       8,
 		zobrishTable:    table,
 		pieceCount:      3,
 	}
@@ -173,7 +173,7 @@ func TestCalculateZobrishHashIncludesState(t *testing.T) {
 	board := Board{
 		isWhiteTurn:     false,
 		castleAvailable: CastleWK | CastleBQ,
-		enpassant:       "e3",
+		enpassant:       4,
 		zobrishTable:    table,
 		pieceCount:      2,
 	}
@@ -197,10 +197,10 @@ func TestCalculateZobrishHashRestoresAfterUnmakeMove(t *testing.T) {
 	board := initBoard()
 	initialHash := board.calculateZobrishHash()
 
-	move := Move{
-		startSquare: Square{row: 6, col: 4, piece: board.getCell(6, 4)},
-		endSquare:   Square{row: 4, col: 4, piece: board.getCell(4, 4)},
-	}
+	move := newMove(
+		Square{row: 6, col: 4, piece: board.getCell(6, 4)},
+		Square{row: 4, col: 4, piece: board.getCell(4, 4)},
+		false, 0)
 	board.makeMove(&move)
 	board.unmakeMove(&move)
 

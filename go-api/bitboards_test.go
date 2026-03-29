@@ -61,7 +61,7 @@ func TestBitBoardsOpening(t *testing.T) {
 
 	e2 := Square{row: 6, col: 4, piece: Piece(WhitePawn)}
 	e4 := Square{row: 4, col: 4, piece: Piece(EmptyPiece)}
-	move := Move{startSquare: e2, endSquare: e4}
+	move := newMove(e2, e4, false, 0)
 	board.makeMove(&move)
 
 	whitePawnBitBoard = board.getBitboard(Piece(WhitePawn))

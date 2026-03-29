@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-const maxSearchPly = 16
-const maxQSearchPly = 16
+const maxSearchPly = 8
+const maxQSearchPly = 8
 
 type MoveEvaluation struct {
 	evaluation int
@@ -131,8 +131,8 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		}
 	}
 
-	startSquare := toSquare(bestMove.startSquare.row, bestMove.startSquare.col)
-	endSquare := toSquare(bestMove.endSquare.row, bestMove.endSquare.col)
+	startSquare := toSquare(bestMove.getStartSquare().row, bestMove.getStartSquare().col)
+	endSquare := toSquare(bestMove.getEndSquare().row, bestMove.getEndSquare().col)
 	promotion := "q"
 	if bestMove.isPromotion {
 		if bestMove.promotionPieceType == PieceType(Rook) {
@@ -307,16 +307,16 @@ func (a MoveOrder) Less(i, j int) bool {
 		return a[i].isPromotion
 	}
 
-	iIsCapture := a[i].endSquare.piece != 0
-	jIsCapture := a[j].endSquare.piece != 0
+	iIsCapture := a[i].getEndSquare().piece != 0
+	jIsCapture := a[j].getEndSquare().piece != 0
 
 	if iIsCapture != jIsCapture {
 		return iIsCapture
 	}
-	iStartVal := getPieceValue(pieceType(a[i].startSquare.piece))
-	iEndVal := getPieceValue(pieceType(a[i].endSquare.piece))
-	jStartVal := getPieceValue(pieceType(a[j].startSquare.piece))
-	jEndVal := getPieceValue(pieceType(a[j].endSquare.piece))
+	iStartVal := getPieceValue(pieceType(a[i].getStartSquare().piece))
+	iEndVal := getPieceValue(pieceType(a[i].getEndSquare().piece))
+	jStartVal := getPieceValue(pieceType(a[j].getStartSquare().piece))
+	jEndVal := getPieceValue(pieceType(a[j].getEndSquare().piece))
 
 	iDiff := iEndVal - iStartVal
 	jDiff := jEndVal - jStartVal
@@ -324,16 +324,16 @@ func (a MoveOrder) Less(i, j int) bool {
 		return iDiff > jDiff
 	}
 
-	if a[i].startSquare.row != a[j].startSquare.row {
-		return a[i].startSquare.row < a[j].startSquare.row
+	if a[i].getStartSquare().row != a[j].getStartSquare().row {
+		return a[i].getStartSquare().row < a[j].getStartSquare().row
 	}
-	if a[i].startSquare.col != a[j].startSquare.col {
-		return a[i].startSquare.col < a[j].startSquare.col
+	if a[i].getStartSquare().col != a[j].getStartSquare().col {
+		return a[i].getStartSquare().col < a[j].getStartSquare().col
 	}
-	if a[i].endSquare.row != a[j].endSquare.row {
-		return a[i].endSquare.row < a[j].endSquare.row
+	if a[i].getEndSquare().row != a[j].getEndSquare().row {
+		return a[i].getEndSquare().row < a[j].getEndSquare().row
 	}
-	return a[i].endSquare.col < a[j].endSquare.col
+	return a[i].getEndSquare().col < a[j].getEndSquare().col
 }
 
 type MoveEvaluationOrder []MoveEvaluation

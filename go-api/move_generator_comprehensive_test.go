@@ -8,8 +8,8 @@ import (
 
 func moveToUCI(move Move) string {
 	return fmt.Sprintf("%s%s",
-		toSquare(move.startSquare.row, move.startSquare.col),
-		toSquare(move.endSquare.row, move.endSquare.col),
+		toSquare(move.getStartSquare().row, move.getStartSquare().col),
+		toSquare(move.getEndSquare().row, move.getEndSquare().col),
 	)
 }
 
@@ -202,10 +202,10 @@ func TestBoardUpdateCastle_WhiteQueensideRookMoveClearsQOnly(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("4k3/8/8/8/8/8/8/R3K2R w KQ - 0 1")
 
-	move := Move{
-		startSquare: Square{row: 7, col: 0, piece: newPiece('R')},
-		endSquare:   Square{row: 7, col: 1, piece: newPiece('*')},
-	}
+	move := newMove(
+		Square{row: 7, col: 0, piece: newPiece('R')},
+		Square{row: 7, col: 1, piece: newPiece('*')},
+		false, 0)
 	board.makeMove(&move)
 
 	if board.castleAvailable != CastleWK {
@@ -216,13 +216,13 @@ func TestBoardUpdateCastle_WhiteQueensideRookMoveClearsQOnly(t *testing.T) {
 func TestBoardMakeMove_BlackDoublePushSetsEnPassant(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("4k3/4p3/8/8/8/8/8/4K3 b - - 0 1")
-	move := Move{
-		startSquare: Square{row: 1, col: 4, piece: newPiece('p')},
-		endSquare:   Square{row: 3, col: 4, piece: newPiece('*')},
-	}
+	move := newMove(
+		Square{row: 1, col: 4, piece: newPiece('p')},
+		Square{row: 3, col: 4, piece: newPiece('*')},
+		false, 0)
 	board.makeMove(&move)
-	if board.enpassant != "e6" {
-		t.Fatalf("expected en-passant square e6 after e7e5, got %q", board.enpassant)
+	if board.enpassant != 4 {
+		t.Fatalf("expected en-passant column e (4) after e7e5, got %q", board.enpassant)
 	}
 }
 

@@ -123,10 +123,10 @@ func parseMoveFromUCI(board *Board, uciMove string) Move {
 	startPiece := board.getCell(fromRow, fromCol)
 	endPiece := board.getCell(toRow, toCol)
 
-	move := Move{
-		startSquare: Square{row: fromRow, col: fromCol, piece: startPiece},
-		endSquare:   Square{row: toRow, col: toCol, piece: endPiece},
-	}
+	move := newMove(
+		Square{row: fromRow, col: fromCol, piece: startPiece},
+		Square{row: toRow, col: toCol, piece: endPiece},
+		false, 0)
 
 	if len(uciMove) == 5 {
 		switch uciMove[4] {

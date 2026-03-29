@@ -53,7 +53,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 		t.Fatalf("expected exactly one root capture, got %d", len(firstCaptures))
 	}
 	firstMove := firstCaptures[0]
-	if toSquare(firstMove.startSquare.row, firstMove.startSquare.col)+toSquare(firstMove.endSquare.row, firstMove.endSquare.col) != "a1a8" {
+	if toSquare(firstMove.getStartSquare().row, firstMove.getStartSquare().col)+toSquare(firstMove.getEndSquare().row, firstMove.getEndSquare().col) != "a1a8" {
 		t.Fatalf("expected forced capture a1a8")
 	}
 
@@ -67,7 +67,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 		t.Fatalf("expected exactly one reply capture, got %d", len(secondCaptures))
 	}
 	secondMove := secondCaptures[0]
-	if toSquare(secondMove.startSquare.row, secondMove.startSquare.col)+toSquare(secondMove.endSquare.row, secondMove.endSquare.col) != "b8a8" {
+	if toSquare(secondMove.getStartSquare().row, secondMove.getStartSquare().col)+toSquare(secondMove.getEndSquare().row, secondMove.getEndSquare().col) != "b8a8" {
 		t.Fatalf("expected forced recapture b8a8")
 	}
 
@@ -367,8 +367,8 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 
 	var nxc6 *Move
 	for i := range moves {
-		s := toSquare(moves[i].startSquare.row, moves[i].startSquare.col)
-		e := toSquare(moves[i].endSquare.row, moves[i].endSquare.col)
+		s := toSquare(moves[i].getStartSquare().row, moves[i].getStartSquare().col)
+		e := toSquare(moves[i].getEndSquare().row, moves[i].getEndSquare().col)
 		if s == "e5" && e == "c6" {
 			nxc6 = &moves[i]
 			break

@@ -359,20 +359,20 @@ func TestMoveSortFunctionSpecial(t *testing.T) {
 	a2 := Square{row: 0, col: 1, piece: Piece(BlackPawn)}
 
 	moves := []Move{
-		{startSquare: a4, endSquare: b5},
-		{startSquare: e4, endSquare: e5},
-		{startSquare: a1, endSquare: a2},
-		{startSquare: e4, endSquare: d5},
-		{startSquare: e4, endSquare: f5},
+		newMove(a4, b5, false, 0),
+		newMove(e4, e5, false, 0),
+		newMove(a1, a2, false, 0),
+		newMove(e4, d5, false, 0),
+		newMove(e4, f5, false, 0),
 	}
 	sort.Sort(MoveOrder(moves))
 
 	expected := []Move{
-		{startSquare: e4, endSquare: d5},
-		{startSquare: a4, endSquare: b5},
-		{startSquare: e4, endSquare: f5},
-		{startSquare: a1, endSquare: a2},
-		{startSquare: e4, endSquare: e5},
+		newMove(e4, d5, false, 0),
+		newMove(a4, b5, false, 0),
+		newMove(e4, f5, false, 0),
+		newMove(a1, a2, false, 0),
+		newMove(e4, e5, false, 0),
 	}
 	if !reflect.DeepEqual(moves, expected) {
 		t.Errorf("Failed Move Ordering Test")
