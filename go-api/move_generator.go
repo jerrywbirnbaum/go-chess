@@ -625,9 +625,9 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkBitboard 
 
 			if endRow == 0 || endRow == 7 {
 				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Queen}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop}
-				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight}
+				mg.moves[mg.numMoves+1] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook}
+				mg.moves[mg.numMoves+2] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop}
+				mg.moves[mg.numMoves+3] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight}
 				mg.numMoves += 4
 			} else {
 				mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare}
@@ -689,9 +689,9 @@ func (mg *MoveGenerator) generatePawnMoves(p Square, color Color, checkBitboard 
 		endSquare := Square{row: endRow, col: endCol, piece: mg.board.getCell(endRow, endCol)}
 		if endRow == 0 || endRow == 7 {
 			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Queen}
-			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook}
-			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop}
-			mg.moves[mg.numMoves] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight}
+			mg.moves[mg.numMoves+1] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Rook}
+			mg.moves[mg.numMoves+2] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Bishop}
+			mg.moves[mg.numMoves+3] = Move{startSquare: startSquare, endSquare: endSquare, isPromotion: true, promotionPieceType: Knight}
 			mg.numMoves += 4
 		} else {
 

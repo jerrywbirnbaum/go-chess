@@ -6,15 +6,31 @@ import (
 	"time"
 )
 
+const maxSearchPly = 16
+const maxQSearchPly = 16
+
 type MoveEvaluation struct {
 	evaluation int
 	move       *Move
 }
+
 type ChessEngine struct {
 	moveGenerator      MoveGenerator
 	transpositionTable TranspositionTable
 	searchCancelled    atomic.Bool
 	timer              int
+	searchMG           [maxSearchPly]MoveGenerator
+	qsearchMG          [maxQSearchPly]MoveGenerator
+}
+
+func (s *ChessEngine) initMoveGeneratorPools() {
+	board := s.moveGenerator.board
+	for i := range s.searchMG {
+		s.searchMG[i].board = board
+	}
+	for i := range s.qsearchMG {
+		s.qsearchMG[i].board = board
+	}
 }
 
 func (s *ChessEngine) initSearchTranspositionTable() {
@@ -39,9 +55,11 @@ func (s *ChessEngine) setTimer(timer int) {
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	s.searchCancelled.Store(false)
+	s.initMoveGeneratorPools()
+
 	board := s.moveGenerator.board
-	localMoveGenerator := MoveGenerator{board: board}
-	moves := localMoveGenerator.generateMoves(false)
+	rootMG := &s.searchMG[0]
+	moves := rootMG.generateMoves(false)
 	sort.Sort(MoveOrder(moves))
 	totalEvaluated := 0
 	sortedMoves := make([]MoveEvaluation, len(moves))
@@ -102,12 +120,10 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 			break
 		}
 
-		// Commit results from completed iteration
 		bestMove = bestMoveCurrentIteration
 		bestEvalCompleted = bestEvalCurrentIteration
 		completedDepth = searchDepth
 
-		//Sort moves for one iteration deeper in the order of the previous iteration
 		moves = nil
 		sort.Sort(MoveEvaluationOrder(sortedMoves))
 		for i := range sortedMoves {
@@ -135,6 +151,10 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 		return 0, 0
 	}
 
+	if ply >= maxSearchPly {
+		return pestoEval(*s.moveGenerator.board), 1
+	}
+
 	originalAlpha := alpha
 	board := s.moveGenerator.board
 	tt := s.transpositionTable
@@ -158,7 +178,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	}
 
 	if depth <= 0 {
-		return s.searchOnlyCapturesForce(ply, alpha, beta)
+		return s.searchOnlyCapturesForce(ply, 0, alpha, beta)
 	}
 
 	positionsEvaluated := 0
@@ -176,8 +196,10 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			return beta, nullNodes
 		}
 	}
-	moveGenerator := MoveGenerator{board: board}
-	moves := moveGenerator.generateMoves(false)
+
+	mg := &s.searchMG[ply]
+	mg.board = board
+	moves := mg.generateMoves(false)
 	if len(moves) == 0 {
 		if inCheck {
 			return -(20000 - ply), 1
@@ -228,7 +250,11 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	return alpha, positionsEvaluated
 }
 
-func (s *ChessEngine) searchOnlyCapturesForce(ply int, alpha int, beta int) (int, int) {
+func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta int) (int, int) {
+	if qPly >= maxQSearchPly {
+		return pestoEval(*s.moveGenerator.board), 1
+	}
+
 	board := s.moveGenerator.board
 
 	standPat := pestoEval(*board)
@@ -240,11 +266,12 @@ func (s *ChessEngine) searchOnlyCapturesForce(ply int, alpha int, beta int) (int
 		alpha = standPat
 	}
 
-	moveGenerator := MoveGenerator{board: board}
-	moves := moveGenerator.generateMoves(true)
+	mg := &s.qsearchMG[qPly]
+	mg.board = board
+	moves := mg.generateMoves(true)
 
 	if len(moves) == 0 {
-		if board.playerInCheck() && len(moveGenerator.generateMoves(false)) == 0 {
+		if board.playerInCheck() && len(mg.generateMoves(false)) == 0 {
 			return -(20000 - ply), 1
 		} else {
 			return standPat, 1
@@ -257,7 +284,7 @@ func (s *ChessEngine) searchOnlyCapturesForce(ply int, alpha int, beta int) (int
 	for i := range moves {
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval, currentNodes = s.searchOnlyCapturesForce(ply+1, -beta, -alpha)
+		currentMoveEval, currentNodes = s.searchOnlyCapturesForce(ply+1, qPly+1, -beta, -alpha)
 		currentMoveEval = -currentMoveEval
 		board.unmakeMove(move)
 
