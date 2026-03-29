@@ -386,16 +386,16 @@ func updateEnpassantSquare(move *Move) int {
 }
 
 func (b *Board) makeMoveUpdateSide(move *Move) {
-	if b.castleAvailable != move.nextCastleRights {
+	if b.castleAvailable != move.getNextCastleRights() {
 		b.xorCastleKey(b.castleAvailable)
-		b.xorCastleKey(move.nextCastleRights)
+		b.xorCastleKey(move.getNextCastleRights())
 	}
 	if b.enpassant != move.getNextEnpassant() {
 		b.xorEnpassantKey(b.enpassant)
 		b.xorEnpassantKey(move.getNextEnpassant())
 	}
 	b.zobristHash ^= b.zobrishTable[768] // toggle side to move
-	b.castleAvailable = move.nextCastleRights
+	b.castleAvailable = move.getNextCastleRights()
 	b.enpassant = move.getNextEnpassant()
 	b.moveCount += 1
 	b.isWhiteTurn = !b.isWhiteTurn
@@ -411,17 +411,15 @@ func (b *Board) makeMove(move *Move) {
 
 	pieceType := pieceType(startPiece)
 
-	move.previousCastleRights = b.castleAvailable
-	// move.getPreviousEnpassant() = b.enpassant
+	move.setPreviousCastleRights(b.castleAvailable)
 	move.setPreviousEnpassant(b.enpassant)
-	move.nextCastleRights = updateCastleRights(b.castleAvailable, move)
-	// move.getNextEnpassant() = updateEnpassantSquare(move)
+	move.setNextCastleRights(updateCastleRights(b.castleAvailable, move))
 	move.setNextEnpassant(uint8(updateEnpassantSquare(move)))
-	move.isCastleKingSide = isKing(pieceType) && (endCol-startCol) == 2
-	move.isCastleQueenSide = isKing(pieceType) && (endCol-startCol) == -2
-	move.isPromotion = isPawn(pieceType) && (endRow == 0 || endRow == 7)
-	move.isEnpassant = false
-	move.enpassantCapture = EmptyPiece
+	move.setIsCastleKingSide(isKing(pieceType) && (endCol-startCol) == 2)
+	move.setIsCastleQueenSide(isKing(pieceType) && (endCol-startCol) == -2)
+	move.setIsPromotion(isPawn(pieceType) && (endRow == 0 || endRow == 7))
+	move.setIsEnpassant(false)
+	move.setEnpassantCapture(EmptyPiece)
 
 	if isPawn(pieceType) && move.getPreviousEnpassant() != 8 && isEmpty(endPiece) {
 		epCol := int(move.getPreviousEnpassant())
@@ -432,22 +430,22 @@ func (b *Board) makeMove(move *Move) {
 			epRow = 5
 		}
 		if endRow == epRow && endCol == epCol {
-			move.isEnpassant = true
-			move.enpassantCapture = b.getCell(startRow, epCol)
+			move.setIsEnpassant(true)
+			move.setEnpassantCapture(b.getCell(startRow, epCol))
 		}
 	}
 
-	move.previousZobristHash = b.zobristHash
+	move.setPreviousZobristHash(b.zobristHash)
 
 	//Null move
-	if move.isNull {
+	if move.getIsNull() {
 		b.makeMoveUpdateSide(move)
 		return
 	}
 	//Pawn Promotion
-	if move.isPromotion {
+	if move.getIsPromotion() {
 		var promotedPiece Piece
-		promotedPiece = newPieceTypeColor(move.promotionPieceType, getColor(startPiece))
+		promotedPiece = newPieceTypeColor(move.getPromotionPieceType(), getColor(startPiece))
 		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(endPiece, endRow, endCol)
 		b.xorPieceSquare(promotedPiece, endRow, endCol)
@@ -460,10 +458,10 @@ func (b *Board) makeMove(move *Move) {
 
 		b.removePieceFromList(startPiece, startRow, startCol)
 		b.setPieceInList(endRow, endCol, promotedPiece)
-	} else if move.isEnpassant {
+	} else if move.getIsEnpassant() {
 		//enpassant
 		b.xorPieceSquare(startPiece, startRow, startCol)
-		b.xorPieceSquare(move.enpassantCapture, startRow, endCol)
+		b.xorPieceSquare(move.getEnpassantCapture(), startRow, endCol)
 		b.xorPieceSquare(startPiece, endRow, endCol)
 
 		b.setBitboardPiece(startPiece, endRow, endCol)
@@ -477,7 +475,7 @@ func (b *Board) makeMove(move *Move) {
 		b.removePieceFromList(startPiece, startRow, startCol)
 		b.removePieceFromList(endPiece, startRow, endCol)
 		b.setPieceInList(endRow, endCol, startPiece)
-	} else if move.isCastleKingSide {
+	} else if move.getIsCastleKingSide() {
 		//Castling
 		rookPiece := b.getCell(startRow, 7)
 		b.xorPieceSquare(startPiece, startRow, startCol)
@@ -500,7 +498,7 @@ func (b *Board) makeMove(move *Move) {
 		b.setPieceInList(startRow, 6, startPiece)
 		b.setPieceInList(startRow, 5, b.getCell(startRow, 5))
 		b.updateKingPos(startPiece, startRow, 6)
-	} else if move.isCastleQueenSide {
+	} else if move.getIsCastleQueenSide() {
 		rookPiece := b.getCell(startRow, 0)
 		b.xorPieceSquare(startPiece, startRow, startCol)
 		b.xorPieceSquare(rookPiece, startRow, 0)
@@ -546,14 +544,14 @@ func (b *Board) makeMove(move *Move) {
 }
 
 func (b *Board) unmakeMoveUpdateSide(move *Move) {
-	b.castleAvailable = move.previousCastleRights
+	b.castleAvailable = move.getPreviousCastleRights()
 	b.enpassant = move.getPreviousEnpassant()
 	b.moveCount -= 1
 	b.isWhiteTurn = !b.isWhiteTurn
 }
 
 func (b *Board) unmakeMove(move *Move) {
-	b.zobristHash = move.previousZobristHash
+	b.zobristHash = move.getPreviousZobristHash()
 
 	startRow := move.getStartSquare().row
 	startCol := move.getStartSquare().col
@@ -563,13 +561,13 @@ func (b *Board) unmakeMove(move *Move) {
 	endPiece := move.getEndSquare().piece
 
 	//Null move
-	if move.isNull {
+	if move.getIsNull() {
 		b.unmakeMoveUpdateSide(move)
 		return
 	}
 	//Enpassant
-	if move.isPromotion {
-		promotionPiece := newPieceTypeColor(move.promotionPieceType, getColor(startPiece))
+	if move.getIsPromotion() {
+		promotionPiece := newPieceTypeColor(move.getPromotionPieceType(), getColor(startPiece))
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
 		b.setBitboardPiece(endPiece, endRow, endCol)
@@ -579,19 +577,19 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setCell(endRow, endCol, endPiece)
 		b.setPieceInList(endRow, endCol, endPiece)
 		b.setPieceInList(startRow, startCol, startPiece)
-	} else if move.isEnpassant {
+	} else if move.getIsEnpassant() {
 		b.setCell(startRow, startCol, startPiece)
 		b.setCell(endRow, endCol, EmptyPiece)
-		b.setCell(startRow, endCol, move.enpassantCapture)
+		b.setCell(startRow, endCol, move.getEnpassantCapture())
 		b.setPieceInList(startRow, startCol, startPiece)
 		b.setPieceInList(endRow, endCol, EmptyPiece)
-		b.setPieceInList(startRow, endCol, move.enpassantCapture)
+		b.setPieceInList(startRow, endCol, move.getEnpassantCapture())
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
-		b.setBitboardPiece(move.enpassantCapture, startRow, endCol)
+		b.setBitboardPiece(move.getEnpassantCapture(), startRow, endCol)
 		b.removeBitboardPiece(startPiece, endRow, endCol)
 
-	} else if move.isCastleKingSide {
+	} else if move.getIsCastleKingSide() {
 		rookPiece := newPieceTypeColor(Rook, getColor(startPiece))
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
@@ -610,7 +608,7 @@ func (b *Board) unmakeMove(move *Move) {
 		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
 
 		b.updateKingPos(startPiece, startRow, 4)
-	} else if move.isCastleQueenSide {
+	} else if move.getIsCastleQueenSide() {
 		rookPiece := newPieceTypeColor(Rook, getColor(startPiece))
 
 		b.setBitboardPiece(startPiece, startRow, startCol)
@@ -643,7 +641,7 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 
 	b.unmakeMoveUpdateSide(move)
-	b.isThreeFoldRepitition = b.repititionTable.decrement(move.previousZobristHash)
+	b.isThreeFoldRepitition = b.repititionTable.decrement(move.getPreviousZobristHash())
 }
 
 func (b *Board) currentColor() Color {

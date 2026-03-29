@@ -131,13 +131,13 @@ func parseMoveFromUCI(board *Board, uciMove string) Move {
 	if len(uciMove) == 5 {
 		switch uciMove[4] {
 		case 'q':
-			move.promotionPieceType = Queen
+			move.setPromotionPieceType(Queen)
 		case 'r':
-			move.promotionPieceType = Rook
+			move.setPromotionPieceType(Rook)
 		case 'b':
-			move.promotionPieceType = Bishop
+			move.setPromotionPieceType(Bishop)
 		case 'n':
-			move.promotionPieceType = Knight
+			move.setPromotionPieceType(Knight)
 		}
 	}
 

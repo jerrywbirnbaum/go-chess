@@ -134,16 +134,16 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	startSquare := toSquare(bestMove.getStartSquare().row, bestMove.getStartSquare().col)
 	endSquare := toSquare(bestMove.getEndSquare().row, bestMove.getEndSquare().col)
 	promotion := "q"
-	if bestMove.isPromotion {
-		if bestMove.promotionPieceType == PieceType(Rook) {
+	if bestMove.getIsPromotion() {
+		if bestMove.getPromotionPieceType() == PieceType(Rook) {
 			promotion = "r"
-		} else if bestMove.promotionPieceType == PieceType(Bishop) {
+		} else if bestMove.getPromotionPieceType() == PieceType(Bishop) {
 			promotion = "b"
-		} else if bestMove.promotionPieceType == PieceType(Knight) {
+		} else if bestMove.getPromotionPieceType() == PieceType(Knight) {
 			promotion = "n"
 		}
 	}
-	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.isPromotion}, totalEvaluated, bestEvalCompleted, completedDepth
+	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.getIsPromotion()}, totalEvaluated, bestEvalCompleted, completedDepth
 }
 
 func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, allowNull bool) (int, int) {
@@ -185,7 +185,8 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 
 	//null move pruning
 	if depth >= 3 && !inCheck && !board.isPawnEndgame() {
-		nullMove := Move{isNull: true}
+		nullMove := Move{}
+		nullMove.setIsNull(true)
 		board.makeMove(&nullMove)
 		nullMoveReduction := 2
 		nullMoveEval, nullNodes := s.searchBruteForce(depth-nullMoveReduction, ply+1, -beta, -beta+1, false)
@@ -303,8 +304,8 @@ func (a MoveOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func (a MoveOrder) Less(i, j int) bool {
 
-	if a[i].isPromotion != a[j].isPromotion {
-		return a[i].isPromotion
+	if a[i].getIsPromotion() != a[j].getIsPromotion() {
+		return a[i].getIsPromotion()
 	}
 
 	iIsCapture := a[i].getEndSquare().piece != 0

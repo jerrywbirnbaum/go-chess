@@ -37,9 +37,89 @@ func newMove(startSq Square, endSq Square, isPromotion bool, promotionPieceType 
 	move := Move{}
 	move.setStartSquare(startSq)
 	move.setEndSquare(endSq)
-	move.isPromotion = isPromotion
-	move.promotionPieceType = promotionPieceType
+	move.setIsPromotion(isPromotion)
+	move.setPromotionPieceType(promotionPieceType)
 	return move
+}
+
+func (move *Move) getPreviousCastleRights() uint8 {
+	return move.previousCastleRights
+}
+
+func (move *Move) setPreviousCastleRights(v uint8) {
+	move.previousCastleRights = v
+}
+
+func (move *Move) getNextCastleRights() uint8 {
+	return move.nextCastleRights
+}
+
+func (move *Move) setNextCastleRights(v uint8) {
+	move.nextCastleRights = v
+}
+
+func (move *Move) getIsEnpassant() bool {
+	return move.isEnpassant
+}
+
+func (move *Move) setIsEnpassant(v bool) {
+	move.isEnpassant = v
+}
+
+func (move *Move) getIsCastleKingSide() bool {
+	return move.isCastleKingSide
+}
+
+func (move *Move) setIsCastleKingSide(v bool) {
+	move.isCastleKingSide = v
+}
+
+func (move *Move) getIsCastleQueenSide() bool {
+	return move.isCastleQueenSide
+}
+
+func (move *Move) setIsCastleQueenSide(v bool) {
+	move.isCastleQueenSide = v
+}
+
+func (move *Move) getIsPromotion() bool {
+	return move.isPromotion
+}
+
+func (move *Move) setIsPromotion(v bool) {
+	move.isPromotion = v
+}
+
+func (move *Move) getPromotionPieceType() PieceType {
+	return move.promotionPieceType
+}
+
+func (move *Move) setPromotionPieceType(v PieceType) {
+	move.promotionPieceType = v
+}
+
+func (move *Move) getIsNull() bool {
+	return move.isNull
+}
+
+func (move *Move) setIsNull(v bool) {
+	move.isNull = v
+}
+
+func (move *Move) getEnpassantCapture() Piece {
+	return move.enpassantCapture
+}
+
+func (move *Move) setEnpassantCapture(v Piece) {
+	move.enpassantCapture = v
+}
+
+func (move *Move) getPreviousZobristHash() int64 {
+	return move.previousZobristHash
+}
+
+func (move *Move) setPreviousZobristHash(v int64) {
+	move.previousZobristHash = v
 }
 func (move *Move) getStartSquare() Square {
 	startRow := int(move.moveBits & uint64(0b111))
