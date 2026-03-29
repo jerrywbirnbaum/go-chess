@@ -529,7 +529,7 @@ func (b *Board) makeMove(move *Move) {
 	}
 
 	b.makeMoveUpdateSide(move)
-	b.isThreeFoldRepitition = b.repititionTable.increment(b.zobristHash)
+	// b.isThreeFoldRepitition = b.repititionTable.increment(b.zobristHash)
 
 }
 
@@ -549,7 +549,7 @@ func (b *Board) unmakeMove(move *Move) {
 	endPiece := move.getEndSquare().piece
 
 	b.zobristHash = b.getPrevioiusZHash()
-	b.isThreeFoldRepitition = b.repititionTable.decrement(b.zobristHash)
+	// b.isThreeFoldRepitition = b.repititionTable.decrement(b.zobristHash)
 	b.zobristHashTable = b.zobristHashTable[:len(b.zobristHashTable)-1]
 
 	//Null move

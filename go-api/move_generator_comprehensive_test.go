@@ -165,6 +165,7 @@ func TestPerft_StartPositionRegression(t *testing.T) {
 		{depth: 3, nodes: 8902},
 		{depth: 4, nodes: 197281},
 		{depth: 5, nodes: 4865609},
+		// {depth: 6, nodes: 119060324},
 	} {
 		got := moveGenerationRecursive(tc.depth, board)
 		if got != tc.nodes {
@@ -184,6 +185,7 @@ func TestPerft_KiwiPeteRegression(t *testing.T) {
 		{depth: 2, nodes: 2039},
 		{depth: 3, nodes: 97862},
 		{depth: 4, nodes: 4085603},
+		// {depth: 5, nodes: 193690690},
 	} {
 		got := moveGenerationRecursive(tc.depth, board)
 		if got != tc.nodes {
