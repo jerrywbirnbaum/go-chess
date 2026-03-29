@@ -24,6 +24,7 @@ const (
 type Board struct {
 	board                 [64]Piece
 	pieces                [32]Square
+	pieceListIndex        [64]int8
 	pieceCount            int
 	isWhiteTurn           bool
 	enpassant             uint8
@@ -200,6 +201,9 @@ func (b *Board) clearBitboards() {
 func (b *Board) rebuildPieceList() {
 	b.pieceCount = 0
 	b.clearBitboards()
+	for i := range b.pieceListIndex {
+		b.pieceListIndex[i] = -1
+	}
 	for i := range 8 {
 		for j := range 8 {
 			p := b.getCell(i, j)
@@ -207,8 +211,9 @@ func (b *Board) rebuildPieceList() {
 				continue
 			}
 			b.setBitboardPiece(p, i, j)
+			b.pieceListIndex[i*8+j] = int8(b.pieceCount)
 			b.pieces[b.pieceCount] = Square{row: i, col: j, piece: p}
-			b.pieceCount += 1
+			b.pieceCount++
 			if isKing(pieceType(p)) {
 				if isWhite(p) {
 					b.whiteKingRow = i
@@ -240,16 +245,19 @@ func (b *Board) updateKingPos(king Piece, row, col int) {
 }
 
 func (b *Board) removePieceFromList(piece Piece, row int, col int) {
-	for i := 0; i < b.pieceCount; i++ {
-		p := b.pieces[i]
-		if p.row == row && p.col == col {
-			lastIdx := b.pieceCount - 1
-			b.pieces[i] = b.pieces[lastIdx]
-			b.pieces[lastIdx] = Square{}
-			b.pieceCount -= 1
-			return
-		}
+	sq := row*8 + col
+	idx := int(b.pieceListIndex[sq])
+	if idx < 0 {
+		return
 	}
+	b.pieceListIndex[sq] = -1
+	b.pieceCount--
+	if idx != b.pieceCount {
+		last := b.pieces[b.pieceCount]
+		b.pieces[idx] = last
+		b.pieceListIndex[last.row*8+last.col] = int8(idx)
+	}
+	b.pieces[b.pieceCount] = Square{}
 }
 
 func (b *Board) setPieceInList(row int, col int, piece Piece) {
@@ -258,38 +266,16 @@ func (b *Board) setPieceInList(row int, col int, piece Piece) {
 		return
 	}
 
-	for i := 0; i < b.pieceCount; i++ {
-		if b.pieces[i].row == row && b.pieces[i].col == col {
-			b.pieces[i].piece = piece
-			return
-		}
+	sq := row*8 + col
+	idx := int(b.pieceListIndex[sq])
+	if idx >= 0 {
+		b.pieces[idx].piece = piece
+		return
 	}
 
+	b.pieceListIndex[sq] = int8(b.pieceCount)
 	b.pieces[b.pieceCount] = Square{row: row, col: col, piece: piece}
-	b.pieceCount += 1
-}
-
-func (b *Board) attackedBoard(color Color) [8][8]int {
-	attacks := [8][8]int{
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0},
-	}
-
-	moveGenerator := MoveGenerator{board: b}
-
-	moves := moveGenerator.generateMoves(false)
-	for _, move := range moves {
-		fmt.Printf("row: %dcol: %d\n", move.getEndSquare().row, move.getEndSquare().row)
-		attacks[move.getEndSquare().row][move.getEndSquare().row] += 1
-	}
-
-	return attacks
+	b.pieceCount++
 }
 
 func initBoard() Board {
