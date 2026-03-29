@@ -22,8 +22,7 @@ package main
 //	Bits 41–43   promotionPieceType  (3 bits)
 //	Bits 44–47   enpassantCapture    (4 bits)
 type Move struct {
-	moveBits            uint64
-	previousZobristHash int64
+	moveBits uint64
 }
 
 func newMove(startSq Square, endSq Square, isPromotion bool, promotionPieceType PieceType) Move {
@@ -189,14 +188,4 @@ func (move *Move) getEnpassantCapture() Piece {
 func (move *Move) setEnpassantCapture(v Piece) {
 	move.moveBits &= ^(uint64(0b1111) << 44)
 	move.moveBits |= uint64(v) << 44
-}
-
-// --- Zobrist hash (separate field, irreducible 64 bits) ---
-
-func (move *Move) getPreviousZobristHash() int64 {
-	return move.previousZobristHash
-}
-
-func (move *Move) setPreviousZobristHash(v int64) {
-	move.previousZobristHash = v
 }

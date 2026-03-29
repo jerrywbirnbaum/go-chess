@@ -41,6 +41,11 @@ type Board struct {
 	halfMoveClock         int
 	bitboards             [12]uint64
 	colorBitboards        [2]uint64
+	zobristHashTable      []int64
+}
+
+func (b *Board) getPrevioiusZHash() int64 {
+	return b.zobristHashTable[len(b.zobristHashTable)-1]
 }
 
 func (b *Board) isNoPawnEndGame() bool {
@@ -50,7 +55,6 @@ func (b *Board) isNoPawnEndGame() bool {
 			return false
 		}
 	}
-
 	return true
 }
 
@@ -435,7 +439,7 @@ func (b *Board) makeMove(move *Move) {
 		}
 	}
 
-	move.setPreviousZobristHash(b.zobristHash)
+	b.zobristHashTable = append(b.zobristHashTable, b.zobristHash)
 
 	//Null move
 	if move.getIsNull() {
@@ -551,14 +555,16 @@ func (b *Board) unmakeMoveUpdateSide(move *Move) {
 }
 
 func (b *Board) unmakeMove(move *Move) {
-	b.zobristHash = move.getPreviousZobristHash()
-
 	startRow := move.getStartSquare().row
 	startCol := move.getStartSquare().col
 	startPiece := move.getStartSquare().piece
 	endRow := move.getEndSquare().row
 	endCol := move.getEndSquare().col
 	endPiece := move.getEndSquare().piece
+
+	b.zobristHash = b.getPrevioiusZHash()
+	b.isThreeFoldRepitition = b.repititionTable.decrement(b.zobristHash)
+	b.zobristHashTable = b.zobristHashTable[:len(b.zobristHashTable)-1]
 
 	//Null move
 	if move.getIsNull() {
@@ -641,7 +647,6 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 
 	b.unmakeMoveUpdateSide(move)
-	b.isThreeFoldRepitition = b.repititionTable.decrement(move.getPreviousZobristHash())
 }
 
 func (b *Board) currentColor() Color {
