@@ -52,7 +52,7 @@ type MoveString struct {
 type MoveGenerator struct {
 	board           *Board
 	repititionTable *RepititionTable
-	moves           [64]Move
+	moves           [128]Move
 	numMoves        int
 }
 
