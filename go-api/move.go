@@ -34,6 +34,14 @@ func newMove(startSq Square, endSq Square, isPromotion bool, promotionPieceType 
 	return move
 }
 
+func (move *Move) getMoveBits() uint64 {
+	return move.moveBits
+}
+
+func (move *Move) setMoveBits(moveBits uint64) {
+	move.moveBits = moveBits
+}
+
 // --- Start square (bits 0–9) ---
 
 func (move *Move) getStartSquare() Square {

@@ -161,7 +161,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	inCheck := board.playerInCheck()
 
 	zHash := board.zobristHash
-	isValid, ttDepth, flag, evaluation := tt.lookup(zHash)
+	isValid, ttDepth, flag, evaluation, ttMove := tt.lookup(zHash)
 	if isValid && ttDepth >= depth {
 		if evaluation >= 19900 {
 			evaluation -= ply
@@ -208,10 +208,26 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			return 0, 1
 		}
 	}
-	sort.Sort(MoveOrder(moves))
+
+	ttMoveFound := false
+	if ttMove != 0 {
+		for i := range moves {
+			if comparePackedMoves(moves[i].getMoveBits(), ttMove) {
+				moves[i], moves[0] = moves[0], moves[i]
+				ttMoveFound = true
+				break
+			}
+		}
+	}
+	if ttMoveFound {
+		sort.Sort(MoveOrder(moves[1:]))
+	} else {
+		sort.Sort(MoveOrder(moves))
+	}
 
 	var currentMoveEval int
 	var currentPositionsEvaluated int
+	var bestMoveInNode Move
 
 	for i := range moves {
 		move := &moves[i]
@@ -226,11 +242,14 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			} else if storeBeta <= -19900 {
 				storeBeta -= ply
 			}
-			tt.push(zHash, depth, 1, storeBeta)
+			tt.push(zHash, depth, 1, storeBeta, packMove(*move))
 			board.unmakeMove(move)
 			return beta, positionsEvaluated
 		}
-		alpha = max(alpha, currentMoveEval)
+		if currentMoveEval > alpha {
+			alpha = currentMoveEval
+			bestMoveInNode = *move
+		}
 		board.unmakeMove(move)
 	}
 
@@ -246,7 +265,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	} else if storeAlpha <= -19900 {
 		storeAlpha -= ply
 	}
-	tt.push(zHash, depth, flag, storeAlpha)
+	tt.push(zHash, depth, flag, storeAlpha, packMove(bestMoveInNode))
 
 	return alpha, positionsEvaluated
 }
