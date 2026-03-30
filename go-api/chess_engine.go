@@ -152,7 +152,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	}
 
 	if ply >= maxSearchPly {
-		return pestoEval(*s.moveGenerator.board), 1
+		return pestoEval(s.moveGenerator.board), 1
 	}
 
 	originalAlpha := alpha
@@ -272,12 +272,12 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 
 func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta int) (int, int) {
 	if qPly >= maxQSearchPly {
-		return pestoEval(*s.moveGenerator.board), 1
+		return pestoEval(s.moveGenerator.board), 1
 	}
 
 	board := s.moveGenerator.board
 
-	standPat := pestoEval(*board)
+	standPat := pestoEval(board)
 
 	if standPat >= beta {
 		return beta, 1

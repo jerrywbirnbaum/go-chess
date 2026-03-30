@@ -201,7 +201,7 @@ func getPieceValue(p PieceType) int {
 	return mg_value[p-1]
 }
 
-func pestoEval(b Board) int {
+func pestoEval(b *Board) int {
 	if b.isThreeFoldRepitition {
 		return 0
 	}
@@ -256,7 +256,7 @@ var arrCenterManhattanDistance = [64]int{
 	6, 5, 4, 3, 3, 4, 5, 6,
 }
 
-func mopUpEval(b Board, whiteEval int, blackEval int) int {
+func mopUpEval(b *Board, whiteEval int, blackEval int) int {
 	isWhiteTurn := b.isWhiteTurn
 	isWinning := false
 	if (isWhiteTurn && whiteEval > blackEval) || (!isWhiteTurn && blackEval > whiteEval) {

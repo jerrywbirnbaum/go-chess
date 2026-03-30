@@ -14,7 +14,7 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(0, 0, -20000, 20000, true)
-	want := pestoEval(board)
+	want := pestoEval(&board)
 	if got != want {
 		t.Fatalf("depth 0 should return static evaluation: got %v, want %v", got, want)
 	}
@@ -59,7 +59,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 
 	afterFirst := board
 	afterFirst.makeMove(&firstMove)
-	stopAfterOneCaptureEval := -pestoEval(afterFirst)
+	stopAfterOneCaptureEval := -pestoEval(&afterFirst)
 
 	replyGenerator := MoveGenerator{board: &afterFirst}
 	secondCaptures := replyGenerator.generateMoves(true)
