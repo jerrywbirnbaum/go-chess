@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"testing"
 	// "strconv"
@@ -365,12 +366,12 @@ func TestMoveSortFunctionSpecial(t *testing.T) {
 		newMove(e4, d5, false, 0),
 		newMove(e4, f5, false, 0),
 	}
-	sort.Sort(MoveOrder(moves))
+	slices.SortFunc(moves, compareMoves)
 
 	expected := []Move{
 		newMove(e4, d5, false, 0),
-		newMove(a4, b5, false, 0),
 		newMove(e4, f5, false, 0),
+		newMove(a4, b5, false, 0),
 		newMove(a1, a2, false, 0),
 		newMove(e4, e5, false, 0),
 	}

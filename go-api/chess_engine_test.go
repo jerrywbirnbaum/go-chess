@@ -1,7 +1,7 @@
 package main
 
 import (
-	"sort"
+	"slices"
 	"testing"
 )
 
@@ -341,14 +341,14 @@ func TestBestMoveIllegal(t *testing.T) {
 	}
 }
 func TestMoveEvaluationOrderSortsDescending(t *testing.T) {
-	evals := MoveEvaluationOrder{
+	evals := []MoveEvaluation{
 		{evaluation: 50, move: nil},
 		{evaluation: -100, move: nil},
 		{evaluation: 200, move: nil},
 		{evaluation: 0, move: nil},
 		{evaluation: 75, move: nil},
 	}
-	sort.Sort(evals)
+	slices.SortFunc(evals, compareEvaluationMoves)
 
 	for i := 1; i < len(evals); i++ {
 		if evals[i].evaluation > evals[i-1].evaluation {
@@ -366,13 +366,17 @@ func TestMoveEvaluationOrderSortsDescending(t *testing.T) {
 }
 
 func TestMoveEvaluationOrderEmpty(t *testing.T) {
-	evals := MoveEvaluationOrder{}
-	sort.Sort(evals) // should not panic
+
+	evals := []MoveEvaluation{}
+	slices.SortFunc(evals, compareEvaluationMoves)
 }
 
 func TestMoveEvaluationOrderSingleElement(t *testing.T) {
-	evals := MoveEvaluationOrder{{evaluation: 42, move: nil}}
-	sort.Sort(evals)
+
+	evals := []MoveEvaluation{
+		{evaluation: 42, move: nil},
+	}
+	slices.SortFunc(evals, compareEvaluationMoves)
 	if evals[0].evaluation != 42 {
 		t.Fatalf("expected 42, got %d", evals[0].evaluation)
 	}

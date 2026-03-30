@@ -1,7 +1,8 @@
 package main
 
 import (
-	"sort"
+	"cmp"
+	"slices"
 	"sync/atomic"
 	"time"
 )
@@ -60,7 +61,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	board := s.moveGenerator.board
 	rootMG := &s.searchMG[0]
 	moves := rootMG.generateMoves(false)
-	sort.Sort(MoveOrder(moves))
+	slices.SortFunc(moves, compareMoves)
 	totalEvaluated := 0
 	sortedMoves := make([]MoveEvaluation, len(moves))
 
@@ -125,7 +126,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		completedDepth = searchDepth
 
 		moves = nil
-		sort.Sort(MoveEvaluationOrder(sortedMoves))
+		slices.SortFunc(sortedMoves, compareEvaluationMoves)
 		for i := range sortedMoves {
 			moves = append(moves, *sortedMoves[i].move)
 		}
@@ -219,9 +220,10 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 		}
 	}
 	if ttMoveFound {
-		sort.Sort(MoveOrder(moves[1:]))
+
+		slices.SortFunc(moves[1:], compareMoves)
 	} else {
-		sort.Sort(MoveOrder(moves))
+		slices.SortFunc(moves, compareMoves)
 	}
 
 	var currentMoveEval int
@@ -296,7 +298,7 @@ func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta
 			return standPat, 1
 		}
 	}
-	sort.Sort(MoveOrder(moves))
+	slices.SortFunc(moves, compareMoves)
 
 	var currentMoveEval int
 	var currentNodes int
@@ -315,50 +317,46 @@ func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta
 	return alpha, currentNodes
 }
 
-type MoveOrder []Move
-
-func (a MoveOrder) Len() int      { return len(a) }
-func (a MoveOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-
-func (a MoveOrder) Less(i, j int) bool {
-
-	if a[i].getIsPromotion() != a[j].getIsPromotion() {
-		return a[i].getIsPromotion()
+func boolToInt(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+func compareMoves(i, j Move) int {
+	if i.getIsPromotion() != j.getIsPromotion() {
+		return -cmp.Compare(boolToInt(i.getIsPromotion()), boolToInt(j.getIsPromotion()))
 	}
 
-	iIsCapture := a[i].getEndSquare().piece != 0
-	jIsCapture := a[j].getEndSquare().piece != 0
+	iIsCapture := i.getEndSquare().piece != 0
+	jIsCapture := j.getEndSquare().piece != 0
 
 	if iIsCapture != jIsCapture {
-		return iIsCapture
+		return -cmp.Compare(boolToInt(iIsCapture), boolToInt(jIsCapture))
 	}
-	iStartVal := getPieceValue(pieceType(a[i].getStartSquare().piece))
-	iEndVal := getPieceValue(pieceType(a[i].getEndSquare().piece))
-	jStartVal := getPieceValue(pieceType(a[j].getStartSquare().piece))
-	jEndVal := getPieceValue(pieceType(a[j].getEndSquare().piece))
+	iStartVal := getPieceValue(pieceType(i.getStartSquare().piece))
+	iEndVal := getPieceValue(pieceType(i.getEndSquare().piece))
+	jStartVal := getPieceValue(pieceType(j.getStartSquare().piece))
+	jEndVal := getPieceValue(pieceType(j.getEndSquare().piece))
 
 	iDiff := iEndVal - iStartVal
 	jDiff := jEndVal - jStartVal
 	if iDiff != jDiff {
-		return iDiff > jDiff
+		return -cmp.Compare(iDiff, jDiff)
 	}
 
-	if a[i].getStartSquare().row != a[j].getStartSquare().row {
-		return a[i].getStartSquare().row < a[j].getStartSquare().row
+	if i.getStartSquare().row != j.getStartSquare().row {
+		return -cmp.Compare(i.getStartSquare().row, j.getStartSquare().row)
 	}
-	if a[i].getStartSquare().col != a[j].getStartSquare().col {
-		return a[i].getStartSquare().col < a[j].getStartSquare().col
+	if i.getStartSquare().col != j.getStartSquare().col {
+		return -cmp.Compare(i.getStartSquare().col, j.getStartSquare().col)
 	}
-	if a[i].getEndSquare().row != a[j].getEndSquare().row {
-		return a[i].getEndSquare().row < a[j].getEndSquare().row
+	if i.getEndSquare().row != j.getEndSquare().row {
+		return -cmp.Compare(i.getEndSquare().row, j.getEndSquare().row)
 	}
-	return a[i].getEndSquare().col < a[j].getEndSquare().col
+	return -cmp.Compare(i.getEndSquare().col, j.getEndSquare().col)
 }
 
-type MoveEvaluationOrder []MoveEvaluation
-
-func (a MoveEvaluationOrder) Len() int      { return len(a) }
-func (a MoveEvaluationOrder) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
-func (a MoveEvaluationOrder) Less(i, j int) bool {
-	return a[i].evaluation > a[j].evaluation
+func compareEvaluationMoves(i, j MoveEvaluation) int {
+	return -cmp.Compare(i.evaluation, j.evaluation)
 }
