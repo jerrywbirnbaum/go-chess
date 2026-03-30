@@ -152,12 +152,17 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 		return 0, 0
 	}
 
+	board := s.moveGenerator.board
+
+	if board.repititionTable.isRepeat(board.zobristHash) {
+		return 0, 1
+	}
+
 	if ply >= maxSearchPly {
-		return pestoEval(s.moveGenerator.board), 1
+		return pestoEval(board), 1
 	}
 
 	originalAlpha := alpha
-	board := s.moveGenerator.board
 	tt := &s.transpositionTable
 
 	zHash := board.zobristHash

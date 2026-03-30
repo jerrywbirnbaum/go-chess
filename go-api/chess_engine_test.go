@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"slices"
 	"testing"
 )
@@ -284,7 +285,7 @@ func TestSearchAvoidCheckmate(t *testing.T) {
 }
 func TestBestMoveForcedMove(t *testing.T) {
 	board := initBoard()
-	board.updateFromFEN("8/8/8/8/4k3/8/6b1/7K w - - 0 1")
+	board.updateFromFEN("8/8/8/8/4k3/8/6b1/b6K w - - 0 1")
 	mg := MoveGenerator{board: &board}
 	chessEngine := ChessEngine{moveGenerator: mg}
 	chessEngine.initSearchTranspositionTable()
@@ -294,8 +295,9 @@ func TestBestMoveForcedMove(t *testing.T) {
 		t.Fatalf("expected three legal moves, got %d", len(moves))
 	}
 
-	got, _, _, _ := chessEngine.bestMove()
+	got, _, eval, _ := chessEngine.bestMove()
 	if got.startSquare != "h1" || got.endSquare != "g2" {
+		fmt.Println(eval)
 		t.Fatalf("bestMove selected %s%s, want h1g2", got.startSquare, got.endSquare)
 	}
 }
