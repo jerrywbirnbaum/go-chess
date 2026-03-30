@@ -1,23 +1,27 @@
 package main
 
 type TranspositionData struct {
+	key        int64
 	depth      int
 	flag       int
 	evaluation int
 	bestMove   uint64
 }
+
+const ttSize = 1 << 20
+
 type TranspositionTable struct {
-	table map[int64]TranspositionData
+	table [ttSize]TranspositionData
 }
 
 func initTranspositionTable() TranspositionTable {
-	var tt TranspositionTable
-	tt.table = make(map[int64]TranspositionData)
-	return tt
+	return TranspositionTable{}
 }
 
 func (tt *TranspositionTable) push(key int64, depth int, flag int, evaluation int, moveBits uint64) {
-	tt.table[key] = TranspositionData{
+	idx := int(uint64(key) & (ttSize - 1))
+	tt.table[idx] = TranspositionData{
+		key:        key,
 		depth:      depth,
 		flag:       flag,
 		evaluation: evaluation,
@@ -26,8 +30,9 @@ func (tt *TranspositionTable) push(key int64, depth int, flag int, evaluation in
 }
 
 func (tt *TranspositionTable) lookup(key int64) (bool, int, int, int, uint64) {
-	data, ok := tt.table[key]
-	if !ok {
+	idx := int(uint64(key) & (ttSize - 1))
+	data := tt.table[idx]
+	if data.key != key {
 		return false, 0, 0, 0, 0
 	}
 	return true, data.depth, data.flag, data.evaluation, data.bestMove

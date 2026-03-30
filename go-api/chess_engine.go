@@ -157,7 +157,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 
 	originalAlpha := alpha
 	board := s.moveGenerator.board
-	tt := s.transpositionTable
+	tt := &s.transpositionTable
 	inCheck := board.playerInCheck()
 
 	zHash := board.zobristHash

@@ -4,15 +4,6 @@ import (
 	"testing"
 )
 
-func TestTranspositionTableInitCreatesMap(t *testing.T) {
-	var tt TranspositionTable
-	tt = initTranspositionTable()
-
-	if tt.table == nil {
-		t.Fatal("expected init to allocate table map")
-	}
-}
-
 func TestTranspositionTablePushAndLookup(t *testing.T) {
 	var tt TranspositionTable
 	tt = initTranspositionTable()
