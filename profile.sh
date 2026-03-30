@@ -5,7 +5,7 @@ cd go-api && go build -o go-chess . && cd ..
 
 fastchess \
       -engine cmd="./go-api/go-chess" args="uci" name=GoChess \
-      -engine cmd="stockfish" name=Stockfish option.UCI_LimitStrength=true option.UCI_Elo=2000 \
+      -engine cmd="stockfish" name=Stockfish \
       -each tc=30+0.3 -openings file=openings.epd format=epd \
       -rounds 10 -pgnout append=false notation=san nodes=true file=./games/round1.pgn \
       -resign movecount=60 score=1500 -recover &

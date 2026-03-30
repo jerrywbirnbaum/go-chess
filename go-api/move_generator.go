@@ -66,7 +66,6 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 
 	opp := oppositeColor(color)
 	kingRow, kingCol := mg.board.kingPos(opp)
-	mg.board.setCell(kingRow, kingCol, EmptyPiece)
 
 	for _, p := range mg.board.piecesGenerator() {
 		if getColor(p.piece) != color {
@@ -85,7 +84,7 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 			}
 		}
 		if isSlidingPiece(pt) {
-			pieceAttacks |= mg.slidingAttackBits(p.row, p.col, pt)
+			pieceAttacks |= mg.slidingAttackBits(p.row, p.col, pt, true)
 		}
 		attacks |= pieceAttacks
 		if bitboardCheckOne(pieceAttacks, kingRow, kingCol) {
@@ -93,7 +92,6 @@ func (mg *MoveGenerator) generateAttacks(color Color, slidingOnly bool) (uint64,
 		}
 	}
 
-	mg.board.setCell(kingRow, kingCol, newPieceTypeColor(PieceType(King), opp))
 	return attacks, checkers
 }
 
@@ -135,26 +133,34 @@ func leaperAttackBits(row, col int, offsets [][2]int) uint64 {
 	return bits
 }
 
-func (mg *MoveGenerator) slidingAttackBits(row, col int, pt PieceType) uint64 {
-	dirs := allDirs
-	if isRook(pt) {
-		dirs = straightDirs
-	} else if isBishop(pt) {
-		dirs = diagonalDirs
+func (mg *MoveGenerator) slidingAttackBits(row int, col int, pt PieceType, removeKing bool) uint64 {
+	sq := squareFromRowCol(row, col)
+
+	allPieces := mg.board.allPieceBitboard()
+	if removeKing {
+		kingRow, kingCol := mg.board.kingPos(mg.board.currentColor())
+		allPieces = bitboardRemoveOne(allPieces, kingRow, kingCol)
 	}
-	var bits uint64
-	for _, dir := range dirs {
-		r, c := row+dir[0], col+dir[1]
-		for inBounds(r, c) {
-			bits = bitboardAddOne(bits, r, c)
-			if !mg.board.cellEmpty(r, c) {
-				break
-			}
-			r += dir[0]
-			c += dir[1]
-		}
+	var attacksBitboard uint64
+
+	switch pt {
+	case Bishop:
+		blockers := bishopMasks[sq] & allPieces
+		magicIndex := (reverseColBits(blockers) * getBishopMagicNumber(row, col)) >> getBishopShift(row, col)
+		attacksBitboard = bishopMagicLookup[sq][magicIndex]
+	case Rook:
+		blockers := rookMasks[sq] & allPieces
+		magicIndex := (reverseColBits(blockers) * getRookMagicNumber(row, col)) >> getRookShift(row, col)
+		attacksBitboard = rookMagicLookup[sq][magicIndex]
+	case Queen:
+		bishopBlockers := bishopMasks[sq] & allPieces
+		bishopIndex := (reverseColBits(bishopBlockers) * getBishopMagicNumber(row, col)) >> getBishopShift(row, col)
+		rookBlockers := rookMasks[sq] & allPieces
+		rookIndex := (reverseColBits(rookBlockers) * getRookMagicNumber(row, col)) >> getRookShift(row, col)
+		attacksBitboard = bishopMagicLookup[sq][bishopIndex] | rookMagicLookup[sq][rookIndex]
 	}
-	return bits
+
+	return attacksBitboard
 }
 
 func (mg *MoveGenerator) pinnedPieces(kingRow int, kingCol int) uint64 {
@@ -494,25 +500,28 @@ func (mg *MoveGenerator) generateSlidingMoves(p Square, color Color, checkBitboa
 	currentCol := p.col
 	startSquare := Square{row: currentRow, col: currentCol, piece: p.piece}
 
-	sq := squareFromRowCol(currentRow, currentCol)
-	allPieces := mg.board.allPieceBitboard()
-	var attacksBitboard uint64
 	pt := pieceType(p.piece)
-	if pt == Bishop {
-		blockers := bishopMasks[sq] & allPieces
-		magicIndex := (reverseColBits(blockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
-		attacksBitboard = bishopMagicLookup[sq][magicIndex]
-	} else if pt == Rook {
-		blockers := rookMasks[sq] & allPieces
-		magicIndex := (reverseColBits(blockers) * getRookMagicNumber(currentRow, currentCol)) >> getRookShift(currentRow, currentCol)
-		attacksBitboard = rookMagicLookup[sq][magicIndex]
-	} else if pt == Queen {
-		bishopBlockers := bishopMasks[sq] & allPieces
-		bishopIndex := (reverseColBits(bishopBlockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
-		rookBlockers := rookMasks[sq] & allPieces
-		rookIndex := (reverseColBits(rookBlockers) * getRookMagicNumber(currentRow, currentCol)) >> getRookShift(currentRow, currentCol)
-		attacksBitboard = bishopMagicLookup[sq][bishopIndex] | rookMagicLookup[sq][rookIndex]
-	}
+	attacksBitboard := mg.slidingAttackBits(currentRow, currentCol, pt, false)
+
+	// sq := squareFromRowCol(currentRow, currentCol)
+	// allPieces := mg.board.allPieceBitboard()
+	// var attacksBitboard uint64
+	// pt := pieceType(p.piece)
+	// if pt == Bishop {
+	// 	blockers := bishopMasks[sq] & allPieces
+	// 	magicIndex := (reverseColBits(blockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
+	// 	attacksBitboard = bishopMagicLookup[sq][magicIndex]
+	// } else if pt == Rook {
+	// 	blockers := rookMasks[sq] & allPieces
+	// 	magicIndex := (reverseColBits(blockers) * getRookMagicNumber(currentRow, currentCol)) >> getRookShift(currentRow, currentCol)
+	// 	attacksBitboard = rookMagicLookup[sq][magicIndex]
+	// } else if pt == Queen {
+	// 	bishopBlockers := bishopMasks[sq] & allPieces
+	// 	bishopIndex := (reverseColBits(bishopBlockers) * getBishopMagicNumber(currentRow, currentCol)) >> getBishopShift(currentRow, currentCol)
+	// 	rookBlockers := rookMasks[sq] & allPieces
+	// 	rookIndex := (reverseColBits(rookBlockers) * getRookMagicNumber(currentRow, currentCol)) >> getRookShift(currentRow, currentCol)
+	// 	attacksBitboard = bishopMagicLookup[sq][bishopIndex] | rookMagicLookup[sq][rookIndex]
+	// }
 
 	attacksBitboard &= ^sameColorBitboard
 	attacksBitboard &= checkBitboard

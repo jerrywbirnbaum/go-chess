@@ -407,6 +407,7 @@ func TestMoveGenerationPinnedFriendlyPawn(t *testing.T) {
 	moveGenerator := MoveGenerator{board: &board}
 	moves := moveGenerator.generateMoves(false)
 	if len(moves) != 2 {
+		fmt.Println(moves)
 		t.Errorf("Failed TestMoveGenerationPinnedFriendlyPawn")
 	}
 }
