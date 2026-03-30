@@ -43,6 +43,7 @@ type Board struct {
 	bitboards             [12]uint64
 	colorBitboards        [2]uint64
 	zobristHashTable      []int64
+	inCheck               bool
 }
 
 func (b *Board) getPrevioiusZHash() int64 {
@@ -640,14 +641,6 @@ func (b *Board) currentColor() Color {
 		return White
 	}
 	return Black
-}
-func (b *Board) playerInCheck() bool {
-	color := b.currentColor()
-	moveGenerator := MoveGenerator{board: b}
-	attacks, _ := moveGenerator.generateAttacks(oppositeColor(color), false)
-	kingBitBoard := b.getBitboard(newPieceTypeColor(King, color))
-	return (kingBitBoard & attacks) != 0
-
 }
 
 func (b *Board) zobrishHashTable() [781]int64 {

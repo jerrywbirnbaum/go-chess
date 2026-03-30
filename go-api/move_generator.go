@@ -303,11 +303,14 @@ func (mg *MoveGenerator) generateMoves(onlyCaptures bool) []Move {
 	if bitboardCheckOne(attackedSquares, kingRow, kingCol) && checkers > 1 {
 		piece := Square{row: kingRow, col: kingCol, piece: mg.board.getCell(kingRow, kingCol)}
 		mg.generateKingMoves(piece, color, attackedSquares, onlyCaptures)
+		mg.board.inCheck = true
 		return mg.moves[:mg.numMoves]
 	} else if bitboardCheckOne(attackedSquares, kingRow, kingCol) {
 		checkBitboard = mg.checkRays(kingRow, kingCol)
+		mg.board.inCheck = true
 	} else {
 		checkBitboard = fullBitboard
+		mg.board.inCheck = false
 	}
 
 	pieces := mg.board.piecesGenerator()

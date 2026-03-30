@@ -158,7 +158,6 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	originalAlpha := alpha
 	board := s.moveGenerator.board
 	tt := &s.transpositionTable
-	inCheck := board.playerInCheck()
 
 	zHash := board.zobristHash
 	isValid, ttDepth, flag, evaluation, ttMove := tt.lookup(zHash)
@@ -183,8 +182,19 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 
 	positionsEvaluated := 0
 
+	mg := &s.searchMG[ply]
+	mg.board = board
+	moves := mg.generateMoves(false)
+	if len(moves) == 0 {
+		if board.inCheck {
+			return -(20000 - ply), 1
+		} else {
+			return 0, 1
+		}
+	}
+
 	//null move pruning
-	if depth >= 3 && !inCheck && !board.isPawnEndgame() {
+	if depth >= 3 && !board.inCheck && !board.isPawnEndgame() {
 		nullMove := Move{}
 		nullMove.setIsNull(true)
 		board.makeMove(&nullMove)
@@ -195,17 +205,6 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 		positionsEvaluated += nullNodes
 		if nullMoveEval >= beta {
 			return beta, nullNodes
-		}
-	}
-
-	mg := &s.searchMG[ply]
-	mg.board = board
-	moves := mg.generateMoves(false)
-	if len(moves) == 0 {
-		if inCheck {
-			return -(20000 - ply), 1
-		} else {
-			return 0, 1
 		}
 	}
 
@@ -291,7 +290,7 @@ func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta
 	moves := mg.generateMoves(true)
 
 	if len(moves) == 0 {
-		if board.playerInCheck() && len(mg.generateMoves(false)) == 0 {
+		if board.inCheck && len(mg.generateMoves(false)) == 0 {
 			return -(20000 - ply), 1
 		} else {
 			return standPat, 1
