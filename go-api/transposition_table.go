@@ -8,7 +8,7 @@ type TranspositionData struct {
 	bestMove   uint64
 }
 
-const ttSize = 1 << 20
+const ttSize = 1 << 22
 
 type TranspositionTable struct {
 	table [ttSize]TranspositionData

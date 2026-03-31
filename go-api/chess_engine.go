@@ -80,6 +80,7 @@ func (s *ChessEngine) runWorker(startDepth int) {
 	board := s.ctx.board
 	rootMG := &s.ctx.searchMG[0]
 	moves := rootMG.generateMoves(false)
+	sortedMoves := make([]MoveEvaluation, len(moves))
 	slices.SortFunc(moves, compareMoves)
 
 	for searchDepth := startDepth; searchDepth < 200; searchDepth++ {
@@ -89,11 +90,19 @@ func (s *ChessEngine) runWorker(startDepth int) {
 		for i := range moves {
 			move := &moves[i]
 			board.makeMove(move)
-			s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
+			eval, _ := s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
+			eval = -eval
+			sortedMoves[i] = MoveEvaluation{evaluation: eval, move: move}
 			board.unmakeMove(move)
 			if s.searchCancelled.Load() {
 				return
 			}
+		}
+		// Re-sort moves based on scores so next iteration starts with better ordering
+		slices.SortFunc(sortedMoves, compareEvaluationMoves)
+		moves = moves[:0]
+		for i := range sortedMoves {
+			moves = append(moves, *sortedMoves[i].move)
 		}
 	}
 }
@@ -125,7 +134,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	softLimit := time.Duration(timer) * time.Millisecond * 6 / 10
 	searchStart := time.Now()
 
-	// Launch N-1 helper workers
 	numWorkers := runtime.NumCPU()
 	var wg sync.WaitGroup
 	for i := 1; i < numWorkers; i++ {
@@ -207,9 +215,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 }
 
 func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, allowNull bool) (int, int) {
-	if s.searchCancelled.Load() {
-		return 0, 0
-	}
 
 	board := s.ctx.board
 
@@ -332,6 +337,10 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			bestMoveInNode = *move
 		}
 		board.unmakeMove(move)
+
+		if s.searchCancelled.Load() {
+			break
+		}
 	}
 
 	if alpha <= originalAlpha {
