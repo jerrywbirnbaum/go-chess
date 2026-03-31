@@ -244,7 +244,11 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			lateMoveReduction = 1
 		}
 
-		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-lateMoveReduction-1, ply+1, -beta, -alpha, true)
+		if isLateMoveReduction {
+			currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-lateMoveReduction-1, ply+1, -(alpha + 1), -alpha, true)
+		} else {
+			currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-lateMoveReduction-1, ply+1, -beta, -alpha, true)
+		}
 		positionsEvaluated += currentPositionsEvaluated
 		currentMoveEval = -currentMoveEval
 
