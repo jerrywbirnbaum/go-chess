@@ -68,8 +68,7 @@ func TestRepititionTableIndependentKeys(t *testing.T) {
 func TestForcesThreeFoldRepitition(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("k6K/8/ppQ5/8/8/1r6/r1P5/rr6 w - - 0 1")
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 
 	got, _, eval, depth := chessEngine.bestMove()

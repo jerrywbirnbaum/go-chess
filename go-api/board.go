@@ -46,6 +46,15 @@ type Board struct {
 	inCheck               bool
 }
 
+// Clone returns a deep copy of the board suitable for use in a separate search goroutine.
+func (b *Board) Clone() *Board {
+	clone := *b
+	clone.zobristHashTable = append([]int64{}, b.zobristHashTable...)
+	repTableCopy := *b.repititionTable
+	clone.repititionTable = &repTableCopy
+	return &clone
+}
+
 func (b *Board) getPrevioiusZHash() int64 {
 	return b.zobristHashTable[len(b.zobristHashTable)-1]
 }

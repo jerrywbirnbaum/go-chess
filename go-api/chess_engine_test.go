@@ -10,9 +10,7 @@ func TestSearchBruteForceDepthZeroMatchesBasicEval(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/3p4/3P4/8/8/K6k w - - 0 1")
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(0, 0, -20000, 20000, true)
 	want := pestoEval(&board)
@@ -25,9 +23,7 @@ func TestSearchBruteForceStalemate(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("K1kb2Q1/P1p5/2P5/8/8/8/8/8 b - - 0 1")
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(1, 0, -20000, 20000, true)
 	want := 0
@@ -42,9 +38,7 @@ func TestSearchBruteForceDepthZeroContinuesCaptureSequence(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("rq2k3/8/8/8/8/8/8/R3K3 w - - 0 1")
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(0, 0, -20000, 20000, true)
 
@@ -87,9 +81,7 @@ func TestSearchBruteForceCheckmateReturnsNegativeInfinity(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/6Q1/6K1/8/8/8/8/8 b - - 0 1")
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(1, 0, -20000, 20000, true)
 	if got != -20000 {
@@ -101,9 +93,7 @@ func TestSearchBruteForceStalemateReturnsZero(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("7k/5Q2/6K1/8/8/8/8/8 b - - 0 1")
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	got, _ := chessEngine.searchBruteForce(1, 0, -20000, 20000, true)
 	if got != 0 {
@@ -119,9 +109,7 @@ func TestSearchBruteForceDoesNotMutateBoardState(t *testing.T) {
 	beforeEnpassant := board.enpassant
 	beforeTurn := board.isWhiteTurn
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	_, _ = chessEngine.searchBruteForce(2, 0, -20000, 20000, true)
 
@@ -145,9 +133,7 @@ func TestSearchBruteForceTranspositionExactHitReturnsCachedEval(t *testing.T) {
 
 	key := board.calculateZobrishHash()
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 0, 321, 0)
@@ -167,9 +153,7 @@ func TestSearchBruteForceTranspositionLowerBoundHitReturnsCachedEval(t *testing.
 
 	key := board.calculateZobrishHash()
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 1, 50, 0)
 
@@ -188,9 +172,7 @@ func TestSearchBruteForceTranspositionUpperBoundHitReturnsCachedEval(t *testing.
 
 	key := board.calculateZobrishHash()
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 2, -50, 0)
 	gotEval, gotPositions := chessEngine.searchBruteForce(2, 0, -40, 20000, true)
@@ -208,9 +190,7 @@ func TestSearchBruteForceTranspositionIgnoresShallowEntry(t *testing.T) {
 
 	key := board.calculateZobrishHash()
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 0, 0, 123, 0)
 	gotEval, _ := chessEngine.searchBruteForce(1, 0, -20000, 20000, true)
@@ -225,9 +205,7 @@ func TestSearchBruteForceTranspositionIgnoresUnmetLowerBound(t *testing.T) {
 
 	key := board.calculateZobrishHash()
 
-	mg := MoveGenerator{board: &board}
-
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.transpositionTable.push(key, 4, 1, 30, 0)
 	gotEval, _ := chessEngine.searchBruteForce(2, 0, -20000, 40, true)
@@ -242,8 +220,7 @@ func TestSearchStoresBestMoveInTT(t *testing.T) {
 	board.updateFromFEN("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3")
 
 	key := board.calculateZobrishHash()
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 
 	chessEngine.searchBruteForce(2, 0, -20000, 20000, true)
@@ -258,8 +235,7 @@ func TestTTMoveOrderingPreservesSearchResult(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3")
 
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 
 	eval1, _ := chessEngine.searchBruteForce(3, 0, -20000, 20000, true)
@@ -275,8 +251,7 @@ func TestSearchAvoidCheckmate(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/p1kr2p1/2p5/b7/6Q1/PP1b4/1R3PPP/3r1BKR b - - 10 29")
 
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	gotEval, _ := chessEngine.searchBruteForce(1, 0, -20000, 20000, true)
 	if gotEval != 19999 {
@@ -287,7 +262,7 @@ func TestBestMoveForcedMove(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/8/8/8/4k3/8/6b1/b6K w - - 0 1")
 	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 
 	moves := mg.generateMoves(false)
@@ -305,9 +280,8 @@ func TestBestMoveForcedMove(t *testing.T) {
 func TestBestMoveForcedCheckmate(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("8/1p6/8/8/8/1k4K1/1Q4P1/2Q5 b - - 10 74")
-	mg := MoveGenerator{board: &board}
 
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	got, _, _, _ := chessEngine.bestMove()
 	if got.startSquare != "b3" || got.endSquare != "a4" {
@@ -318,8 +292,7 @@ func TestBestMoveForcedCheckmate(t *testing.T) {
 func TestBestMoveQueenFork(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("4rb2/pp6/1k2r3/4Q1p1/1n1P4/5NP1/PPn3PP/2R2K1R w - - 0 23")
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.setTimer(1000)
 	chessEngine.initSearchTranspositionTable()
 
@@ -332,8 +305,7 @@ func TestBestMoveQueenFork(t *testing.T) {
 func TestBestMoveIllegal(t *testing.T) {
 	board := initBoard()
 	board.updateFromFEN("1r3rk1/ppp1qppp/2Pbb3/6N1/2P2p2/3BB3/P1P2PPP/RQ3RK1 b - - 0 1")
-	mg := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.setTimer(100)
 	chessEngine.initSearchTranspositionTable()
 
@@ -391,7 +363,7 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 	mg := MoveGenerator{board: &board}
 	moves := mg.generateMoves(false)
 
-	chessEngine := ChessEngine{moveGenerator: mg}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 
 	for i := range moves {
@@ -419,7 +391,6 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 	eval, _ := chessEngine.searchBruteForce(2, 0, -20000, 20000, true)
 	board.unmakeMove(nxc6)
 
-	chessEngine.moveGenerator = mg
 	board.makeMove(nxc6)
 	chessEngine.searchBruteForce(1, 0, -20000, 20000, true)
 

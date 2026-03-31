@@ -17,8 +17,7 @@ type TimerRequest struct {
 func main() {
 	go http.ListenAndServe(":8080", nil)
 	board := initBoard()
-	moveGenerator := MoveGenerator{board: &board}
-	chessEngine := ChessEngine{moveGenerator: moveGenerator}
+	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.setTimer(1000)
 	initTables()

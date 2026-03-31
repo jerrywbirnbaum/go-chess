@@ -15,27 +15,35 @@ type MoveEvaluation struct {
 	move       *Move
 }
 
-type ChessEngine struct {
-	moveGenerator      MoveGenerator
-	transpositionTable TranspositionTable
-	searchCancelled    atomic.Bool
-	timer              int
-	searchMG           [maxSearchPly]MoveGenerator
-	qsearchMG          [maxQSearchPly]MoveGenerator
+// SearchContext holds all per-thread search state. Cloning this struct
+// (with a cloned Board) is sufficient to isolate one search worker from another.
+type SearchContext struct {
+	board     *Board
+	searchMG  [maxSearchPly]MoveGenerator
+	qsearchMG [maxQSearchPly]MoveGenerator
 }
 
-func (s *ChessEngine) initMoveGeneratorPools() {
-	board := s.moveGenerator.board
-	for i := range s.searchMG {
-		s.searchMG[i].board = board
+func (ctx *SearchContext) initMoveGeneratorPools() {
+	for i := range ctx.searchMG {
+		ctx.searchMG[i].board = ctx.board
 	}
-	for i := range s.qsearchMG {
-		s.qsearchMG[i].board = board
+	for i := range ctx.qsearchMG {
+		ctx.qsearchMG[i].board = ctx.board
 	}
+}
+
+// ChessEngine holds shared state. transpositionTable and searchCancelled are
+// pointers so multiple worker goroutines can share them without accidental copies.
+type ChessEngine struct {
+	ctx                SearchContext
+	transpositionTable *TranspositionTable
+	searchCancelled    *atomic.Bool
+	timer              int
 }
 
 func (s *ChessEngine) initSearchTranspositionTable() {
-	s.transpositionTable = initTranspositionTable()
+	s.transpositionTable = new(TranspositionTable)
+	s.searchCancelled = new(atomic.Bool)
 }
 
 func (s *ChessEngine) startSearchTimer(done <-chan struct{}) {
@@ -56,10 +64,10 @@ func (s *ChessEngine) setTimer(timer int) {
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	s.searchCancelled.Store(false)
-	s.initMoveGeneratorPools()
+	s.ctx.initMoveGeneratorPools()
 
-	board := s.moveGenerator.board
-	rootMG := &s.searchMG[0]
+	board := s.ctx.board
+	rootMG := &s.ctx.searchMG[0]
 	moves := rootMG.generateMoves(false)
 	slices.SortFunc(moves, compareMoves)
 	totalEvaluated := 0
@@ -152,7 +160,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 		return 0, 0
 	}
 
-	board := s.moveGenerator.board
+	board := s.ctx.board
 
 	if board.repititionTable.isRepeat(board.zobristHash) {
 		return 0, 1
@@ -163,7 +171,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	}
 
 	originalAlpha := alpha
-	tt := &s.transpositionTable
+	tt := s.transpositionTable
 
 	zHash := board.zobristHash
 	isValid, ttDepth, flag, evaluation, ttMove := tt.lookup(zHash)
@@ -188,7 +196,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 
 	positionsEvaluated := 0
 
-	mg := &s.searchMG[ply]
+	mg := &s.ctx.searchMG[ply]
 	mg.board = board
 	moves := mg.generateMoves(false)
 	if len(moves) == 0 {
@@ -294,10 +302,10 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 
 func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta int) (int, int) {
 	if qPly >= maxQSearchPly {
-		return pestoEval(s.moveGenerator.board), 1
+		return pestoEval(s.ctx.board), 1
 	}
 
-	board := s.moveGenerator.board
+	board := s.ctx.board
 
 	standPat := pestoEval(board)
 
@@ -308,7 +316,7 @@ func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta
 		alpha = standPat
 	}
 
-	mg := &s.qsearchMG[qPly]
+	mg := &s.ctx.qsearchMG[qPly]
 	mg.board = board
 	moves := mg.generateMoves(true)
 
