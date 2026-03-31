@@ -1,7 +1,5 @@
 package main
 
-// Move encodes all data in two 64-bit words.
-//
 // moveBits layout:
 //
 //	Bits  0– 2   startRow            (3 bits)

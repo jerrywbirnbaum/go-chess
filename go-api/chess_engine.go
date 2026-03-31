@@ -236,11 +236,23 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	var bestMoveInNode Move
 
 	for i := range moves {
+		lateMoveReduction := 0
 		move := &moves[i]
 		board.makeMove(move)
-		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, ply+1, -beta, -alpha, true)
+		isLateMoveReduction := i >= 3 && depth >= 3 && !move.getIsPromotion() && (move.getEndSquare().piece == EmptyPiece)
+		if isLateMoveReduction {
+			lateMoveReduction = 1
+		}
+
+		currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-lateMoveReduction-1, ply+1, -beta, -alpha, true)
 		positionsEvaluated += currentPositionsEvaluated
 		currentMoveEval = -currentMoveEval
+
+		if currentMoveEval > alpha && isLateMoveReduction {
+			currentMoveEval, currentPositionsEvaluated = s.searchBruteForce(depth-1, ply+1, -beta, -alpha, true)
+			positionsEvaluated += currentPositionsEvaluated
+			currentMoveEval = -currentMoveEval
+		}
 		if currentMoveEval >= beta {
 			storeBeta := beta
 			if storeBeta >= 19900 {
