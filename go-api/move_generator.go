@@ -25,8 +25,15 @@ var row4, _ = strconv.ParseUint("00000000FF000000", 16, 64)
 var row5, _ = strconv.ParseUint("000000FF00000000", 16, 64)
 
 var colA, _ = strconv.ParseUint("8080808080808080", 16, 64)
+var colB, _ = strconv.ParseUint("4040404040404040", 16, 64)
+var colC, _ = strconv.ParseUint("2020202020202020", 16, 64)
+var colD, _ = strconv.ParseUint("1010101010101010", 16, 64)
+var colE, _ = strconv.ParseUint("0808080808080808", 16, 64)
+var colF, _ = strconv.ParseUint("0404040404040404", 16, 64)
+var colG, _ = strconv.ParseUint("0202020202020202", 16, 64)
 var colH, _ = strconv.ParseUint("0101010101010101", 16, 64)
 
+var columnMasks = [8]uint64{colA, colB, colC, colD, colE, colF, colG, colH}
 var bishopMagicLookup [64][512]uint64
 var rookMagicLookup [64][4096]uint64
 

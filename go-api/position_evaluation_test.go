@@ -164,6 +164,80 @@ func TestMopUpEvalWinningKingCloserLargerBonus(t *testing.T) {
 	}
 }
 
+func TestPassedPawns(t *testing.T) {
+	// Helper: find the first pawn of the given color on the board.
+	findPawn := func(b *Board, color Color) Square {
+		for _, sq := range b.piecesGenerator() {
+			if pieceType(sq.piece) == Pawn && getColor(sq.piece) == color {
+				return sq
+			}
+		}
+		return Square{}
+	}
+
+	tests := []struct {
+		name      string
+		fen       string
+		pawnColor Color
+		want      int
+	}{
+		// --- Black pawn cases (aheadMask is correct for black) ---
+		{
+			name:      "black passed pawn on e7, no white pawn on e-file",
+			fen:       "7k/4p3/8/8/8/8/8/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      20,
+		},
+		{
+			name:      "black pawn on e7 blocked by white pawn on e4",
+			fen:       "7k/4p3/8/8/4P3/8/8/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      0,
+		},
+		{
+			name:      "black pawn on e7 blocked by white pawn on e2",
+			fen:       "7k/4p3/8/8/8/8/4P3/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      0,
+		},
+		{
+			name:      "black pawn on e7, white pawn on f2 (adjacent file)",
+			fen:       "7k/4p3/8/8/8/8/5P2/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      0,
+		},
+		{
+			name:      "white passed pawn on e7, no black pawn on e-file ahead",
+			fen:       "7k/4P3/8/8/8/8/8/K7 w - - 0 1",
+			pawnColor: White,
+			want:      20,
+		},
+		{
+			name:      "white pawn on e7 blocked by black pawn on e8",
+			fen:       "4p2k/4P3/8/8/8/8/8/K7 w - - 0 1",
+			pawnColor: White,
+			want:      0,
+		},
+		{
+			name:      "white pawn on e2, black pawn on e5 ",
+			fen:       "7k/8/8/4p3/8/8/4P3/K7 w - - 0 1",
+			pawnColor: White,
+			want:      0,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			board := initBoard()
+			board.updateFromFEN(tc.fen)
+			pawn := findPawn(&board, tc.pawnColor)
+			got := passedPawns(&board, pawn)
+			if got != tc.want {
+				t.Errorf("passedPawns = %d, want %d", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestMopUpEvalPerspectiveNegation(t *testing.T) {
 	board1 := initBoard()
 	board1.updateFromFEN("k7/8/8/8/8/8/8/4K3 w - - 0 1")

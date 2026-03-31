@@ -211,12 +211,16 @@ func pestoEval(b *Board) int {
 	blackEGEval := 0
 	whiteEGEval := 0
 	midGamePhase := 0
+	passedPawnScore := 0
 	pieces := b.piecesGenerator()
 	for i := range pieces {
 		piece := pieces[i]
 		color := getColor(piece.piece)
 		pieceType := pieceType(piece.piece)
 		midGamePhase += gamephaseInc[pieceType-1]
+		if pieceType == Pawn {
+			passedPawnScore += passedPawns(b, piece)
+		}
 		if color == White {
 			whiteMGEval += getEvalCell(mg_table[piece.piece-1], piece.row, piece.col, false)
 			whiteEGEval += getEvalCell(eg_table[piece.piece-1], piece.row, piece.col, false)
@@ -287,4 +291,26 @@ func mopUpEval(b *Board, whiteEval int, blackEval int) int {
 	}
 
 	return int(bonusEval)
+}
+
+func passedPawns(b *Board, pawn Square) int {
+	oppositeBitboard := b.getBitboard(newPieceTypeColor(Pawn, oppositeColor(getColor(pawn.piece))))
+	aheadMask := fullBitboard
+	if getColor(pawn.piece) == White {
+		aheadMask <<= ((8 - pawn.row) * 8)
+	} else {
+
+		aheadMask >>= (pawn.row * 8)
+	}
+
+	colMask := columnMasks[pawn.col]
+	colMask |= (colMask << 1) & ^colH
+	colMask |= (colMask >> 1) & ^colA
+
+	isPassedPawn := colMask & aheadMask & oppositeBitboard
+
+	if isPassedPawn == 0 {
+		return 20
+	}
+	return 0
 }
