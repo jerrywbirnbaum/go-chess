@@ -2,7 +2,9 @@ package main
 
 import (
 	"cmp"
+	"runtime"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -41,6 +43,18 @@ type ChessEngine struct {
 	timer              int
 }
 
+func (s *ChessEngine) newWorker() ChessEngine {
+	clonedBoard := s.ctx.board.Clone()
+	worker := ChessEngine{
+		ctx:                SearchContext{board: clonedBoard},
+		transpositionTable: s.transpositionTable,
+		searchCancelled:    s.searchCancelled,
+		timer:              s.timer,
+	}
+	worker.ctx.initMoveGeneratorPools()
+	return worker
+}
+
 func (s *ChessEngine) initSearchTranspositionTable() {
 	s.transpositionTable = new(TranspositionTable)
 	s.searchCancelled = new(atomic.Bool)
@@ -60,6 +74,28 @@ func (s *ChessEngine) startSearchTimer(done <-chan struct{}) {
 
 func (s *ChessEngine) setTimer(timer int) {
 	s.timer = timer
+}
+
+func (s *ChessEngine) runWorker(startDepth int) {
+	board := s.ctx.board
+	rootMG := &s.ctx.searchMG[0]
+	moves := rootMG.generateMoves(false)
+	slices.SortFunc(moves, compareMoves)
+
+	for searchDepth := startDepth; searchDepth < 200; searchDepth++ {
+		if s.searchCancelled.Load() {
+			return
+		}
+		for i := range moves {
+			move := &moves[i]
+			board.makeMove(move)
+			s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
+			board.unmakeMove(move)
+			if s.searchCancelled.Load() {
+				return
+			}
+		}
+	}
 }
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
@@ -88,6 +124,19 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	}
 	softLimit := time.Duration(timer) * time.Millisecond * 6 / 10
 	searchStart := time.Now()
+
+	// Launch N-1 helper workers
+	numWorkers := runtime.NumCPU()
+	var wg sync.WaitGroup
+	for i := 1; i < numWorkers; i++ {
+		wg.Add(1)
+		worker := s.newWorker()
+		startDepth := (i % 2) + 1 // alternate starting depths: 2, 1, 2, 1, ...
+		go func(w ChessEngine, d int) {
+			defer wg.Done()
+			w.runWorker(d)
+		}(worker, startDepth)
+	}
 
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
@@ -152,6 +201,8 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 			promotion = "n"
 		}
 	}
+	s.searchCancelled.Store(true)
+	wg.Wait()
 	return MoveString{startSquare: startSquare, endSquare: endSquare, promotion: promotion, isPromotion: bestMove.getIsPromotion()}, totalEvaluated, bestEvalCompleted, completedDepth
 }
 
@@ -301,6 +352,9 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 }
 
 func (s *ChessEngine) searchOnlyCapturesForce(ply int, qPly int, alpha int, beta int) (int, int) {
+	if s.searchCancelled.Load() {
+		return 0, 0
+	}
 	if qPly >= maxQSearchPly {
 		return pestoEval(s.ctx.board), 1
 	}
