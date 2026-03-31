@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-const maxSearchPly = 8
-const maxQSearchPly = 8
+const maxSearchPly = 64
+const maxQSearchPly = 16
 
 type MoveEvaluation struct {
 	evaluation int
@@ -109,6 +109,7 @@ func (s *ChessEngine) runWorker(startDepth int) {
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	s.searchCancelled.Store(false)
+	s.transpositionTable.generation++
 	s.ctx.initMoveGeneratorPools()
 
 	board := s.ctx.board
@@ -281,7 +282,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	ttMoveFound := false
 	if ttMove != 0 {
 		for i := range moves {
-			if comparePackedMoves(moves[i].getMoveBits(), ttMove) {
+			if comparePackedMoves(moves[i].getMoveBits(), unpackTTMove(ttMove)) {
 				moves[i], moves[0] = moves[0], moves[i]
 				ttMoveFound = true
 				break

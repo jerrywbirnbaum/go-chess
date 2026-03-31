@@ -55,6 +55,7 @@ func TestTranspositionTableStoresBestMove(t *testing.T) {
 	if got != packed {
 		t.Fatalf("expected bestMove %d, got %d", packed, got)
 	}
+
 }
 
 func TestPackMoveRoundTrip(t *testing.T) {
@@ -67,7 +68,7 @@ func TestPackMoveRoundTrip(t *testing.T) {
 	if packed == 0 {
 		t.Fatal("expected packMove to return non-zero for a real move")
 	}
-	if !comparePackedMoves(packed, packed) {
+	if !comparePackedMoves(unpackTTMove(packed), unpackTTMove(packed)) {
 		t.Fatal("expected comparePackedMoves(x, x) to be true")
 	}
 }
