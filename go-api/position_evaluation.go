@@ -1,6 +1,8 @@
 package main
 
-import "math"
+import (
+	"math"
+)
 
 var mg_pawn_table = [64]int{
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -246,6 +248,7 @@ func pestoEval(b *Board) int {
 	if b.isNoPawnEndGame() {
 		score += mopUpEval(b, whiteMGEval+whiteEGEval, blackMGEval+blackEGEval)
 	}
+	score += passedPawnScore
 	return score
 }
 
@@ -294,13 +297,16 @@ func mopUpEval(b *Board, whiteEval int, blackEval int) int {
 }
 
 func passedPawns(b *Board, pawn Square) int {
-	oppositeBitboard := b.getBitboard(newPieceTypeColor(Pawn, oppositeColor(getColor(pawn.piece))))
+	oppositeBitboard := b.getBitboard(newPieceTypeColor(Pawn, Black))
+	oppositeBitboard |= b.getBitboard(newPieceTypeColor(Pawn, White))
+
 	aheadMask := fullBitboard
-	if getColor(pawn.piece) == White {
-		aheadMask <<= ((8 - pawn.row) * 8)
+	color := getColor(pawn.piece)
+	if color == White {
+		aheadMask <<= ((8 - (pawn.row)) * 8)
 	} else {
 
-		aheadMask >>= (pawn.row * 8)
+		aheadMask >>= ((pawn.row + 1) * 8)
 	}
 
 	colMask := columnMasks[pawn.col]
@@ -309,8 +315,12 @@ func passedPawns(b *Board, pawn Square) int {
 
 	isPassedPawn := colMask & aheadMask & oppositeBitboard
 
+	row := pawn.row
+	if color == White {
+		row = 7 - row
+	}
 	if isPassedPawn == 0 {
-		return 20
+		return 10 * row
 	}
 	return 0
 }

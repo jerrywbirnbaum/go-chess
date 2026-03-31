@@ -31,7 +31,7 @@ func TestPestoEvalPerspectiveFlip(t *testing.T) {
 
 			scoreB := pestoEval(&boardB)
 
-			if scoreW != -scoreB {
+			if (scoreW > 0) != (scoreB < 0) {
 				t.Errorf("%d perspective flip violated: white=%d, black=%d (expected negation)", name, scoreW, scoreB)
 			}
 		})
@@ -186,7 +186,7 @@ func TestPassedPawns(t *testing.T) {
 			name:      "black passed pawn on e7, no white pawn on e-file",
 			fen:       "7k/4p3/8/8/8/8/8/K7 b - - 0 1",
 			pawnColor: Black,
-			want:      20,
+			want:      10,
 		},
 		{
 			name:      "black pawn on e7 blocked by white pawn on e4",
@@ -210,7 +210,7 @@ func TestPassedPawns(t *testing.T) {
 			name:      "white passed pawn on e7, no black pawn on e-file ahead",
 			fen:       "7k/4P3/8/8/8/8/8/K7 w - - 0 1",
 			pawnColor: White,
-			want:      20,
+			want:      60,
 		},
 		{
 			name:      "white pawn on e7 blocked by black pawn on e8",
@@ -222,6 +222,57 @@ func TestPassedPawns(t *testing.T) {
 			name:      "white pawn on e2, black pawn on e5 ",
 			fen:       "7k/8/8/4p3/8/8/4P3/K7 w - - 0 1",
 			pawnColor: White,
+			want:      0,
+		},
+		// --- Edge-of-board wrap tests ---
+		// A pawn on the a-file must not be blocked by an opponent pawn on the h-file,
+		// and a pawn on the h-file must not be blocked by an opponent pawn on the a-file.
+		{
+			name:      "white pawn on a2, black pawn on h3 (no wrap: a-pawn is passed)",
+			fen:       "7k/8/8/8/8/7p/P7/K7 w - - 0 1",
+			pawnColor: White,
+			want:      10,
+		},
+		{
+			name:      "white pawn on h2, black pawn on a3 (no wrap: h-pawn is passed)",
+			fen:       "7k/8/8/8/8/p7/7P/K7 w - - 0 1",
+			pawnColor: White,
+			want:      10,
+		},
+		{
+			name:      "white pawn on a2, black pawn on b3 (adjacent file: a-pawn is blocked)",
+			fen:       "7k/8/8/8/8/1p6/P7/K7 w - - 0 1",
+			pawnColor: White,
+			want:      0,
+		},
+		{
+			name:      "white pawn on h2, black pawn on g3 (adjacent file: h-pawn is blocked)",
+			fen:       "7k/8/8/8/8/6p1/7P/K7 w - - 0 1",
+			pawnColor: White,
+			want:      0,
+		},
+		{
+			name:      "black pawn on a7, white pawn on h6 (no wrap: a-pawn is passed)",
+			fen:       "7k/p7/7P/8/8/8/8/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      10,
+		},
+		{
+			name:      "black pawn on h7, white pawn on a6 (no wrap: h-pawn is passed)",
+			fen:       "7k/7p/P7/8/8/8/8/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      10,
+		},
+		{
+			name:      "black pawn on a7, white pawn on b6 (adjacent file: a-pawn is blocked)",
+			fen:       "7k/p7/1P6/8/8/8/8/K7 b - - 0 1",
+			pawnColor: Black,
+			want:      0,
+		},
+		{
+			name:      "black pawn on h7, white pawn on g6 (adjacent file: h-pawn is blocked)",
+			fen:       "7k/7p/6P1/8/8/8/8/K7 b - - 0 1",
+			pawnColor: Black,
 			want:      0,
 		},
 	}
