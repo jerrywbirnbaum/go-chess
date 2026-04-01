@@ -15,8 +15,7 @@ type MoveEvaluation struct {
 	move       *Move
 }
 
-// SearchContext holds all per-thread search state. Cloning this struct
-// (with a cloned Board) is sufficient to isolate one search worker from another.
+// SearchContext holds all per-thread search state.
 type SearchContext struct {
 	board     *Board
 	searchMG  [maxSearchPly]MoveGenerator
@@ -32,30 +31,33 @@ func (ctx *SearchContext) initMoveGeneratorPools() {
 	}
 }
 
-// ChessEngine holds shared state. transpositionTable and searchCancelled are
-// pointers so multiple worker goroutines can share them without accidental copies.
+// ChessEngine holds shared state.
 type ChessEngine struct {
-	ctx                SearchContext
-	transpositionTable *TranspositionTable
-	searchCancelled    *atomic.Bool
-	timer              int
+	ctx                 SearchContext
+	transpositionTable  *TranspositionTable
+	searchCancelled     *atomic.Bool
+	softSearchCancelled *atomic.Bool
+	timer               int
 }
 
 func (s *ChessEngine) initSearchTranspositionTable() {
 	s.transpositionTable = new(TranspositionTable)
 	s.searchCancelled = new(atomic.Bool)
+	s.softSearchCancelled = new(atomic.Bool)
 }
 
-func (s *ChessEngine) startSearchTimer(done <-chan struct{}) {
+func (s *ChessEngine) startSearchTimer() {
 	timer := s.timer
 	if timer == 0 {
 		timer = 1000
 	}
-	select {
-	case <-time.After(time.Duration(timer) * time.Millisecond):
-		s.searchCancelled.Store(true)
-	case <-done:
-	}
+	softTimer := timer * 6 / 10
+
+	time.Sleep(time.Duration(softTimer) * time.Millisecond)
+	s.softSearchCancelled.Store(true)
+
+	time.Sleep(time.Duration(timer-softTimer) * time.Millisecond)
+	s.searchCancelled.Store(true)
 }
 
 func (s *ChessEngine) setTimer(timer int) {
@@ -64,6 +66,7 @@ func (s *ChessEngine) setTimer(timer int) {
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	s.searchCancelled.Store(false)
+	s.softSearchCancelled.Store(false)
 	s.ctx.initMoveGeneratorPools()
 
 	board := s.ctx.board
@@ -78,23 +81,14 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	bestEvalCompleted := -40000
 	completedDepth := 1
 
-	done := make(chan struct{})
-	defer close(done)
-	go s.startSearchTimer(done)
-
-	timer := s.timer
-	if timer == 0 {
-		timer = 1000
-	}
-	softLimit := time.Duration(timer) * time.Millisecond * 6 / 10
-	searchStart := time.Now()
+	go s.startSearchTimer()
 
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
 			continue
 		}
 
-		if time.Since(searchStart) > softLimit {
+		if s.softSearchCancelled.Load() {
 			break
 		}
 
@@ -208,7 +202,7 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 	}
 
 	//null move pruning
-	if depth >= 3 && !board.inCheck && !board.isPawnEndgame() {
+	if depth >= 3 && !board.inCheck && !board.isPawnEndgame() && allowNull {
 		nullMove := Move{}
 		nullMove.setIsNull(true)
 		board.makeMove(&nullMove)
@@ -232,8 +226,8 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			}
 		}
 	}
-	if ttMoveFound {
 
+	if ttMoveFound {
 		slices.SortFunc(moves[1:], compareMoves)
 	} else {
 		slices.SortFunc(moves, compareMoves)
