@@ -373,6 +373,8 @@ func TestNxc6EvalCleanTT(t *testing.T) {
 		board.unmakeMove(move)
 		after_hash := board.zobristHash
 		if before_hash != after_hash {
+			fmt.Println(move.getStartSquare())
+			fmt.Println(move.getEndSquare())
 			t.Fatal("hash")
 		}
 

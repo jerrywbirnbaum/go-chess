@@ -453,93 +453,37 @@ func (b *Board) makeMove(move *Move) {
 	if move.getIsPromotion() {
 		var promotedPiece Piece
 		promotedPiece = newPieceTypeColor(move.getPromotionPieceType(), getColor(startPiece))
-		b.xorPieceSquare(startPiece, startRow, startCol)
-		b.xorPieceSquare(endPiece, endRow, endCol)
-		b.xorPieceSquare(promotedPiece, endRow, endCol)
-		b.setCell(endRow, endCol, promotedPiece)
-		b.setCell(startRow, startCol, EmptyPiece)
-
-		b.setBitboardPiece(promotedPiece, endRow, endCol)
-		b.removeBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(endPiece, endRow, endCol)
-
-		b.removePieceFromList(startPiece, startRow, startCol)
-		b.setPieceInList(endRow, endCol, promotedPiece)
+		b.decrementPiece(endPiece, endRow, endCol, true)
+		b.decrementPiece(startPiece, startRow, startCol, true)
+		b.incrementPiece(promotedPiece, endRow, endCol, true)
 	} else if move.getIsEnpassant() {
 		//enpassant
-		b.xorPieceSquare(startPiece, startRow, startCol)
-		b.xorPieceSquare(move.getEnpassantCapture(), startRow, endCol)
-		b.xorPieceSquare(startPiece, endRow, endCol)
-
-		b.setBitboardPiece(startPiece, endRow, endCol)
-		b.removeBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(b.getCell(startRow, endCol), startRow, endCol)
-
-		b.setCell(endRow, endCol, startPiece)
-		b.setCell(startRow, endCol, EmptyPiece)
-		b.setCell(startRow, startCol, EmptyPiece)
-
-		b.removePieceFromList(startPiece, startRow, startCol)
-		b.removePieceFromList(endPiece, startRow, endCol)
-		b.setPieceInList(endRow, endCol, startPiece)
+		b.decrementPiece(b.getCell(startRow, endCol), startRow, endCol, true)
+		b.decrementPiece(startPiece, startRow, startCol, true)
+		b.incrementPiece(startPiece, endRow, endCol, true)
 	} else if move.getIsCastleKingSide() {
 		//Castling
 		rookPiece := b.getCell(startRow, 7)
-		b.xorPieceSquare(startPiece, startRow, startCol)
-		b.xorPieceSquare(rookPiece, startRow, 7)
-		b.xorPieceSquare(startPiece, startRow, 6)
-		b.xorPieceSquare(rookPiece, startRow, 5)
 
-		b.setCell(startRow, 6, startPiece)
-		b.setCell(startRow, 5, b.getCell(startRow, 7))
-		b.setCell(startRow, startCol, EmptyPiece)
-		b.setCell(startRow, 7, EmptyPiece)
-
-		b.setBitboardPiece(startPiece, startRow, 6)
-		b.setBitboardPiece(rookPiece, startRow, 5)
-		b.removeBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(rookPiece, startRow, 7)
-
-		b.removePieceFromList(startPiece, startRow, startCol)
-		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 7)
-		b.setPieceInList(startRow, 6, startPiece)
-		b.setPieceInList(startRow, 5, b.getCell(startRow, 5))
+		b.decrementPiece(rookPiece, startRow, 7, true)
+		b.decrementPiece(startPiece, startRow, startCol, true)
+		b.incrementPiece(rookPiece, startRow, 5, true)
+		b.incrementPiece(startPiece, startRow, 6, true)
 		b.updateKingPos(startPiece, startRow, 6)
 	} else if move.getIsCastleQueenSide() {
 		rookPiece := b.getCell(startRow, 0)
-		b.xorPieceSquare(startPiece, startRow, startCol)
-		b.xorPieceSquare(rookPiece, startRow, 0)
-		b.xorPieceSquare(startPiece, startRow, 2)
-		b.xorPieceSquare(rookPiece, startRow, 3)
-		b.setCell(startRow, 2, startPiece)
-		b.setCell(startRow, 3, b.getCell(startRow, 0))
-		b.setCell(startRow, startCol, EmptyPiece)
-		b.setCell(startRow, 0, EmptyPiece)
 
-		b.setBitboardPiece(startPiece, startRow, 2)
-		b.setBitboardPiece(rookPiece, startRow, 3)
-		b.removeBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(rookPiece, startRow, 0)
-
-		b.removePieceFromList(startPiece, startRow, startCol)
-		b.removePieceFromList(newPieceTypeColor(Rook, b.currentColor()), startRow, 0)
-		b.setPieceInList(startRow, 2, startPiece)
-		b.setPieceInList(startRow, 3, b.getCell(startRow, 3))
+		b.decrementPiece(rookPiece, startRow, 0, true)
+		b.decrementPiece(startPiece, startRow, startCol, true)
+		b.incrementPiece(rookPiece, startRow, 3, true)
+		b.incrementPiece(startPiece, startRow, 2, true)
 		b.updateKingPos(startPiece, startRow, 2)
 	} else {
 		//Normal Move
-		b.xorPieceSquare(startPiece, startRow, startCol)
-		b.xorPieceSquare(endPiece, endRow, endCol)
-		b.xorPieceSquare(startPiece, endRow, endCol)
-		b.setCell(startRow, startCol, EmptyPiece)
-		b.setCell(endRow, endCol, startPiece)
+		b.decrementPiece(endPiece, endRow, endCol, true)
+		b.decrementPiece(startPiece, startRow, startCol, true)
+		b.incrementPiece(startPiece, endRow, endCol, true)
 
-		b.removeBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(endPiece, endRow, endCol)
-		b.setBitboardPiece(startPiece, endRow, endCol)
-
-		b.removePieceFromList(startPiece, startRow, startCol)
-		b.setPieceInList(endRow, endCol, startPiece)
 		if isKing(pieceType) {
 			b.updateKingPos(startPiece, endRow, endCol)
 		}
@@ -576,74 +520,41 @@ func (b *Board) unmakeMove(move *Move) {
 	}
 	//Enpassant
 	if move.getIsPromotion() {
-		promotionPiece := newPieceTypeColor(move.getPromotionPieceType(), getColor(startPiece))
+		promotedPiece := newPieceTypeColor(move.getPromotionPieceType(), getColor(startPiece))
 
-		b.setBitboardPiece(startPiece, startRow, startCol)
-		b.setBitboardPiece(endPiece, endRow, endCol)
-		b.removeBitboardPiece(promotionPiece, endRow, endCol)
-
-		b.setCell(startRow, startCol, startPiece)
-		b.setCell(endRow, endCol, endPiece)
-		b.setPieceInList(endRow, endCol, endPiece)
-		b.setPieceInList(startRow, startCol, startPiece)
+		b.decrementPiece(promotedPiece, endRow, endCol, false)
+		b.incrementPiece(endPiece, endRow, endCol, false)
+		b.incrementPiece(startPiece, startRow, startCol, false)
 	} else if move.getIsEnpassant() {
-		b.setCell(startRow, startCol, startPiece)
-		b.setCell(endRow, endCol, EmptyPiece)
-		b.setCell(startRow, endCol, move.getEnpassantCapture())
-		b.setPieceInList(startRow, startCol, startPiece)
-		b.setPieceInList(endRow, endCol, EmptyPiece)
-		b.setPieceInList(startRow, endCol, move.getEnpassantCapture())
 
-		b.setBitboardPiece(startPiece, startRow, startCol)
-		b.setBitboardPiece(move.getEnpassantCapture(), startRow, endCol)
-		b.removeBitboardPiece(startPiece, endRow, endCol)
+		b.decrementPiece(startPiece, endRow, endCol, false)
+		b.incrementPiece(move.getEnpassantCapture(), startRow, endCol, false)
+		b.incrementPiece(startPiece, startRow, startCol, false)
 
 	} else if move.getIsCastleKingSide() {
 		rookPiece := newPieceTypeColor(Rook, getColor(startPiece))
 
-		b.setBitboardPiece(startPiece, startRow, startCol)
-		b.setBitboardPiece(rookPiece, startRow, 7)
-		b.removeBitboardPiece(startPiece, startRow, 6)
-		b.removeBitboardPiece(rookPiece, startRow, 5)
-
-		b.setCell(startRow, 4, startPiece)
-		b.setCell(startRow, 7, b.getCell(startRow, 5))
-		b.setCell(startRow, 5, EmptyPiece)
-		b.setCell(startRow, 6, EmptyPiece)
-
-		b.setPieceInList(startRow, 5, EmptyPiece)
-		b.setPieceInList(startRow, 6, EmptyPiece)
-		b.setPieceInList(startRow, 4, startPiece)
-		b.setPieceInList(startRow, 7, b.getCell(startRow, 7))
+		b.decrementPiece(rookPiece, startRow, 5, false)
+		b.decrementPiece(startPiece, startRow, 6, false)
+		b.incrementPiece(rookPiece, startRow, 7, false)
+		b.incrementPiece(startPiece, startRow, startCol, false)
 
 		b.updateKingPos(startPiece, startRow, 4)
 	} else if move.getIsCastleQueenSide() {
 		rookPiece := newPieceTypeColor(Rook, getColor(startPiece))
 
-		b.setBitboardPiece(startPiece, startRow, startCol)
-		b.setBitboardPiece(rookPiece, startRow, 0)
-		b.removeBitboardPiece(startPiece, startRow, 3)
-		b.removeBitboardPiece(rookPiece, startRow, 2)
+		b.decrementPiece(rookPiece, startRow, 3, false)
+		b.decrementPiece(startPiece, startRow, 2, false)
+		b.incrementPiece(rookPiece, startRow, 0, false)
+		b.incrementPiece(startPiece, startRow, startCol, false)
 
-		b.setCell(startRow, 4, startPiece)
-		b.setCell(startRow, 0, b.getCell(startRow, 3))
-		b.setCell(startRow, 2, EmptyPiece)
-		b.setCell(startRow, 3, EmptyPiece)
-		b.setPieceInList(startRow, 2, EmptyPiece)
-		b.setPieceInList(startRow, 3, EmptyPiece)
-		b.setPieceInList(startRow, 4, startPiece)
-		b.setPieceInList(startRow, 0, b.getCell(startRow, 0))
 		b.updateKingPos(startPiece, startRow, 4)
 	} else {
-		b.setCell(startRow, startCol, startPiece)
-		b.setCell(endRow, endCol, endPiece)
 
-		b.setBitboardPiece(endPiece, endRow, endCol)
-		b.setBitboardPiece(startPiece, startRow, startCol)
-		b.removeBitboardPiece(startPiece, endRow, endCol)
+		b.decrementPiece(startPiece, endRow, endCol, false)
+		b.incrementPiece(endPiece, endRow, endCol, false)
+		b.incrementPiece(startPiece, startRow, startCol, false)
 
-		b.setPieceInList(endRow, endCol, endPiece)
-		b.setPieceInList(startRow, startCol, startPiece)
 		if isKing(pieceType(startPiece)) {
 			b.updateKingPos(startPiece, startRow, startCol)
 		}
@@ -760,4 +671,23 @@ func (b *Board) updateEval(piece Piece, row int, col int, sign int) {
 		b.blackMGEval += getEvalCell(mg_table[piece-1], row, col, false) * sign
 		b.blackEGEval += getEvalCell(eg_table[piece-1], row, col, false) * sign
 	}
+}
+
+func (b *Board) incrementPiece(piece Piece, row int, col int, updateHash bool) {
+	if updateHash {
+		b.xorPieceSquare(piece, row, col)
+	}
+	b.setCell(row, col, piece)
+	b.setBitboardPiece(piece, row, col)
+	b.setPieceInList(row, col, piece)
+}
+
+func (b *Board) decrementPiece(piece Piece, row int, col int, updateHash bool) {
+	if updateHash {
+		b.xorPieceSquare(piece, row, col)
+	}
+	b.removeBitboardPiece(piece, row, col)
+
+	b.setCell(row, col, EmptyPiece)
+	b.removePieceFromList(piece, row, col)
 }
