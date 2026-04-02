@@ -296,6 +296,8 @@ func mopUpEval(b *Board, whiteEval int, blackEval int) int {
 	return int(bonusEval)
 }
 
+var passed_pawn_table = [7]int{0, 10, 20, 40, 70, 120, 200}
+
 func passedPawns(b *Board, pawn Square) int {
 	oppositeBitboard := b.getBitboard(newPieceTypeColor(Pawn, Black))
 	oppositeBitboard |= b.getBitboard(newPieceTypeColor(Pawn, White))
@@ -320,7 +322,7 @@ func passedPawns(b *Board, pawn Square) int {
 		row = 7 - row
 	}
 	if isPassedPawn == 0 {
-		return 10 * row
+		return passed_pawn_table[row-1]
 	}
 	return 0
 }
