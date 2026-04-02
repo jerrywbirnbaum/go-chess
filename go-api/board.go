@@ -44,6 +44,12 @@ type Board struct {
 	colorBitboards        [2]uint64
 	zobristHashTable      []int64
 	inCheck               bool
+	whiteMGEval           int
+	blackMGEval           int
+	whiteEGEval           int
+	blackEGEval           int
+	midGamePhase          int
+	passedPawnScore       int
 }
 
 // Clone returns a deep copy of the board suitable for use in a separate search goroutine.
@@ -399,6 +405,7 @@ func (b *Board) makeMoveUpdateSide(move *Move) {
 	b.enpassant = move.getNextEnpassant()
 	b.moveCount += 1
 	b.isWhiteTurn = !b.isWhiteTurn
+
 }
 
 func (b *Board) makeMove(move *Move) {
@@ -732,4 +739,25 @@ func (b *Board) calculateZobrishHash() int64 {
 	}
 
 	return hash
+}
+
+func (b *Board) updateEval(piece Piece, row int, col int, sign int) {
+	if piece == EmptyPiece {
+		return
+	}
+
+	color := getColor(piece)
+	pieceType := pieceType(piece)
+	b.midGamePhase += gamephaseInc[pieceType-1] * sign
+
+	if pieceType == Pawn {
+		b.passedPawnScore += passedPawns(b, Square{piece: piece, row: row, col: col})
+	}
+	if color == White {
+		b.whiteMGEval += getEvalCell(mg_table[piece-1], row, col, false) * sign
+		b.whiteEGEval += getEvalCell(eg_table[piece-1], row, col, false) * sign
+	} else {
+		b.blackMGEval += getEvalCell(mg_table[piece-1], row, col, false) * sign
+		b.blackEGEval += getEvalCell(eg_table[piece-1], row, col, false) * sign
+	}
 }
