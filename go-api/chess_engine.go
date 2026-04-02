@@ -2,7 +2,9 @@ package main
 
 import (
 	"cmp"
+	"runtime"
 	"slices"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -46,6 +48,55 @@ func (s *ChessEngine) initSearchTranspositionTable() {
 	s.softSearchCancelled = new(atomic.Bool)
 }
 
+func newWorker(chessEngine *ChessEngine) ChessEngine {
+	ctx := SearchContext{}
+	ctx.board = chessEngine.ctx.board.Clone()
+	ctx.initMoveGeneratorPools()
+	return ChessEngine{ctx: ctx,
+		transpositionTable:  chessEngine.transpositionTable,
+		searchCancelled:     chessEngine.searchCancelled,
+		softSearchCancelled: chessEngine.softSearchCancelled,
+		timer:               chessEngine.timer,
+	}
+}
+
+func (s *ChessEngine) workerSearch(depth int) {
+	board := s.ctx.board
+	rootMG := &s.ctx.searchMG[0]
+	moves := rootMG.generateMoves(false)
+	slices.SortFunc(moves, compareMoves)
+	sortedMoves := make([]MoveEvaluation, len(moves))
+
+	for searchDepth := depth; searchDepth < 200; searchDepth++ {
+		if s.softSearchCancelled.Load() {
+			break
+		}
+
+		for i := range moves {
+			move := &moves[i]
+			board.makeMove(move)
+			eval, _ := s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
+			eval = -eval
+			board.unmakeMove(move)
+			if s.searchCancelled.Load() {
+				return
+			}
+
+			sortedMoves[i] = MoveEvaluation{evaluation: eval, move: move}
+		}
+
+		if s.searchCancelled.Load() {
+			return
+		}
+
+		moves = nil
+		slices.SortFunc(sortedMoves, compareEvaluationMoves)
+		for i := range sortedMoves {
+			moves = append(moves, *sortedMoves[i].move)
+		}
+	}
+}
+
 func (s *ChessEngine) startSearchTimer() {
 	timer := s.timer
 	if timer == 0 {
@@ -76,6 +127,19 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	totalEvaluated := 0
 	sortedMoves := make([]MoveEvaluation, len(moves))
 
+	threads := runtime.NumCPU()
+	var wg sync.WaitGroup
+	if multithreading {
+		for i := range threads {
+			wg.Add(1)
+			worker := newWorker(s)
+			go func(w *ChessEngine, startDepth int) {
+				defer wg.Done()
+				w.workerSearch(startDepth)
+			}(&worker, i+1)
+		}
+	}
+
 	var bestMove Move
 	var bestMoveCurrentIteration Move
 	bestEvalCompleted := -40000
@@ -93,7 +157,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		}
 
 		bestEvalCurrentIteration := -40000
-		bestMoveCurrentIteration = bestMove // inherit previous best as fallback
+		bestMoveCurrentIteration = bestMove
 		movesEvaluatedInIteration := 0
 
 		for i := range moves {
@@ -133,6 +197,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 			moves = append(moves, *sortedMoves[i].move)
 		}
 	}
+	wg.Wait()
 
 	return moveToMovestring(bestMove), totalEvaluated, bestEvalCompleted, completedDepth
 }

@@ -27,6 +27,8 @@ func init() {
 	initTables()
 }
 
+var multithreading bool = false
+
 func main() {
 	go http.ListenAndServe(":8080", nil)
 	board := initBoard()
@@ -34,7 +36,11 @@ func main() {
 	chessEngine.initSearchTranspositionTable()
 	chessEngine.setTimer(1000)
 
-	if len(os.Args) > 1 && os.Args[1] == "uci" {
+	if len(os.Args) > 1 && os.Args[1] == "multithreading" {
+		multithreading = true
+	}
+
+	if len(os.Args) > 2 && os.Args[2] == "uci" {
 		runUCI(&chessEngine, &board)
 		return
 	}

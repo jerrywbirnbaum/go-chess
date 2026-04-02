@@ -55,7 +55,7 @@ type Board struct {
 // Clone returns a deep copy of the board suitable for use in a separate search goroutine.
 func (b *Board) Clone() *Board {
 	clone := *b
-	clone.zobristHashTable = append([]int64{}, b.zobristHashTable...)
+	clone.zobristHashTable = append([]int64{}, b.getPrevioiusZHash())
 	repTableCopy := *b.repititionTable
 	clone.repititionTable = &repTableCopy
 	return &clone
