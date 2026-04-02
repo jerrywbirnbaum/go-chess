@@ -204,26 +204,26 @@ func getPieceValue(p PieceType) int {
 }
 func pestoEval(b *Board) int {
 
-	b.blackMGEval = 0
-	b.whiteMGEval = 0
-	b.blackEGEval = 0
-	b.whiteEGEval = 0
-	passedPawnScore := 0
-	b.midGamePhase = 0
+	// b.blackMGEval = 0
+	// b.whiteMGEval = 0
+	// b.blackEGEval = 0
+	// b.whiteEGEval = 0
+	// b.midGamePhase = 0
 
 	if b.isThreeFoldRepitition {
 		return 0
 	}
 
-	pieces := b.piecesGenerator()
-	for i := range pieces {
-		piece := pieces[i]
-		b.updateEval(piece.piece, piece.row, piece.col, 1)
-	}
+	// pieces := b.piecesGenerator()
+	// for i := range pieces {
+	// 	piece := pieces[i]
+	// 	b.updateEval(piece.piece, piece.row, piece.col, 1)
+	// }
 
-	if b.midGamePhase > 24 {
-		b.midGamePhase = 24
-	}
+	midGamePhase := min(b.midGamePhase, 24)
+	// if b.midGamePhase > 24 {
+	// 	midGamePhase = 24
+	// }
 	var mgScore int
 	var egScore int
 	if b.isWhiteTurn {
@@ -234,11 +234,12 @@ func pestoEval(b *Board) int {
 		mgScore = b.blackMGEval - b.whiteMGEval
 		egScore = b.blackEGEval - b.whiteEGEval
 	}
-	score := (mgScore*b.midGamePhase + egScore*(24-b.midGamePhase)) / 24
+	score := (mgScore*midGamePhase + egScore*(24-midGamePhase)) / 24
 	if b.isNoPawnEndGame() {
 		score += mopUpEval(b, b.whiteMGEval+b.whiteEGEval, b.blackMGEval+b.blackEGEval)
 	}
 
+	passedPawnScore := 0
 	pawnBitboard := b.getBitboard(newPieceTypeColor(Pawn, b.currentColor()))
 
 	for pawnBitboard != 0 {

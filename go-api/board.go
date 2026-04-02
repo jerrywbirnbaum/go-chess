@@ -214,9 +214,18 @@ func (b *Board) clearBitboards() {
 		b.colorBitboards[i] = 0
 	}
 }
+
+func (b *Board) clearEval() {
+	b.blackMGEval = 0
+	b.blackEGEval = 0
+	b.whiteMGEval = 0
+	b.whiteEGEval = 0
+	b.midGamePhase = 0
+}
 func (b *Board) rebuildPieceList() {
 	b.pieceCount = 0
 	b.clearBitboards()
+	b.clearEval()
 	for i := range b.pieceListIndex {
 		b.pieceListIndex[i] = -1
 	}
@@ -662,9 +671,6 @@ func (b *Board) updateEval(piece Piece, row int, col int, sign int) {
 	pieceType := pieceType(piece)
 	b.midGamePhase += gamephaseInc[pieceType-1] * sign
 
-	// if pieceType == Pawn {
-	// 	b.passedPawnScore += passedPawns(b, Square{piece: piece, row: row, col: col})
-	// }
 	if color == White {
 		b.whiteMGEval += getEvalCell(mg_table[piece-1], row, col, false) * sign
 		b.whiteEGEval += getEvalCell(eg_table[piece-1], row, col, false) * sign
