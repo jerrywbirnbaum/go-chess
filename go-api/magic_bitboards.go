@@ -4,19 +4,6 @@ import (
 	"math"
 )
 
-func init() {
-	for sq := range 64 {
-		r, c := sq/8, sq%8
-		knightAttacks[sq] = leaperAttackBits(r, c, knightOffsets[:])
-		kingAttacks[sq] = leaperAttackBits(r, c, kingOffsets[:])
-		bishopMasks[sq] = sliderMaskBits(r, c, diagonalDirs[:])
-		rookMasks[sq] = sliderMaskBits(r, c, straightDirs[:])
-	}
-	bishopMagicLookup = createBishopLookupTable()
-	rookMagicLookup = createRookLookupTable()
-	initTables()
-}
-
 func getBishopMagicNumber(row int, col int) uint64 {
 	row = 7 - row
 	return BishopMagics[row*8+col]
