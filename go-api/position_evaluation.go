@@ -151,8 +151,8 @@ var eg_value = [6]int{94, 281, 297, 512, 936, 0}
 
 var mg_pesto_table = [6][64]int{
 	mg_pawn_table,
-	mg_knight_table,
 	mg_bishop_table,
+	mg_knight_table,
 	mg_rook_table,
 	mg_queen_table,
 	mg_king_table,
@@ -160,8 +160,8 @@ var mg_pesto_table = [6][64]int{
 
 var eg_pesto_table = [6][64]int{
 	eg_pawn_table,
-	eg_knight_table,
 	eg_bishop_table,
+	eg_knight_table,
 	eg_rook_table,
 	eg_queen_table,
 	eg_king_table,
