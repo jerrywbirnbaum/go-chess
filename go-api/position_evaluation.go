@@ -208,7 +208,7 @@ func pestoEval(b *Board) int {
 	b.whiteMGEval = 0
 	b.blackEGEval = 0
 	b.whiteEGEval = 0
-	b.passedPawnScore = 0
+	passedPawnScore := 0
 	b.midGamePhase = 0
 
 	if b.isThreeFoldRepitition {
@@ -238,7 +238,17 @@ func pestoEval(b *Board) int {
 	if b.isNoPawnEndGame() {
 		score += mopUpEval(b, b.whiteMGEval+b.whiteEGEval, b.blackMGEval+b.blackEGEval)
 	}
-	score += b.passedPawnScore
+
+	pawnBitboard := b.getBitboard(newPieceTypeColor(Pawn, b.currentColor()))
+
+	for pawnBitboard != 0 {
+		pawnIdx := bitScanForward(pawnBitboard)
+		pawnBitboard ^= 1 << pawnIdx
+		row, col := rowColFromSquare(63 - pawnIdx)
+		passedPawnScore += passedPawns(b, Square{piece: newPieceTypeColor(Pawn, b.currentColor()), row: row, col: col})
+	}
+
+	score += passedPawnScore
 	return score
 }
 

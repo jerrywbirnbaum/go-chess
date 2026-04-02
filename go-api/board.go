@@ -49,7 +49,7 @@ type Board struct {
 	whiteEGEval           int
 	blackEGEval           int
 	midGamePhase          int
-	passedPawnScore       int
+	// passedPawnScore       int
 }
 
 // Clone returns a deep copy of the board suitable for use in a separate search goroutine.
@@ -230,6 +230,7 @@ func (b *Board) rebuildPieceList() {
 			b.pieceListIndex[i*8+j] = int8(b.pieceCount)
 			b.pieces[b.pieceCount] = Square{row: i, col: j, piece: p}
 			b.pieceCount++
+			b.updateEval(p, i, j, 1)
 			if isKing(pieceType(p)) {
 				if isWhite(p) {
 					b.whiteKingRow = i
@@ -661,9 +662,9 @@ func (b *Board) updateEval(piece Piece, row int, col int, sign int) {
 	pieceType := pieceType(piece)
 	b.midGamePhase += gamephaseInc[pieceType-1] * sign
 
-	if pieceType == Pawn {
-		b.passedPawnScore += passedPawns(b, Square{piece: piece, row: row, col: col})
-	}
+	// if pieceType == Pawn {
+	// 	b.passedPawnScore += passedPawns(b, Square{piece: piece, row: row, col: col})
+	// }
 	if color == White {
 		b.whiteMGEval += getEvalCell(mg_table[piece-1], row, col, false) * sign
 		b.whiteEGEval += getEvalCell(eg_table[piece-1], row, col, false) * sign
@@ -680,14 +681,15 @@ func (b *Board) incrementPiece(piece Piece, row int, col int, updateHash bool) {
 	b.setCell(row, col, piece)
 	b.setBitboardPiece(piece, row, col)
 	b.setPieceInList(row, col, piece)
+	b.updateEval(piece, row, col, 1)
 }
 
 func (b *Board) decrementPiece(piece Piece, row int, col int, updateHash bool) {
 	if updateHash {
 		b.xorPieceSquare(piece, row, col)
 	}
-	b.removeBitboardPiece(piece, row, col)
-
 	b.setCell(row, col, EmptyPiece)
+	b.removeBitboardPiece(piece, row, col)
 	b.removePieceFromList(piece, row, col)
+	b.updateEval(piece, row, col, -1)
 }

@@ -14,6 +14,7 @@ func init() {
 	}
 	bishopMagicLookup = createBishopLookupTable()
 	rookMagicLookup = createRookLookupTable()
+	initTables()
 }
 
 func getBishopMagicNumber(row int, col int) uint64 {

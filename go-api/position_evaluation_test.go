@@ -6,7 +6,6 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	initTables()
 	os.Exit(m.Run())
 }
 
