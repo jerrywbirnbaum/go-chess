@@ -60,12 +60,13 @@ func newWorker(chessEngine *ChessEngine) ChessEngine {
 	}
 }
 
-func (s *ChessEngine) workerSearch(depth int) {
+func (s *ChessEngine) workerSearch(depth int) int {
 	board := s.ctx.board
 	rootMG := &s.ctx.searchMG[0]
 	moves := rootMG.generateMoves(false)
 	slices.SortFunc(moves, compareMoves)
 	sortedMoves := make([]MoveEvaluation, len(moves))
+	nodes_searched := 0
 
 	for searchDepth := depth; searchDepth < 200; searchDepth++ {
 		if s.softSearchCancelled.Load() {
@@ -75,18 +76,19 @@ func (s *ChessEngine) workerSearch(depth int) {
 		for i := range moves {
 			move := &moves[i]
 			board.makeMove(move)
-			eval, _ := s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
+			eval, nodes := s.searchBruteForce(searchDepth, 1, -20000, 20000, true)
 			eval = -eval
+			nodes_searched += nodes
 			board.unmakeMove(move)
 			if s.searchCancelled.Load() {
-				return
+				return nodes_searched
 			}
 
 			sortedMoves[i] = MoveEvaluation{evaluation: eval, move: move}
 		}
 
 		if s.searchCancelled.Load() {
-			return
+			return nodes_searched
 		}
 
 		moves = nil
@@ -95,6 +97,7 @@ func (s *ChessEngine) workerSearch(depth int) {
 			moves = append(moves, *sortedMoves[i].move)
 		}
 	}
+	return nodes_searched
 }
 
 func (s *ChessEngine) startSearchTimer() {
@@ -128,15 +131,16 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	sortedMoves := make([]MoveEvaluation, len(moves))
 
 	threads := runtime.NumCPU()
+	workerNodes := make([]int, threads)
 	var wg sync.WaitGroup
 	if multithreading {
 		for i := range threads {
 			wg.Add(1)
 			worker := newWorker(s)
-			go func(w *ChessEngine, startDepth int) {
+			go func(w *ChessEngine, startDepth int, nodeSlot *int) {
 				defer wg.Done()
-				w.workerSearch(startDepth)
-			}(&worker, i+1)
+				*nodeSlot = w.workerSearch(startDepth)
+			}(&worker, i+1, &workerNodes[i])
 		}
 	}
 
@@ -198,6 +202,9 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		}
 	}
 	wg.Wait()
+	for _, n := range workerNodes {
+		totalEvaluated += n
+	}
 
 	return moveToMovestring(bestMove), totalEvaluated, bestEvalCompleted, completedDepth
 }
@@ -229,11 +236,11 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			evaluation += ply
 		}
 		if flag == 0 {
-			return evaluation, 1
+			return evaluation, 0
 		} else if flag == 1 && evaluation >= beta {
-			return evaluation, 1
+			return evaluation, 0
 		} else if flag == 2 && evaluation <= alpha {
-			return evaluation, 1
+			return evaluation, 0
 		}
 	}
 
@@ -328,6 +335,9 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			bestMoveInNode = *move
 		}
 		board.unmakeMove(move)
+		if s.searchCancelled.Load() {
+			break
+		}
 	}
 
 	if alpha <= originalAlpha {

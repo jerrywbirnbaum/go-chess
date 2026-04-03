@@ -17,6 +17,6 @@ lsof -ti:9090 | xargs kill -9 2>/dev/null || true
 
 # Wait for go-chess pprof server to initialize
 sleep 2
-go tool pprof -http=:9090 "http://localhost:8080/debug/pprof/profile?seconds=30" &
+go tool pprof -http=:9090 "http://localhost:8080/debug/pprof/profile?seconds=120" &
 
 wait $FASTCHESS_PID
