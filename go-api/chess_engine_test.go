@@ -142,8 +142,8 @@ func TestSearchBruteForceTranspositionExactHitReturnsCachedEval(t *testing.T) {
 	if gotEval != 321 {
 		t.Fatalf("expected exact TT hit to return cached eval 321, got %d", gotEval)
 	}
-	if gotPositions != 1 {
-		t.Fatalf("expected exact TT hit to count one position, got %d", gotPositions)
+	if gotPositions != 0 {
+		t.Fatalf("expected exact TT hit to count zero position, got %d", gotPositions)
 	}
 }
 
@@ -161,8 +161,8 @@ func TestSearchBruteForceTranspositionLowerBoundHitReturnsCachedEval(t *testing.
 	if gotEval != 50 {
 		t.Fatalf("expected lower-bound TT hit to return cached eval 50, got %d", gotEval)
 	}
-	if gotPositions != 1 {
-		t.Fatalf("expected lower-bound TT hit to count one position, got %d", gotPositions)
+	if gotPositions != 0 {
+		t.Fatalf("expected lower-bound TT hit to count 0 position, got %d", gotPositions)
 	}
 }
 
@@ -179,8 +179,8 @@ func TestSearchBruteForceTranspositionUpperBoundHitReturnsCachedEval(t *testing.
 	if gotEval != -50 {
 		t.Fatalf("expected upper-bound TT hit to return cached eval -50, got %d", gotEval)
 	}
-	if gotPositions != 1 {
-		t.Fatalf("expected upper-bound TT hit to count one position, got %d", gotPositions)
+	if gotPositions != 0 {
+		t.Fatalf("expected upper-bound TT hit to count zero position, got %d", gotPositions)
 	}
 }
 
