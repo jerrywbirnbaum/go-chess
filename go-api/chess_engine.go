@@ -39,6 +39,8 @@ type ChessEngine struct {
 	transpositionTable  *TranspositionTable
 	searchCancelled     *atomic.Bool
 	softSearchCancelled *atomic.Bool
+	softTimer           *time.Timer
+	hardTimer           *time.Timer
 	timer               int
 }
 
@@ -101,17 +103,27 @@ func (s *ChessEngine) workerSearch(depth int) int {
 }
 
 func (s *ChessEngine) startSearchTimer() {
+	s.searchCancelled.Store(false)
+	s.softSearchCancelled.Store(false)
+
 	timer := s.timer
 	if timer == 0 {
 		timer = 1000
 	}
-	softTimer := timer * 6 / 10
+	softTimerLength := timer * 6 / 10
+	s.softTimer = time.NewTimer(time.Duration(softTimerLength) * time.Millisecond)
 
-	time.Sleep(time.Duration(softTimer) * time.Millisecond)
-	s.softSearchCancelled.Store(true)
+	go func() {
+		<-s.softTimer.C
+		s.softSearchCancelled.Store(true)
+	}()
 
-	time.Sleep(time.Duration(timer-softTimer) * time.Millisecond)
-	s.searchCancelled.Store(true)
+	s.hardTimer = time.NewTimer(time.Duration(timer) * time.Millisecond)
+	go func() {
+		<-s.hardTimer.C
+		s.searchCancelled.Store(true)
+	}()
+
 }
 
 func (s *ChessEngine) setTimer(timer int) {
@@ -119,8 +131,6 @@ func (s *ChessEngine) setTimer(timer int) {
 }
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
-	s.searchCancelled.Store(false)
-	s.softSearchCancelled.Store(false)
 	s.ctx.initMoveGeneratorPools()
 
 	board := s.ctx.board
@@ -132,6 +142,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 
 	threads := runtime.NumCPU()
 	workerNodes := make([]int, threads)
+
 	var wg sync.WaitGroup
 	if multithreading {
 		for i := range threads {
@@ -149,7 +160,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	bestEvalCompleted := -40000
 	completedDepth := 1
 
-	go s.startSearchTimer()
+	s.startSearchTimer()
 
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
@@ -201,7 +212,12 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 			moves = append(moves, *sortedMoves[i].move)
 		}
 	}
+
+	s.searchCancelled.Store(true)
+	s.softTimer.Stop()
+	s.hardTimer.Stop()
 	wg.Wait()
+
 	for _, n := range workerNodes {
 		totalEvaluated += n
 	}
