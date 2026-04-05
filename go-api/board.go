@@ -171,6 +171,7 @@ func (b *Board) updateFromFEN(fen_string string) {
 	b.updateBoardFEN(board_fen_string)
 	b.rebuildPieceList()
 	b.zobristHash = b.calculateZobrishHash()
+	b.zobristHashTable = append(b.zobristHashTable, b.zobristHash)
 	b.repititionTable = initRepititionTable()
 }
 func (b *Board) updateTurnFEN(turn_fen_string string) {
