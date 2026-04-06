@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-const maxSearchPly = 8
-const maxQSearchPly = 8
+const maxSearchPly = 64
+const maxQSearchPly = 16
 
 type MoveEvaluation struct {
 	evaluation int
