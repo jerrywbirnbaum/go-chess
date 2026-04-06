@@ -143,6 +143,7 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	threads := runtime.NumCPU()
 	workerNodes := make([]int, threads)
 
+	s.startSearchTimer()
 	var wg sync.WaitGroup
 	if multithreading {
 		for i := range threads {
@@ -159,8 +160,6 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	var bestMoveCurrentIteration Move
 	bestEvalCompleted := -40000
 	completedDepth := 1
-
-	s.startSearchTimer()
 
 	for searchDepth := range 200 {
 		if searchDepth == 0 {
