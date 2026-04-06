@@ -3,6 +3,8 @@ services:
     build:
       context: ./go-api
     container_name: go-chess-api
+    env_file:
+      - path: .env
     ports:
       - "8080:8080"
 

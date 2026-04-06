@@ -9,3 +9,4 @@ config.json
 /go-api/chess-engine.test
 /go-api/cpu.prof
 /go-api/mem.prof
+.env

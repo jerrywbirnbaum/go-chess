@@ -4,6 +4,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type ChessRequest struct {
@@ -30,6 +32,7 @@ func init() {
 var multithreading bool = false
 
 func main() {
+	godotenv.Load()
 	go http.ListenAndServe(":8080", nil)
 	board := initBoard()
 	chessEngine := ChessEngine{ctx: SearchContext{board: &board}}

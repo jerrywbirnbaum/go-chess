@@ -5,13 +5,22 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 )
+
+func corsOrigins() []string {
+	if val := os.Getenv("CORS_ALLOW_ORIGINS"); val != "" {
+		return strings.Split(val, ",")
+	}
+	return []string{}
+}
 
 func NewRouter(chessEngine *ChessEngine, board *Board) *gin.Engine {
 	r := gin.Default()
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173", "http://127.0.0.1:5173", "http://0.0.0.0:5173"},
+		AllowOrigins:     corsOrigins(),
 		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
