@@ -11,6 +11,8 @@ import (
 
 const maxSearchPly = 64
 const maxQSearchPly = 16
+const maxHistoryScore = 16000
+const historyAgeShift = 4
 
 type MoveEvaluation struct {
 	evaluation int
@@ -22,6 +24,13 @@ type SearchContext struct {
 	board     *Board
 	searchMG  [maxSearchPly]MoveGenerator
 	qsearchMG [maxQSearchPly]MoveGenerator
+	killers   [maxSearchPly][2]Move
+	history   [2][64][64]int
+}
+
+type ScoredMove struct {
+	move  Move
+	score int
 }
 
 func (ctx *SearchContext) initMoveGeneratorPools() {
@@ -31,6 +40,57 @@ func (ctx *SearchContext) initMoveGeneratorPools() {
 	for i := range ctx.qsearchMG {
 		ctx.qsearchMG[i].board = ctx.board
 	}
+}
+
+func (ctx *SearchContext) clearKillers() {
+	ctx.killers = [maxSearchPly][2]Move{}
+}
+
+func (ctx *SearchContext) clearHistory() {
+	ctx.history = [2][64][64]int{}
+}
+
+func (ctx *SearchContext) ageHistory() {
+	for side := range 2 {
+		for from := range 64 {
+			for to := range 64 {
+				ctx.history[side][from][to] >>= historyAgeShift
+			}
+		}
+	}
+}
+
+// Score tiers: TT move (2M) > promotion (1M) > capture/MVV-LVA (100K+) >
+// killer 0 (90K) > killer 1 (80K) > history (0–16K).
+func (ctx *SearchContext) scoreMoves(moves []Move, ply int, ttMove uint64, side int) []ScoredMove {
+	scored := make([]ScoredMove, len(moves))
+	for i, move := range moves {
+		var score int
+		moveBits := move.getMoveBits()
+		switch {
+		case ttMove != 0 && comparePackedMoves(moveBits, ttMove):
+			score = 2_000_000
+		case move.getIsPromotion():
+			score = 1_000_000
+		case move.getEndSquare().piece != EmptyPiece || move.getIsEnpassant():
+			victimVal := getPieceValue(pieceType(move.getEndSquare().piece))
+			if move.getIsEnpassant() {
+				victimVal = getPieceValue(Pawn)
+			}
+			attackerVal := getPieceValue(pieceType(move.getStartSquare().piece))
+			score = 100_000 + victimVal - attackerVal
+		case ctx.killers[ply][0].getMoveBits() != 0 && comparePackedMoves(moveBits, ctx.killers[ply][0].getMoveBits()):
+			score = 90_000
+		case ctx.killers[ply][1].getMoveBits() != 0 && comparePackedMoves(moveBits, ctx.killers[ply][1].getMoveBits()):
+			score = 80_000
+		default:
+			fromSq := move.getStartSquare().row*8 + move.getStartSquare().col
+			toSq := move.getEndSquare().row*8 + move.getEndSquare().col
+			score = ctx.history[side][fromSq][toSq]
+		}
+		scored[i] = ScoredMove{move: move, score: score}
+	}
+	return scored
 }
 
 // ChessEngine holds shared state.
@@ -93,6 +153,8 @@ func (s *ChessEngine) workerSearch(depth int) int {
 			return nodes_searched
 		}
 
+		s.ctx.ageHistory()
+
 		moves = nil
 		slices.SortFunc(sortedMoves, compareEvaluationMoves)
 		for i := range sortedMoves {
@@ -132,6 +194,8 @@ func (s *ChessEngine) setTimer(timer int) {
 
 func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 	s.ctx.initMoveGeneratorPools()
+	s.ctx.clearKillers()
+	s.ctx.clearHistory()
 
 	board := s.ctx.board
 	rootMG := &s.ctx.searchMG[0]
@@ -204,6 +268,8 @@ func (s *ChessEngine) bestMove() (MoveString, int, int, int) {
 		bestMove = bestMoveCurrentIteration
 		bestEvalCompleted = bestEvalCurrentIteration
 		completedDepth = searchDepth
+
+		s.ctx.ageHistory()
 
 		moves = nil
 		slices.SortFunc(sortedMoves, compareEvaluationMoves)
@@ -291,21 +357,17 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 		}
 	}
 
-	ttMoveFound := false
-	if ttMove != 0 {
-		for i := range moves {
-			if comparePackedMoves(moves[i].getMoveBits(), ttMove) {
-				moves[i], moves[0] = moves[0], moves[i]
-				ttMoveFound = true
-				break
-			}
-		}
+	side := 0
+	if !board.isWhiteTurn {
+		side = 1
 	}
 
-	if ttMoveFound {
-		slices.SortFunc(moves[1:], compareMoves)
-	} else {
-		slices.SortFunc(moves, compareMoves)
+	scored := s.ctx.scoreMoves(moves, ply, ttMove, side)
+	slices.SortFunc(scored, func(a, b ScoredMove) int {
+		return cmp.Compare(b.score, a.score)
+	})
+	for i := range moves {
+		moves[i] = scored[i].move
 	}
 
 	var currentMoveEval int
@@ -335,6 +397,17 @@ func (s *ChessEngine) searchBruteForce(depth int, ply int, alpha int, beta int, 
 			currentMoveEval = -currentMoveEval
 		}
 		if currentMoveEval >= beta {
+			isQuiet := move.getEndSquare().piece == EmptyPiece && !move.getIsPromotion() && !move.getIsEnpassant()
+			if isQuiet {
+				ctx := &s.ctx
+				if !comparePackedMoves(move.getMoveBits(), ctx.killers[ply][0].getMoveBits()) {
+					ctx.killers[ply][1] = ctx.killers[ply][0]
+					ctx.killers[ply][0] = *move
+				}
+				fromSq := move.getStartSquare().row*8 + move.getStartSquare().col
+				toSq := move.getEndSquare().row*8 + move.getEndSquare().col
+				ctx.history[side][fromSq][toSq] = min(ctx.history[side][fromSq][toSq]+depth*depth, maxHistoryScore)
+			}
 			storeBeta := beta
 			if storeBeta >= 19900 {
 				storeBeta += ply

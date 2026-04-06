@@ -94,9 +94,9 @@ func handleGo(engine *ChessEngine, board *Board, args []string) {
 
 	timeMs := 1000
 	if board.isWhiteTurn && wtime > 0 {
-		timeMs = wtime/20 + winc
+		timeMs = wtime/25 + winc
 	} else if !board.isWhiteTurn && btime > 0 {
-		timeMs = btime/20 + binc
+		timeMs = btime/25 + binc
 	}
 	timeMs += int(float64(movetime) * 0.5)
 

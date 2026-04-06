@@ -345,6 +345,38 @@ func TestMoveEvaluationOrderEmpty(t *testing.T) {
 	slices.SortFunc(evals, compareEvaluationMoves)
 }
 
+func TestEffectiveBranchingFactor(t *testing.T) {
+	// Standard opening position — rich enough to exercise pruning meaningfully.
+	fen := "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3"
+	maxDepth := 6
+
+	nodes := make([]int, maxDepth+1)
+	for depth := 1; depth <= maxDepth; depth++ {
+		board := initBoard()
+		board.updateFromFEN(fen)
+		chessEngine := ChessEngine{ctx: SearchContext{board: &board}}
+		chessEngine.initSearchTranspositionTable()
+		chessEngine.ctx.initMoveGeneratorPools()
+		_, n := chessEngine.searchBruteForce(depth, 0, -20000, 20000, true)
+		nodes[depth] = n
+	}
+
+	t.Log("Depth | Nodes       | EBF")
+	t.Log("------|-------------|------")
+	for depth := 1; depth <= maxDepth; depth++ {
+		if depth == 1 {
+			t.Logf("  %d   | %11d | -", depth, nodes[depth])
+			continue
+		}
+		ebf := float64(nodes[depth]) / float64(nodes[depth-1])
+		t.Logf("  %d   | %11d | %.2f", depth, nodes[depth], ebf)
+
+		if ebf > 35 {
+			t.Errorf("depth %d EBF=%.2f exceeds 35 — pruning may be broken", depth, ebf)
+		}
+	}
+}
+
 func TestMoveEvaluationOrderSingleElement(t *testing.T) {
 
 	evals := []MoveEvaluation{
