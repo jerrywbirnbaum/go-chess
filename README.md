@@ -16,6 +16,8 @@ The project is easiest to run using docker.
 To run locally first install Docker Desktop
 https://www.docker.com/products/docker-desktop/
 
+Then create a .env file copied from .env.example
+
 Then start the docker containers from the main project directory:
 docker compose up --build
 
